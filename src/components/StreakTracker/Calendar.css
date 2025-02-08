@@ -1,0 +1,32 @@
+.calendar {
+  width: 100%;
+  max-width: 450px;
+  display: flex;
+  flex-direction: column;
+  margin-top: auto;
+  margin-bottom: 2rem;
+}
+
+.calendar-day {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: calc(100% / 7);
+  aspect-ratio: 1 / 1;
+}
+
+.calendar-day_week-name {
+  color: gray;
+}
+
+.calendar-menu {
+  display: flex;
+  flex: 1;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.calendar-day_active {
+  font-weight: bold;
+  text-decoration: underline;
+}
