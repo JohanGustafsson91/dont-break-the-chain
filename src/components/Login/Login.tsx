@@ -1,10 +1,9 @@
-import { signInWithPopup } from "firebase/auth";
-import { auth, githubProvider } from "../../firebase";
+import { login } from "../../services/authService";
 
 export const Login = () => {
   const handleLogin = async () => {
     try {
-      await signInWithPopup(auth, githubProvider);
+      await login({ provider: "github" });
     } catch (error) {
       console.error("GitHub Login Failed:", error);
     }

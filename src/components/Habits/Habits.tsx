@@ -1,8 +1,7 @@
-import { addDoc, collection, getDocs } from "firebase/firestore";
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { db } from "../../firebase";
 import type { Habit } from "../../shared/Habit";
+import { addHabit, getAllHabits } from "../../services/habitService";
 
 export const Habits = () => {
   const [habits, setHabits] = useState<Habit[]>([]);
@@ -38,25 +37,4 @@ export const Habits = () => {
       </button>
     </div>
   );
-};
-
-const getAllHabits = async (): Promise<Habit[]> => {
-  const habitsRef = collection(db, "habits");
-  const snapshot = await getDocs(habitsRef);
-  return snapshot.docs.map((doc) => ({
-    id: doc.id,
-    ...doc.data(),
-  })) as unknown as Habit[];
-};
-
-const addHabit = async () => {
-  const habitsRef = collection(db, "habits");
-  const docRef = await addDoc(habitsRef, {
-    name: `Habit ${new Date().toISOString()}`,
-    description: "",
-    streak: [],
-    createdAt: Date.now(),
-  });
-
-  return docRef.id;
 };

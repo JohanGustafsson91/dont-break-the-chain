@@ -1,7 +1,7 @@
-import "./ProtectedRoute.css";
 import type { PropsWithChildren } from "react";
 import { useNavigate } from "react-router-dom";
-import { logout, useAuth } from "../../services/authService";
+import { useAuth } from "../../services/authService";
+import { AppBar } from "../AppBar/AppBar";
 
 interface ProtectedRouteProps {
   redirectPath?: string;
@@ -36,17 +36,7 @@ export const ProtectedRoute = ({
 
   return (
     <div>
-      {user ? (
-        <div className="menu">
-          {user.photoURL ? (
-            <img alt="profile" src={user?.photoURL} className="menu-avatar" />
-          ) : null}
-
-          <button type="button" onClick={logout}>
-            Logout
-          </button>
-        </div>
-      ) : null}
+      {user ? <AppBar user={user} /> : null}
       {children}
     </div>
   );

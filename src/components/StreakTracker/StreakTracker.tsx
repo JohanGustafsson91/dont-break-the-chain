@@ -2,12 +2,14 @@ import { useEffect, useState } from "react";
 import type { Habit, DayInStreak } from "../../shared/Habit";
 import { Calendar } from "./Calendar";
 import { createDate, getMonthName, isSameDay } from "../../utils/date";
-import { deleteDoc, doc, getDoc, updateDoc } from "firebase/firestore";
-import { db } from "../../firebase";
 import { useNavigate, useParams } from "react-router-dom";
 import { EditableTextField } from "./EditableTextField";
-import type firebase from "firebase/compat/app";
 import "./StreakTracker.css";
+import {
+  deleteHabit,
+  getHabitById,
+  updateHabit,
+} from "../../services/habitService";
 
 export const StreakTracker = () => {
   const { id } = useParams();
@@ -26,7 +28,6 @@ export const StreakTracker = () => {
     },
     [id],
   );
-
   // const { longestStreak, currentStreak } = {
   //   longestStreak: { streak: 0 },
   //   currentStreak: { streak: 0 },
@@ -284,39 +285,3 @@ function getRate(streak: DayInStreak[]) {
 }
 
 type Status = DayInStreak["status"] | "NOT_SPECIFIED";
-
-export const getHabitById = async (
-  habitId: string,
-): Promise<Habit | undefined> => {
-  const habitRef = doc(db, "habits", habitId);
-  const snapshot = await getDoc(habitRef);
-
-  if (!snapshot.exists()) {
-    return undefined;
-  }
-
-  const data = snapshot.data();
-
-  return {
-    id: snapshot.id,
-    ...data,
-    streak: data.streak.map((s: DayInStreak) => ({
-      ...s,
-      date: createDate(
-        new Date(
-          (s.date as unknown as firebase.firestore.Timestamp)?.seconds * 1000,
-        ),
-      ),
-    })),
-  } as Habit;
-};
-
-const updateHabit = async (habitId: string, data: Partial<Habit>) => {
-  const habitRef = doc(db, "habits", habitId);
-  await updateDoc(habitRef, data);
-};
-
-const deleteHabit = async (habitId: string) => {
-  const activityRef = doc(db, "habits", habitId);
-  return await deleteDoc(activityRef);
-};

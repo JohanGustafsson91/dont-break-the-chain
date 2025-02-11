@@ -1,6 +1,7 @@
 import { initializeApp } from "firebase/app";
-import { doc, getDoc, getFirestore } from "firebase/firestore";
-import { getAuth, GithubAuthProvider } from "firebase/auth";
+import { getFirestore } from "firebase/firestore";
+import { getAuth } from "firebase/auth";
+export type { User } from "firebase/auth";
 
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_API_KEY,
@@ -16,10 +17,3 @@ export const app = initializeApp(firebaseConfig);
 
 export const auth = getAuth();
 export const db = getFirestore();
-export const githubProvider = new GithubAuthProvider();
-
-export async function getDocument(coll: string, id: string) {
-  const snap = await getDoc(doc(db, coll, id));
-  if (snap.exists()) return snap.data();
-  else return Promise.reject(Error(`No such document: ${coll}.${id}`));
-}
