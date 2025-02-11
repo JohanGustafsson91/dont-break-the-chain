@@ -1,4 +1,5 @@
-export interface Activity {
+export interface Habit {
+  id: string;
   name: string;
   description: string;
   streak: DayInStreak[];

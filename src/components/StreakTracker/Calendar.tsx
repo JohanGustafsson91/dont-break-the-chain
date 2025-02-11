@@ -1,5 +1,5 @@
 import "./Calendar.css";
-import type { DayInStreak } from "../../shared/Activity";
+import type { DayInStreak } from "../../shared/Habit";
 import {
   createDate,
   getMonthName,
@@ -29,6 +29,7 @@ export const Calendar = ({
         date,
         name: getWeekDayName(date),
         status: dayInStreak?.status ?? "NOT_SPECIFIED",
+        notes: dayInStreak?.notes ?? "",
       } as const;
     },
   );
@@ -92,14 +93,13 @@ export const Calendar = ({
           {week.map((day) => {
             return typeof day !== "number" ? (
               <div
-                className={`calendar-day ${isSameDay(day.date, currentDate) ? "calendar-day_active" : ""}`}
+                className={`calendar-day ${classNameByStatus[day.status]} ${isSameDay(day.date, currentDate) ? "calendar-day_active" : ""}`}
                 key={day.date.toLocaleDateString()}
-                style={styleByStatus[day.status]}
                 onClick={() => {
                   isBeforeOrSameDay(day.date) && onSelectDate(day.date);
                 }}
               >
-                {day.number}
+                {day.number} {day.notes ? "*" : ""}
               </div>
             ) : (
               <div className="calendar-day" key={day} />
@@ -111,16 +111,10 @@ export const Calendar = ({
   );
 };
 
-const styleByStatus = {
-  GOOD: {
-    backgroundColor: "green",
-  },
-  BAD: {
-    backgroundColor: "red",
-  },
-  NOT_SPECIFIED: {
-    backgroundColor: "inherit",
-  },
+const classNameByStatus = {
+  GOOD: "calendar-day_success",
+  BAD: "calendar-day_error",
+  NOT_SPECIFIED: "",
 };
 
 const dayNamesInWeek = [

@@ -1,4 +1,4 @@
-import type { Meta, StoryObj } from "@storybook/react";
+import type { Meta } from "@storybook/react";
 
 import { Calendar } from "./Calendar";
 import { mockData } from "../StreakTracker/StreakTracker.mockData";
@@ -15,6 +15,3 @@ const meta = {
 } satisfies Meta<typeof Calendar>;
 
 export default meta;
-type Story = StoryObj<typeof meta>;
-
-export const Primary: Story = {};

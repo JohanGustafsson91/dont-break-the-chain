@@ -1,7 +1,6 @@
 import type { Meta, StoryObj } from "@storybook/react";
 
 import { StreakTracker } from "./StreakTracker";
-import type { DayInStreak } from "../../shared/Activity";
 
 const meta = {
   title: "StreakTracker",

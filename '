@@ -1,0 +1,266 @@
+import { useEffect, useState } from "react";
+import type { Habit, DayInStreak } from "../../shared/Habit";
+import { Calendar } from "./Calendar";
+import { createDate, getMonthName, isSameDay } from "../../utils/date";
+import { doc, getDoc, updateDoc } from "firebase/firestore";
+import { db } from "../../firebase";
+import { useParams } from "react-router-dom";
+import { EditableTextField } from "./EditableTextField";
+
+export const StreakTracker = () => {
+  const { id } = useParams();
+  const [habit, setHabit] = useState<Habit>();
+  const [activeDate, setActiveDate] = useState(createDate(new Date()));
+  console.log({ habit });
+  useEffect(() => {
+    const fetchHabit = async (id: string) => {
+      const data = await getHabitById(id);
+      setHabit(data);
+    };
+
+    id && fetchHabit(id);
+  }, [id]);
+
+  const { longestStreak, currentStreak } = {
+    longestStreak: { streak: 0 },
+    currentStreak: { streak: 0 },
+  };
+
+  function handleSetActiveDate(date: Date) {
+    setActiveDate(date);
+  }
+
+  async function onUpdateHabit(id: Habit["id"], data: Partial<Habit>) {
+    try {
+      await updateHabit(id, data);
+    } catch (error) {
+      console.info("Could not update habit");
+    }
+  }
+
+  async function handleChangeStatusForDate({
+    date,
+    status,
+  }: {
+    date: Date;
+    status: Status;
+  }) {
+    if (!habit) {
+      return;
+    }
+
+    const actionMap = {
+      remove: (streak: Habit["streak"]) =>
+        streak.filter((s) => !isSameDay(s.date, date)),
+      add: (streak: Habit["streak"]) => [
+        ...streak,
+        {
+          date,
+          status,
+          notes: "",
+        },
+      ],
+      update: (streak: Habit["streak"]) =>
+        streak.map((s) => (isSameDay(s.date, date) ? { ...s, status } : s)),
+    };
+
+    const doAction =
+      status === "NOT_SPECIFIED"
+        ? "remove"
+        : habit.streak.find((s) => isSameDay(s.date, date))
+          ? "update"
+          : "add";
+
+    const streak = actionMap[doAction](habit.streak) as DayInStreak[];
+    const previousStreak = habit.streak;
+    try {
+      setHabit((prev) => (prev ? ({ ...prev, streak } as Habit) : prev));
+      await updateHabit(habit.id, { streak });
+    } catch (error) {
+      console.log("Error update streak");
+      setHabit((prev) =>
+        prev ? ({ ...prev, streak: previousStreak } as Habit) : prev,
+      );
+    }
+  }
+
+  if (!habit) {
+    return null;
+  }
+
+  const currentStreakDay = habit?.streak?.find((s) =>
+    isSameDay(s.date, activeDate),
+  );
+
+  return (
+    <div className="page">
+      <EditableTextField
+        value={habit.name}
+        type="text"
+        onUpdate={(name) => onUpdateHabit(habit.id, { name })}
+        allowEmpty={false}
+      />
+      <EditableTextField
+        value={habit.description}
+        type="textarea"
+        onUpdate={(description) => onUpdateHabit(habit.id, { description })}
+      />
+      <p>{habit.description}</p>
+
+      <div style={{ marginBottom: 24 }}>
+        {/* <div>Longest streak: {longestStreak.streak} days</div> */}
+        {/* <div>Current streak: {currentStreak.streak} days</div> */}
+        <div>
+          Good: {habit.streak.filter((s) => s.status === "GOOD").length} days
+        </div>
+        <div>
+          Bad: {habit.streak.filter((s) => s.status === "BAD").length} days
+        </div>
+        <div>Rate: {getRate(habit.streak)}%</div>
+      </div>
+
+      <div>
+        <p>
+          {activeDate.getDate()} {getMonthName(activeDate)}
+        </p>
+        <div>
+          {["GOOD", "BAD", "NOT_SPECIFIED"].map((status) => (
+            <label key={status} style={{ marginRight: "10px" }}>
+              <input
+                type="radio"
+                name="status"
+                value={status}
+                checked={Boolean(
+                  currentStreakDay?.status ?? "NOT_SPECIFIED" === status,
+                )}
+                onChange={(e) =>
+                  handleChangeStatusForDate({
+                    date: activeDate,
+                    status: e.target.value as Status,
+                  })
+                }
+              />
+              {status}
+            </label>
+          ))}
+          {["GOOD", "BAD"].includes(currentStreakDay?.status ?? "") ? (
+            <EditableTextField
+              type="textarea"
+              value={currentStreakDay?.notes}
+            />
+          ) : null}
+        </div>
+      </div>
+
+      <Calendar
+        onChangeDate={handleSetActiveDate}
+        onSelectDate={handleSetActiveDate}
+        streak={habit.streak}
+        currentDate={activeDate}
+      />
+    </div>
+  );
+};
+
+function findStreaks(dates: DayInStreak[]): {
+  longestStreak: { from: Date; to: Date; streak: number };
+  currentStreak: { from: Date; to: Date; streak: number };
+} {
+  if (dates.length === 0)
+    return {
+      longestStreak: { from: new Date(), to: new Date(), streak: 0 },
+      currentStreak: { from: new Date(), to: new Date(), streak: 0 },
+    };
+
+  const goodDates = dates
+    .filter((day) => day.status === "GOOD")
+    .map((day) => createDate(day.date));
+
+  if (goodDates.length === 0)
+    return {
+      longestStreak: { from: new Date(), to: new Date(), streak: 0 },
+      currentStreak: { from: new Date(), to: new Date(), streak: 0 },
+    };
+
+  const streaks = goodDates
+    .sort((a, b) => a.getTime() - b.getTime())
+    .reduce(
+      (acc, curr, i, arr) => {
+        const streakStart =
+          i === 0 || !isNextDay(arr[i - 1], curr)
+            ? curr
+            : acc[acc.length - 1].from;
+        const streakEnd = curr;
+
+        if (i === 0 || !isNextDay(arr[i - 1], curr)) {
+          acc.push({ from: streakStart, to: streakEnd, streak: 1 });
+        } else {
+          acc[acc.length - 1].to = streakEnd;
+          acc[acc.length - 1].streak += 1;
+        }
+        return acc;
+      },
+      [] as { from: Date; to: Date; streak: number }[],
+    );
+
+  const longestStreak = streaks.reduce(
+    (max, streak) => (streak.streak > max.streak ? streak : max),
+    streaks[0],
+  );
+
+  const currentStreak = streaks[streaks.length - 1];
+
+  return {
+    longestStreak,
+    currentStreak,
+  };
+}
+
+function isNextDay(prev: Date, current: Date): boolean {
+  return (
+    Date.UTC(
+      current.getUTCFullYear(),
+      current.getUTCMonth(),
+      current.getUTCDate(),
+    ) -
+      Date.UTC(prev.getUTCFullYear(), prev.getUTCMonth(), prev.getUTCDate()) ===
+    86400000
+  ); // 1 day in ms
+}
+
+function getRate(streak: DayInStreak[]) {
+  const goodDays = streak.filter((s) => s.status === "GOOD").length;
+  const badDays = streak.filter((s) => s.status === "BAD").length;
+  const total = goodDays + badDays;
+
+  return total === 0 ? "0.0" : ((goodDays / total) * 100).toFixed(1);
+}
+
+type Status = DayInStreak["status"] | "NOT_SPECIFIED";
+
+export const getHabitById = async (
+  habitId: string,
+): Promise<Habit | undefined> => {
+  const habitRef = doc(db, "habits", habitId);
+  const snapshot = await getDoc(habitRef);
+
+  if (!snapshot.exists()) {
+    return undefined;
+  }
+
+  const data = snapshot.data();
+
+  return {
+    id: snapshot.id,
+    ...data,
+    streak: data.streak.map((s) => ({
+      ...s,
+      date: createDate(new Date(s.date.seconds * 1000)),
+    })),
+  } as Habit;
+};
+
+const updateHabit = async (habitId: string, data: Partial<Habit>) => {
+  const habitRef = doc(db, "habits", habitId);
+  await updateDoc(habitRef, data);
+};

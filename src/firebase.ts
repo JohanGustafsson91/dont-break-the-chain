@@ -1,6 +1,6 @@
 import { initializeApp } from "firebase/app";
 import { doc, getDoc, getFirestore } from "firebase/firestore";
-import { getAuth } from "firebase/auth";
+import { getAuth, GithubAuthProvider } from "firebase/auth";
 
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_API_KEY,
@@ -12,10 +12,11 @@ const firebaseConfig = {
   measurementId: import.meta.env.VITE_MEASUREMENT_ID,
 };
 
-initializeApp(firebaseConfig);
+export const app = initializeApp(firebaseConfig);
 
 export const auth = getAuth();
 export const db = getFirestore();
+export const githubProvider = new GithubAuthProvider();
 
 export async function getDocument(coll: string, id: string) {
   const snap = await getDoc(doc(db, coll, id));

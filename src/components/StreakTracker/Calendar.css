@@ -15,6 +15,14 @@
   aspect-ratio: 1 / 1;
 }
 
+.calendar-day_success {
+  background-color: var(--success-color);
+}
+
+.calendar-day_error {
+  background-color: var(--error-color);
+}
+
 .calendar-day_week-name {
   color: gray;
 }
