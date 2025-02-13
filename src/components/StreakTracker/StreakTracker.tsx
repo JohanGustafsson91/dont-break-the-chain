@@ -97,8 +97,10 @@ export const StreakTracker = () => {
 
   async function onDelete(id: Habit["id"]) {
     try {
-      await deleteHabit(id);
-      navigate("/");
+      if (window.confirm("Are you sure you want to proceed?")) {
+        await deleteHabit(id);
+        navigate("/");
+      }
     } catch (error) {
       console.log("Could not delete habit...", error);
     }
