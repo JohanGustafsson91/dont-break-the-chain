@@ -5,6 +5,7 @@ import {
   getMonthName,
   getWeekDayName,
   isBeforeOrSameDay,
+  isNextMonthDisabled,
   isSameDay,
 } from "../../utils/date";
 
@@ -66,6 +67,7 @@ export const Calendar = ({
         </span>
         <button
           type="button"
+          disabled={isNextMonthDisabled(currentDate)}
           onClick={() =>
             onChangeDate(
               createDate({

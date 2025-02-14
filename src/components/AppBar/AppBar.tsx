@@ -3,6 +3,7 @@ import { logout } from "../../services/authService";
 import type { User } from "../../services/firebaseService";
 import { useLocation, useNavigate } from "react-router-dom";
 import { BackArrowIcon } from "./BackArrowIcon";
+import { LogoutIcon } from "./LogoutIcon";
 
 export const AppBar = ({ user }: Props) => {
   const location = useLocation();
@@ -20,9 +21,7 @@ export const AppBar = ({ user }: Props) => {
         <img alt="profile" src={user?.photoURL} className="app-bar_avatar" />
       ) : null}
 
-      <button type="button" onClick={logout}>
-        Logout
-      </button>
+      <LogoutIcon onClick={logout} />
     </div>
   );
 };

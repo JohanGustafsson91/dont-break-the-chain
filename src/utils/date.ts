@@ -71,3 +71,12 @@ export function isYesterday(prev: Date, current = new Date()): boolean {
 
   return currentUTC - prevUTC === ONE_DAY_IN_MS;
 }
+
+export function isNextMonthDisabled(currentDate: Date): boolean {
+  const now = new Date();
+
+  return (
+    currentDate.getFullYear() === now.getFullYear() &&
+    currentDate.getMonth() === now.getMonth()
+  );
+}
