@@ -1,7 +1,11 @@
+import "./Habits.css";
 import { useEffect, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import type { Habit } from "../../shared/Habit";
 import { addHabit, getAllHabits } from "../../services/habitService";
+import { ProgressBar } from "../StreakTracker/ProgressBar";
+import { StreakStat } from "../StreakTracker/StreakStat";
+import { findStreaks } from "../StreakTracker/StreakTracker";
 
 export const Habits = () => {
   const [habits, setHabits] = useState<Habit[]>([]);
@@ -24,14 +28,48 @@ export const Habits = () => {
     }
   }
 
+  function navigateToDetailView(id: Habit["id"]) {
+    return () => navigate(`/habits/${id}`);
+  }
+
   return (
     <div className="page">
       <h1>Habits</h1>
-      {habits.map(({ id, name }) => (
-        <p key={id}>
-          <Link to={`/habits/${id}`}>{name}</Link>
-        </p>
-      ))}
+      {habits.map(({ id, name, streak }) => {
+        const { longestStreak, currentStreak } = findStreaks(streak ?? []);
+
+        return (
+          <div
+            className="habit-item"
+            key={id}
+            onClick={navigateToDetailView(id)}
+          >
+            <span className="habit-item_title">{name}</span>
+            <div className="habit-item_row">
+              <ProgressBar
+                goodDays={streak.filter((s) => s.status === "GOOD").length}
+                badDays={streak.filter((s) => s.status === "BAD").length}
+              />
+            </div>
+            <div className="habit-item_row">
+              <StreakStat
+                icon="🔥"
+                label="Longest"
+                value={longestStreak.streak}
+                unit={longestStreak.streak === 1 ? "day" : "days"}
+                compact
+              />
+              <StreakStat
+                icon="🔄"
+                label="Current"
+                value={currentStreak.streak}
+                unit={currentStreak.streak === 1 ? "day" : "days"}
+                compact
+              />
+            </div>
+          </div>
+        );
+      })}
       <button type="button" onClick={onCreateHabit}>
         Create habit
       </button>

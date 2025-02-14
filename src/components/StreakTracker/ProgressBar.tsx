@@ -16,11 +16,13 @@ export const ProgressBar: React.FC<ProgressBarProps> = ({
 
   return (
     <div className="progress-bar-container">
-      <div className="progress-bar">
-        <div className="good" style={{ width: `${goodPercentage}%` }}></div>
-        <div className="bad" style={{ width: `${badPercentage}%` }}></div>
-        <span className="progress-label">{goodPercentage.toFixed(1)}%</span>
-      </div>
+      {isNaN(goodPercentage) ? null : (
+        <div className="progress-bar">
+          <div className="good" style={{ width: `${goodPercentage}%` }}></div>
+          <div className="bad" style={{ width: `${badPercentage}%` }}></div>
+          <span className="progress-label">{goodPercentage.toFixed(1)}%</span>
+        </div>
+      )}
       <div className="legend">
         <span className="good">✅ Good: {goodDays} days</span>
         <span className="bad">❌ Bad: {badDays} days</span>

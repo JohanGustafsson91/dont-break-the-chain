@@ -5,12 +5,13 @@ export const StreakStat: React.FC<StreakStatProps> = ({
   label,
   value,
   unit,
+  compact = false,
 }) => {
   return (
-    <div className="streak">
+    <div className={compact ? "" : "streak"}>
       <span>
         <span className="icon">{icon}</span>
-        <strong>{label}</strong>
+        {!compact && <strong>{label}</strong>}
       </span>
       <span>
         {value} {unit}
@@ -24,4 +25,5 @@ interface StreakStatProps {
   label: string;
   value: number | string;
   unit: string;
+  compact?: boolean;
 }

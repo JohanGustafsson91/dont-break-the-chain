@@ -221,7 +221,8 @@ const textByStatus = {
   BAD: "❌",
   NOT_SPECIFIED: "⏳",
 };
-function findStreaks(dates: DayInStreak[]): {
+
+export function findStreaks(dates: DayInStreak[]): {
   longestStreak: { from: Date; to: Date; streak: number };
   currentStreak: { from: Date; to: Date; streak: number };
 } {
@@ -298,14 +299,6 @@ function findStreaks(dates: DayInStreak[]): {
       streak: currentStreak.length,
     },
   };
-}
-
-function getRate(streak: DayInStreak[]) {
-  const goodDays = streak.filter((s) => s.status === "GOOD").length;
-  const badDays = streak.filter((s) => s.status === "BAD").length;
-  const total = goodDays + badDays;
-
-  return total === 0 ? "0.0" : ((goodDays / total) * 100).toFixed(1);
 }
 
 type Status = DayInStreak["status"] | "NOT_SPECIFIED";

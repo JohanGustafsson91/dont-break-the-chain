@@ -58,14 +58,12 @@ it("should render habits", async () => {
   expect(await screen.findByText(/Eat and be healthy/i)).toBeInTheDocument();
   expect(await screen.findByText(/Good: 5 days/i)).toBeInTheDocument();
   expect(await screen.findByText(/Bad: 1 days/i)).toBeInTheDocument();
-  expect(await screen.findByText(/Rate: 83.3%/i)).toBeInTheDocument();
+  expect(await screen.findByText(/83.3%/i)).toBeInTheDocument();
   expect(await screen.findByText(/10 February/i)).toBeInTheDocument();
-  expect(
-    await screen.findByText(/Longest streak: 3 days/i),
-  ).toBeInTheDocument();
-  expect(
-    await screen.findByText(/Current streak: 2 days/i),
-  ).toBeInTheDocument();
+  expect(await screen.findByText(/Longest/i)).toBeInTheDocument();
+  expect(await screen.findByText(/3 days/i)).toBeInTheDocument();
+  expect(await screen.findByText(/Current/i)).toBeInTheDocument();
+  expect(await screen.findByText(/2 days/i)).toBeInTheDocument();
 });
 
 const habitData = () => ({
