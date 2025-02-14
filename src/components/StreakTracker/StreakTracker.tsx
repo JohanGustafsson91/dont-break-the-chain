@@ -209,7 +209,11 @@ export const StreakTracker = () => {
         currentDate={activeDate}
       />
 
-      <button type="button" onClick={() => habit && onDelete(habit?.id)}>
+      <button
+        type="button"
+        className="error"
+        onClick={() => habit && onDelete(habit?.id)}
+      >
         Delete habit
       </button>
     </div>

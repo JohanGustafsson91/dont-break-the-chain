@@ -21,7 +21,9 @@ export const AppBar = ({ user }: Props) => {
         <img alt="profile" src={user?.photoURL} className="app-bar_avatar" />
       ) : null}
 
-      <LogoutIcon onClick={logout} />
+      <button type="button" className="icon-button">
+        <LogoutIcon onClick={logout} />
+      </button>
     </div>
   );
 };

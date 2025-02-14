@@ -61,7 +61,6 @@ button:hover {
   background-color: var(--secondary-color);
 }
 
-/* Primär och sekundär knapp */
 button.success {
   background-color: var(--success-color);
   color: var(--bg-color);
@@ -72,7 +71,29 @@ button.error {
   color: var(--bg-color);
 }
 
-/* Input och Textarea */
-input[type="text"],
-textarea {
+.icon-button {
+  background: none;
+  border: none;
+  padding: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: opacity 0.2s ease-in-out;
+}
+
+.icon-button:hover {
+  transform: scale(1.1);
+  background-color: inherit;
+}
+
+.icon-button svg {
+  width: 24px;
+  height: 24px;
+  stroke: var(--primary-color);
+  transition: stroke 0.2s ease-in-out;
+}
+
+.icon-button:hover svg {
+  stroke: var(--secondary-color);
 }

@@ -8,6 +8,8 @@ import {
   isNextMonthDisabled,
   isSameDay,
 } from "../../utils/date";
+import { NextMonthIcon } from "./NextMonthIcon";
+import { PrevMonthIcon } from "./PrevMonthIcon";
 
 export const Calendar = ({
   currentDate = new Date(),
@@ -49,6 +51,7 @@ export const Calendar = ({
     <div className="calendar">
       <div className="calendar-menu">
         <button
+          className="icon-button"
           type="button"
           onClick={() =>
             onChangeDate(
@@ -60,12 +63,13 @@ export const Calendar = ({
             )
           }
         >
-          Prev
+          <PrevMonthIcon />
         </button>
         <span>
           {getMonthName(currentDate)} {currentDate.getFullYear()}
         </span>
         <button
+          className="icon-button"
           type="button"
           disabled={isNextMonthDisabled(currentDate)}
           onClick={() =>
@@ -78,7 +82,7 @@ export const Calendar = ({
             )
           }
         >
-          Next
+          <NextMonthIcon />
         </button>
       </div>
 
