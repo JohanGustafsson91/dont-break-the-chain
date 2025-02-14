@@ -4,3 +4,9 @@
   justify-content: space-between;
   margin-bottom: 0.5rem;
 }
+
+.stats-row {
+  margin-bottom: 1rem;
+  display: flex;
+  justify-content: space-between;
+}

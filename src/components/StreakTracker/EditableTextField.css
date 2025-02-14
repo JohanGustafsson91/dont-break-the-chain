@@ -25,6 +25,9 @@ input[type="text"] {
 textarea {
   min-height: 50px;
   max-height: 50px;
+  font-weight: 0.2;
+  font-size: 0.9rem;
+  font-style: italic;
 }
 
 label {

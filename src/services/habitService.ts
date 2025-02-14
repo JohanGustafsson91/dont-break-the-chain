@@ -5,10 +5,12 @@ import {
   doc,
   getDoc,
   getDocs,
+  query,
   updateDoc,
+  where,
 } from "firebase/firestore";
 import type { DayInStreak, Habit } from "../shared/Habit";
-import { db } from "./firebaseService";
+import { auth, db } from "./firebaseService";
 import { createDate } from "../utils/date";
 import type firebase from "firebase/compat/app";
 
@@ -50,7 +52,12 @@ export const deleteHabit = async (habitId: string) => {
 
 export const getAllHabits = async (): Promise<Habit[]> => {
   const habitsRef = collection(db, "habits");
-  const snapshot = await getDocs(habitsRef);
+  const q = query(
+    habitsRef,
+    where("author", "==", auth.currentUser?.uid ?? ""),
+  );
+  const snapshot = await getDocs(q);
+
   return snapshot.docs.map((doc) => ({
     id: doc.id,
     ...doc.data(),
@@ -64,6 +71,7 @@ export const addHabit = async () => {
     description: "",
     streak: [],
     createdAt: Date.now(),
+    author: auth.currentUser?.uid ?? "",
   });
 
   return docRef.id;

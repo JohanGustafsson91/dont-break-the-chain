@@ -42,3 +42,32 @@ export function isBeforeOrSameDay(date: Date, today = new Date()): boolean {
 
   return dateCopy <= todayCopy;
 }
+
+const ONE_DAY_IN_MS = 86400000;
+
+export function isNextDay(prev: Date, current: Date): boolean {
+  return (
+    Date.UTC(
+      current.getUTCFullYear(),
+      current.getUTCMonth(),
+      current.getUTCDate(),
+    ) -
+      Date.UTC(prev.getUTCFullYear(), prev.getUTCMonth(), prev.getUTCDate()) ===
+    ONE_DAY_IN_MS
+  );
+}
+
+export function isYesterday(prev: Date, current = new Date()): boolean {
+  const prevUTC = Date.UTC(
+    prev.getUTCFullYear(),
+    prev.getUTCMonth(),
+    prev.getUTCDate(),
+  );
+  const currentUTC = Date.UTC(
+    current.getUTCFullYear(),
+    current.getUTCMonth(),
+    current.getUTCDate(),
+  );
+
+  return currentUTC - prevUTC === ONE_DAY_IN_MS;
+}
