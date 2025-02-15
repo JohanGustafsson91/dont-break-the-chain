@@ -1,12 +1,16 @@
 .edit-day-pane {
   display: flex;
-  align-items: center;
   justify-content: space-between;
+  flex-direction: column;
   margin-bottom: 0.5rem;
 }
 
+.edit-day-pane h3 {
+  margin-top: 0;
+}
+
 .stats-row {
-  margin-bottom: 1rem;
+  margin-bottom: 2rem;
   display: flex;
   justify-content: space-between;
 }

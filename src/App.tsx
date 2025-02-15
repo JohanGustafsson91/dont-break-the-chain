@@ -1,9 +1,9 @@
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import "./App.css";
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { StreakTracker } from "./components/StreakTracker/StreakTracker";
 import { ProtectedRoute } from "./components/ProtectedRoute/ProtectedRoute";
 import { Login } from "./components/Login/Login";
-import { Habits } from "./components/Habits/Habits";
+import { HabitsList } from "./components/Habits/HabitsList";
 
 export const App = () => (
   <Router>
@@ -12,7 +12,7 @@ export const App = () => (
         path="/"
         element={
           <ProtectedRoute>
-            <Habits />
+            <HabitsList />
           </ProtectedRoute>
         }
       />

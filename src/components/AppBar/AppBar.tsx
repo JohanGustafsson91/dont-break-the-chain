@@ -14,11 +14,11 @@ export const AppBar = ({ user }: Props) => {
   }
 
   return (
-    <div className="app-bar">
+    <div className="AppBar">
       {location.pathname !== "/" ? <BackArrowIcon onClick={goBack} /> : null}
 
       {user.photoURL && location.pathname === "/" ? (
-        <img alt="profile" src={user?.photoURL} className="app-bar_avatar" />
+        <img alt="profile" src={user.photoURL} className="AppBar_avatar" />
       ) : null}
 
       <button type="button" className="icon-button">

@@ -1,4 +1,4 @@
-import "./Habits.css";
+import "./HabitsList.css";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import type { Habit } from "../../shared/Habit";
@@ -6,17 +6,21 @@ import { addHabit, getAllHabits } from "../../services/habitService";
 import { ProgressBar } from "../StreakTracker/ProgressBar";
 import { StreakStat } from "../StreakTracker/StreakStat";
 import { findStreaks } from "../../shared/findStreaks";
+import { LOG } from "../../utils/logger";
 
-export const Habits = () => {
+export const HabitsList = () => {
   const [habits, setHabits] = useState<Habit[]>([]);
   const navigate = useNavigate();
 
-  useEffect(() => {
-    const fetchHabits = async () => {
-      const data = await getAllHabits();
-      setHabits(data);
-    };
-    fetchHabits();
+  useEffect(function fetchHabits() {
+    (async () => {
+      try {
+        const data = await getAllHabits();
+        setHabits(data);
+      } catch (error) {
+        LOG.error("Could fetch habits", { error });
+      }
+    })();
   }, []);
 
   async function onCreateHabit() {
@@ -24,7 +28,7 @@ export const Habits = () => {
       const habitId = await addHabit();
       navigate(`/habits/${habitId}`);
     } catch (error) {
-      console.log({ error });
+      LOG.error("Could not create habit", { error });
     }
   }
 
@@ -36,23 +40,22 @@ export const Habits = () => {
     <div className="page">
       <h1>Habits</h1>
       {habits.map(({ id, name, streak }) => {
-        console.log({ streak });
         const { longestStreak, currentStreak } = findStreaks(streak ?? []);
-        console.log({ longestStreak, currentStreak });
+
         return (
           <div
-            className="habit-item"
+            className="HabitsList-item"
             key={id}
             onClick={navigateToDetailView(id)}
           >
-            <span className="habit-item_title">{name}</span>
-            <div className="habit-item_row">
+            <span className="HabitsList-item_title">{name}</span>
+            <div className="HabitsList-item_row">
               <ProgressBar
                 goodDays={streak.filter((s) => s.status === "GOOD").length}
                 badDays={streak.filter((s) => s.status === "BAD").length}
               />
             </div>
-            <div className="habit-item_row">
+            <div className="HabitsList-item_row">
               <StreakStat
                 icon="🔥"
                 label="Longest"
@@ -71,6 +74,7 @@ export const Habits = () => {
           </div>
         );
       })}
+
       <button type="button" onClick={onCreateHabit}>
         Create habit
       </button>

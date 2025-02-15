@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import type { Habit, DayInStreak } from "../../shared/Habit";
 import { Calendar } from "./Calendar";
-import { createDate, getMonthName, isSameDay } from "../../utils/date";
+import { getMonthName, isSameDay } from "../../utils/date";
 import { useNavigate, useParams } from "react-router-dom";
 import { EditableTextField } from "./EditableTextField";
 import "./StreakTracker.css";
@@ -13,12 +13,14 @@ import {
 import { StreakStat } from "./StreakStat";
 import { ProgressBar } from "./ProgressBar";
 import { findStreaks } from "../../shared/findStreaks";
+import { LOG } from "../../utils/logger";
+import { BottomSheet } from "./BottomSheet";
 
 export const StreakTracker = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const [habit, setHabit] = useState<Habit>();
-  const [activeDate, setActiveDate] = useState(createDate(new Date()));
+  const [activeDate, setActiveDate] = useState<Date | undefined>();
 
   useEffect(
     function fetchHabit() {
@@ -42,7 +44,7 @@ export const StreakTracker = () => {
     try {
       await updateHabit(id, data);
     } catch (error) {
-      console.info("Could not update habit");
+      LOG.error("Could not update habit", { error });
     }
   }
 
@@ -90,6 +92,8 @@ export const StreakTracker = () => {
       setHabit((prev) => (prev ? ({ ...prev, streak } as Habit) : prev));
       await updateHabit(habit.id, { streak });
     } catch (error) {
+      LOG.error("Could not update habit", { error });
+
       setHabit((prev) =>
         prev ? ({ ...prev, streak: previousStreak } as Habit) : prev,
       );
@@ -103,7 +107,7 @@ export const StreakTracker = () => {
         navigate("/");
       }
     } catch (error) {
-      console.log("Could not delete habit...", error);
+      LOG.error("Could not delete habit...", { error });
     }
   }
 
@@ -111,8 +115,8 @@ export const StreakTracker = () => {
     return null;
   }
 
-  const currentStreakDay = habit?.streak?.find((s) =>
-    isSameDay(s.date, activeDate),
+  const currentStreakDay = habit?.streak?.find(
+    (s) => activeDate && isSameDay(s.date, activeDate),
   );
 
   return (
@@ -154,55 +158,7 @@ export const StreakTracker = () => {
         />
       </div>
 
-      <div>
-        <div className="edit-day-pane">
-          <p>
-            {activeDate.getDate()} {getMonthName(activeDate)}
-          </p>
-          <div>
-            {["GOOD", "BAD", "NOT_SPECIFIED"].map((status) => (
-              <label key={status}>
-                <input
-                  type="radio"
-                  name="status"
-                  value={status}
-                  checked={Boolean(
-                    (currentStreakDay?.status ?? "NOT_SPECIFIED") === status,
-                  )}
-                  onChange={(e) =>
-                    updateStreak({
-                      date: activeDate,
-                      status: e.target.value as Status,
-                      notes: "",
-                    })
-                  }
-                />
-                {textByStatus[status as Status]}
-              </label>
-            ))}
-          </div>
-        </div>
-
-        <div className="form-element">
-          <EditableTextField
-            key={currentStreakDay?.date?.toISOString()}
-            type="textarea"
-            placeholder="Enter notes"
-            value={currentStreakDay?.notes ?? ""}
-            onUpdate={(notes) =>
-              currentStreakDay && updateStreak({ ...currentStreakDay, notes })
-            }
-            disabled={!currentStreakDay?.status}
-          />
-        </div>
-      </div>
-
-      <Calendar
-        onChangeDate={handleSetActiveDate}
-        onSelectDate={handleSetActiveDate}
-        streak={habit.streak}
-        currentDate={activeDate}
-      />
+      <Calendar onSelectDate={handleSetActiveDate} streak={habit.streak} />
 
       <button
         type="button"
@@ -211,6 +167,53 @@ export const StreakTracker = () => {
       >
         Delete habit
       </button>
+
+      {activeDate ? (
+        <BottomSheet onClose={() => setActiveDate(undefined)}>
+          <div className="edit-day-pane">
+            <h3>
+              {activeDate.getDate()} {getMonthName(activeDate)}
+            </h3>
+            <div className="radio-group form-element">
+              {["GOOD", "BAD", "NOT_SPECIFIED"].map((status) => (
+                <label className="radio-label" key={status}>
+                  <input
+                    type="radio"
+                    name="options"
+                    className="radio-input"
+                    value={status}
+                    checked={Boolean(
+                      (currentStreakDay?.status ?? "NOT_SPECIFIED") === status,
+                    )}
+                    onChange={(e) =>
+                      updateStreak({
+                        date: activeDate,
+                        status: e.target.value as Status,
+                        notes: "",
+                      })
+                    }
+                  />
+                  <span className="radio-custom"></span>
+                  {textByStatus[status as Status]}
+                </label>
+              ))}
+            </div>
+          </div>
+
+          <div className="form-element">
+            <EditableTextField
+              key={currentStreakDay?.date?.toISOString()}
+              type="textarea"
+              placeholder="Enter notes"
+              value={currentStreakDay?.notes ?? ""}
+              onUpdate={(notes) =>
+                currentStreakDay && updateStreak({ ...currentStreakDay, notes })
+              }
+              disabled={!currentStreakDay?.status}
+            />
+          </div>
+        </BottomSheet>
+      ) : null}
     </div>
   );
 };

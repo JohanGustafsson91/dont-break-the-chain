@@ -1,4 +1,4 @@
-.habit-item {
+.HabitsList-item {
   display: flex;
   flex-direction: column;
   padding: 1rem;
@@ -8,15 +8,15 @@
   margin-bottom: 1rem;
 }
 
-.habit-item:hover {
+.HabitsList-item:hover {
   border: 1px solid var(--primary-color);
 }
 
-.habit-item_title {
+.HabitsList-item_title {
   margin-bottom: 1rem;
 }
 
-.habit-item_row {
+.HabitsList-item_row {
   display: flex;
   align-items: center;
   justify-content: space-between;

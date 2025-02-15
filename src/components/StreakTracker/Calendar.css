@@ -13,14 +13,17 @@
   justify-content: center;
   width: calc(100% / 7);
   aspect-ratio: 1 / 1;
+  cursor: pointer;
 }
 
 .calendar-day_success {
   background-color: var(--success-color);
+  border-radius: 50%;
 }
 
 .calendar-day_error {
   background-color: var(--error-color);
+  border-radius: 50%;
 }
 
 .calendar-day_week-name {
@@ -37,4 +40,21 @@
 .calendar-day_active {
   font-weight: bold;
   text-decoration: underline;
+}
+
+@keyframes pulsate {
+  0% {
+    background-color: var(--bg-color); /* Start with the background color */
+  }
+  50% {
+    background-color: rgba(255, 255, 255, 0.3); /* Fade to a lighter color */
+  }
+  100% {
+    background-color: var(--bg-color); /* Back to the original color */
+  }
+}
+
+.calendar-day_pulsate {
+  animation: pulsate 3s infinite ease-in-out;
+  border-radius: 50%;
 }

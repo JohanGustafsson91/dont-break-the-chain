@@ -10,14 +10,11 @@ import {
 } from "../../utils/date";
 import { NextMonthIcon } from "./NextMonthIcon";
 import { PrevMonthIcon } from "./PrevMonthIcon";
+import { useState } from "react";
 
-export const Calendar = ({
-  currentDate = new Date(),
-  streak,
-  onSelectDate,
-  onChangeDate,
-}: Props) => {
-  const [year, month] = [currentDate.getFullYear(), currentDate.getMonth()];
+export const Calendar = ({ streak, onSelectDate }: Props) => {
+  const [activeDate, setActiveDate] = useState(new Date());
+  const [year, month] = [activeDate.getFullYear(), activeDate.getMonth()];
   const numberOfDaysInMonth = new Date(year, month, 0).getDate();
 
   const daysInMonthWithStreakData = Array.from(
@@ -54,10 +51,10 @@ export const Calendar = ({
           className="icon-button"
           type="button"
           onClick={() =>
-            onChangeDate(
+            setActiveDate(
               createDate({
-                year: currentDate.getFullYear(),
-                month: currentDate.getMonth() - 1,
+                year: activeDate.getFullYear(),
+                month: activeDate.getMonth() - 1,
                 day: 1,
               }),
             )
@@ -66,17 +63,17 @@ export const Calendar = ({
           <PrevMonthIcon />
         </button>
         <span>
-          {getMonthName(currentDate)} {currentDate.getFullYear()}
+          {getMonthName(activeDate)} {activeDate.getFullYear()}
         </span>
         <button
           className="icon-button"
           type="button"
-          disabled={isNextMonthDisabled(currentDate)}
+          disabled={isNextMonthDisabled(activeDate)}
           onClick={() =>
-            onChangeDate(
+            setActiveDate(
               createDate({
-                year: currentDate.getFullYear(),
-                month: currentDate.getMonth() + 1,
+                year: activeDate.getFullYear(),
+                month: activeDate.getMonth() + 1,
                 day: 1,
               }),
             )
@@ -99,13 +96,14 @@ export const Calendar = ({
           {week.map((day) => {
             return typeof day !== "number" ? (
               <div
-                className={`calendar-day ${classNameByStatus[day.status]} ${isSameDay(day.date, currentDate) ? "calendar-day_active" : ""}`}
+                className={`calendar-day ${classNameByStatus[day.status]} ${isSameDay(day.date, activeDate) ? "calendar-day_active" : ""} ${isSameDay(day.date, new Date()) && day.status === "NOT_SPECIFIED" ? "calendar-day_pulsate" : ""}`}
                 key={day.date.toLocaleDateString()}
                 onClick={() => {
                   isBeforeOrSameDay(day.date) && onSelectDate(day.date);
                 }}
               >
-                {day.number} {day.notes ? "*" : ""}
+                {day.number}
+                {day.notes ? "*" : ""}
               </div>
             ) : (
               <div className="calendar-day" key={day} />
@@ -141,8 +139,7 @@ function splitIntoChunks<T>(arr: T[], size: number = 7): T[][] {
 }
 
 interface Props {
-  currentDate?: Date;
+  activeDate?: Date;
   streak: DayInStreak[];
   onSelectDate: (date: Date) => void;
-  onChangeDate: (date: Date) => void;
 }
