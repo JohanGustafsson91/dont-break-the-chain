@@ -5,7 +5,7 @@ import type { Habit } from "../../shared/Habit";
 import { addHabit, getAllHabits } from "../../services/habitService";
 import { ProgressBar } from "../StreakTracker/ProgressBar";
 import { StreakStat } from "../StreakTracker/StreakStat";
-import { findStreaks } from "../StreakTracker/StreakTracker";
+import { findStreaks } from "../../shared/findStreaks";
 
 export const Habits = () => {
   const [habits, setHabits] = useState<Habit[]>([]);
@@ -36,8 +36,9 @@ export const Habits = () => {
     <div className="page">
       <h1>Habits</h1>
       {habits.map(({ id, name, streak }) => {
+        console.log({ streak });
         const { longestStreak, currentStreak } = findStreaks(streak ?? []);
-
+        console.log({ longestStreak, currentStreak });
         return (
           <div
             className="habit-item"

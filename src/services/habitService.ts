@@ -6,6 +6,7 @@ import {
   getDoc,
   getDocs,
   query,
+  QueryDocumentSnapshot,
   updateDoc,
   where,
 } from "firebase/firestore";
@@ -24,20 +25,7 @@ export const getHabitById = async (
     return undefined;
   }
 
-  const data = snapshot.data();
-
-  return {
-    id: snapshot.id,
-    ...data,
-    streak: data.streak.map((s: DayInStreak) => ({
-      ...s,
-      date: createDate(
-        new Date(
-          (s.date as unknown as firebase.firestore.Timestamp)?.seconds * 1000,
-        ),
-      ),
-    })),
-  } as Habit;
+  return formatHabbit(snapshot);
 };
 
 export const updateHabit = async (habitId: string, data: Partial<Habit>) => {
@@ -58,10 +46,7 @@ export const getAllHabits = async (): Promise<Habit[]> => {
   );
   const snapshot = await getDocs(q);
 
-  return snapshot.docs.map((doc) => ({
-    id: doc.id,
-    ...doc.data(),
-  })) as unknown as Habit[];
+  return snapshot.docs.map(formatHabbit);
 };
 
 export const addHabit = async () => {
@@ -76,3 +61,20 @@ export const addHabit = async () => {
 
   return docRef.id;
 };
+
+function formatHabbit(doc: QueryDocumentSnapshot) {
+  const data = doc.data();
+
+  return {
+    id: doc.id,
+    ...data,
+    streak: data.streak.map((s: DayInStreak) => ({
+      ...s,
+      date: createDate(
+        new Date(
+          (s.date as unknown as firebase.firestore.Timestamp)?.seconds * 1000,
+        ),
+      ),
+    })),
+  } as Habit;
+}
