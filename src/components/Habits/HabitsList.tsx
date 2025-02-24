@@ -57,17 +57,17 @@ export const HabitsList = () => {
             </div>
             <div className="HabitsList-item_row">
               <StreakStat
-                icon="🔥"
-                label="Longest"
-                value={longestStreak.streak}
-                unit={longestStreak.streak === 1 ? "day" : "days"}
-                compact
-              />
-              <StreakStat
                 icon="🔄"
                 label="Current"
                 value={currentStreak.streak}
                 unit={currentStreak.streak === 1 ? "day" : "days"}
+                compact
+              />
+              <StreakStat
+                icon="🔥"
+                label="Longest"
+                value={longestStreak.streak}
+                unit={longestStreak.streak === 1 ? "day" : "days"}
                 compact
               />
             </div>

@@ -15,12 +15,14 @@ import { ProgressBar } from "./ProgressBar";
 import { findStreaks } from "../../shared/findStreaks";
 import { LOG } from "../../utils/logger";
 import { BottomSheet } from "./BottomSheet";
+import { useAppBarContext } from "../AppBar/AppBar.Context";
 
 export const StreakTracker = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const [habit, setHabit] = useState<Habit>();
   const [activeDate, setActiveDate] = useState<Date | undefined>();
+  const { renderAppBarItems } = useAppBarContext();
 
   useEffect(
     function fetchHabit() {
@@ -32,6 +34,32 @@ export const StreakTracker = () => {
       id && fetchHabit(id);
     },
     [id],
+  );
+
+  useEffect(
+    function renderDeleteOptionInAppBar() {
+      if (!habit?.id) {
+        return;
+      }
+
+      async function onDelete(id: Habit["id"]) {
+        try {
+          if (window.confirm("Are you sure you want to proceed?")) {
+            await deleteHabit(id);
+            navigate("/");
+          }
+        } catch (error) {
+          LOG.error("Could not delete habit...", { error });
+        }
+      }
+
+      renderAppBarItems(
+        <button type="button" onClick={() => onDelete(habit.id)}>
+          Delete
+        </button>,
+      );
+    },
+    [habit?.id, renderAppBarItems, navigate],
   );
 
   const { longestStreak, currentStreak } = findStreaks(habit?.streak ?? []);
@@ -100,17 +128,6 @@ export const StreakTracker = () => {
     }
   }
 
-  async function onDelete(id: Habit["id"]) {
-    try {
-      if (window.confirm("Are you sure you want to proceed?")) {
-        await deleteHabit(id);
-        navigate("/");
-      }
-    } catch (error) {
-      LOG.error("Could not delete habit...", { error });
-    }
-  }
-
   if (!habit) {
     return null;
   }
@@ -118,6 +135,10 @@ export const StreakTracker = () => {
   const currentStreakDay = habit?.streak?.find(
     (s) => activeDate && isSameDay(s.date, activeDate),
   );
+
+  function closeBottomSheet() {
+    setActiveDate(undefined);
+  }
 
   return (
     <div className="page">
@@ -160,16 +181,8 @@ export const StreakTracker = () => {
 
       <Calendar onSelectDate={handleSetActiveDate} streak={habit.streak} />
 
-      <button
-        type="button"
-        className="error"
-        onClick={() => habit && onDelete(habit?.id)}
-      >
-        Delete habit
-      </button>
-
       {activeDate ? (
-        <BottomSheet onClose={() => setActiveDate(undefined)}>
+        <BottomSheet onClose={closeBottomSheet}>
           <div className="edit-day-pane">
             <h3>
               {activeDate.getDate()} {getMonthName(activeDate)}
@@ -185,13 +198,14 @@ export const StreakTracker = () => {
                     checked={Boolean(
                       (currentStreakDay?.status ?? "NOT_SPECIFIED") === status,
                     )}
-                    onChange={(e) =>
+                    onChange={(e) => {
                       updateStreak({
                         date: activeDate,
                         status: e.target.value as Status,
                         notes: "",
-                      })
-                    }
+                      });
+                      closeBottomSheet();
+                    }}
                   />
                   <span className="radio-custom"></span>
                   {textByStatus[status as Status]}
