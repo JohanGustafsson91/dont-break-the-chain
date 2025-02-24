@@ -7,6 +7,7 @@ import { ProgressBar } from "../StreakTracker/ProgressBar";
 import { StreakStat } from "../StreakTracker/StreakStat";
 import { findStreaks } from "../../shared/findStreaks";
 import { LOG } from "../../utils/logger";
+import { isSameDay } from "../../utils/date";
 
 export const HabitsList = () => {
   const [habits, setHabits] = useState<Habit[]>([]);
@@ -41,6 +42,7 @@ export const HabitsList = () => {
       <h1>Habits</h1>
       {habits.map(({ id, name, streak }) => {
         const { longestStreak, currentStreak } = findStreaks(streak ?? []);
+        const isTodaySet = streak.find((s) => isSameDay(s.date, new Date()));
 
         return (
           <div
@@ -70,6 +72,12 @@ export const HabitsList = () => {
                 unit={longestStreak.streak === 1 ? "day" : "days"}
                 compact
               />
+            </div>
+
+            <div className="HabitsList-item_row">
+              {!isTodaySet ? (
+                <i>Keep the streak alive! Mark your progress for today.</i>
+              ) : null}
             </div>
           </div>
         );
