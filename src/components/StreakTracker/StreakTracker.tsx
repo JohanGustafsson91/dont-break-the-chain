@@ -31,7 +31,7 @@ export const StreakTracker = () => {
         setHabit(data);
       };
 
-      id && fetchHabit(id);
+      if (id) fetchHabit(id);
     },
     [id],
   );

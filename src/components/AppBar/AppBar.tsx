@@ -14,7 +14,7 @@ export const AppBar = ({ user }: Props) => {
 
   useEffect(
     function clearChildrenComponentsOnNewLocation() {
-      location.pathname && renderAppBarItems(null);
+      renderAppBarItems(null);
     },
     [location.pathname, renderAppBarItems],
   );

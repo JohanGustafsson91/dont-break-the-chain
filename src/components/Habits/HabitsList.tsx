@@ -8,12 +8,34 @@ import { StreakStat } from "../StreakTracker/StreakStat";
 import { findStreaks } from "../../shared/findStreaks";
 import { LOG } from "../../utils/logger";
 import { isSameDay } from "../../utils/date";
+import { useAppBarContext } from "../AppBar/AppBar.Context";
 
 export const HabitsList = () => {
   const [habits, setHabits] = useState<Habit[]>([]);
   const navigate = useNavigate();
+  const { renderAppBarItems } = useAppBarContext();
 
-  useEffect(function fetchHabits() {
+  useEffect(
+    function renderCreateHabitOptionInAppBar() {
+      async function onCreateHabit() {
+        try {
+          const habitId = await addHabit();
+          navigate(`/habits/${habitId}`);
+        } catch (error) {
+          LOG.error("Could not create habit", { error });
+        }
+      }
+
+      renderAppBarItems(
+        <button type="button" onClick={onCreateHabit}>
+          Create habit
+        </button>,
+      );
+    },
+    [navigate, renderAppBarItems],
+  );
+
+  useEffect(function fetchAndSetHabits() {
     (async () => {
       try {
         const data = await getAllHabits();
@@ -24,15 +46,6 @@ export const HabitsList = () => {
     })();
   }, []);
 
-  async function onCreateHabit() {
-    try {
-      const habitId = await addHabit();
-      navigate(`/habits/${habitId}`);
-    } catch (error) {
-      LOG.error("Could not create habit", { error });
-    }
-  }
-
   function navigateToDetailView(id: Habit["id"]) {
     return () => navigate(`/habits/${id}`);
   }
@@ -40,9 +53,12 @@ export const HabitsList = () => {
   return (
     <div className="page">
       <h1>Habits</h1>
+
       {habits.map(({ id, name, streak }) => {
         const { longestStreak, currentStreak } = findStreaks(streak ?? []);
-        const isTodaySet = streak.find((s) => isSameDay(s.date, new Date()));
+        const hasNotMadeSelectionForToday = !streak.find((s) =>
+          isSameDay(s.date, new Date()),
+        );
 
         return (
           <div
@@ -75,17 +91,25 @@ export const HabitsList = () => {
             </div>
 
             <div className="HabitsList-item_row">
-              {!isTodaySet ? (
-                <i>Keep the streak alive! Mark your progress for today.</i>
+              {hasNotMadeSelectionForToday ? (
+                <i>{messages[getRandomInteger(messages.length)]}</i>
               ) : null}
             </div>
           </div>
         );
       })}
-
-      <button type="button" onClick={onCreateHabit}>
-        Create habit
-      </button>
     </div>
   );
+};
+
+const messages = [
+  "Keep the streak alive! Mark your progress for today.",
+  "No entry for today yet—tap to stay on track!",
+  "Your chain is waiting! Log today’s progress.",
+  "Don’t let the streak end—check in for today!",
+  "One small action today keeps the momentum going!",
+];
+
+const getRandomInteger = (max: number) => {
+  return Math.floor(Math.random() * max);
 };
