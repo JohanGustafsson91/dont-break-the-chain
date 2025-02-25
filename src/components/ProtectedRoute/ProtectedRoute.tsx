@@ -3,14 +3,9 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../services/authService";
 import { AppBar } from "../AppBar/AppBar";
 
-interface ProtectedRouteProps {
-  redirectPath?: string;
-  fromLogin?: true;
-}
-
 export const ProtectedRoute = ({
   redirectPath = "/login",
-  fromLogin,
+  isLoginPage,
   children,
 }: PropsWithChildren<ProtectedRouteProps>) => {
   const navigate = useNavigate();
@@ -24,12 +19,14 @@ export const ProtectedRoute = ({
     );
   }
 
-  if (!user && !fromLogin) {
+  const isUnauthenticatedOnProtectedPage = !user && !isLoginPage;
+  if (isUnauthenticatedOnProtectedPage) {
     navigate(redirectPath);
     return null;
   }
 
-  if (user && fromLogin) {
+  const isAuthenticatedOnLoginPage = user && isLoginPage;
+  if (isAuthenticatedOnLoginPage) {
     navigate("/");
     return null;
   }
@@ -41,5 +38,10 @@ export const ProtectedRoute = ({
     </div>
   );
 };
+
+interface ProtectedRouteProps {
+  redirectPath?: string;
+  isLoginPage?: true;
+}
 
 export default ProtectedRoute;

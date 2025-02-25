@@ -29,7 +29,7 @@ export const App = () => (
         <Route
           path="/login"
           element={
-            <ProtectedRoute fromLogin>
+            <ProtectedRoute isLoginPage>
               <Login />
             </ProtectedRoute>
           }

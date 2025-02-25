@@ -1,4 +1,5 @@
 import { login } from "../../services/authService";
+import { LOG } from "../../utils/logger";
 import "./Login.css";
 
 export const Login = () => {
@@ -6,7 +7,7 @@ export const Login = () => {
     try {
       await login({ provider: "github" });
     } catch (error) {
-      console.error("GitHub Login Failed:", error);
+      LOG.error("GitHub Login Failed:", { error });
     }
   };
 
@@ -16,7 +17,7 @@ export const Login = () => {
       <h2 className="Login-subtitle">
         Build habits, stay consistent, and keep your streak alive!
       </h2>
-      <button type="button" onClick={handleLogin}>
+      <button className="Login-button" type="button" onClick={handleLogin}>
         Login with GitHub
       </button>
     </div>
