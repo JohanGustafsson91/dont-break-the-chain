@@ -15,7 +15,7 @@ import { useState } from "react";
 export const Calendar = ({ streak, onSelectDate }: Props) => {
   const [activeDate, setActiveDate] = useState(new Date());
   const [year, month] = [activeDate.getFullYear(), activeDate.getMonth()];
-  const numberOfDaysInMonth = new Date(year, month, 0).getDate();
+  const numberOfDaysInMonth = new Date(year, month + 1, 0).getDate();
 
   const daysInMonthWithStreakData = Array.from(
     { length: numberOfDaysInMonth },
