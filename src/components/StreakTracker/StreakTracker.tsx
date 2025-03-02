@@ -179,7 +179,11 @@ export const StreakTracker = () => {
         />
       </div>
 
-      <Calendar onSelectDate={handleSetActiveDate} streak={habit.streak} />
+      <Calendar
+        onSelectDate={handleSetActiveDate}
+        streak={habit.streak}
+        onUpdateDate={updateStreak}
+      />
 
       {activeDate ? (
         <BottomSheet onClose={closeBottomSheet}>

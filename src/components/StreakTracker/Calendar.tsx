@@ -12,7 +12,17 @@ import { NextMonthIcon } from "./NextMonthIcon";
 import { PrevMonthIcon } from "./PrevMonthIcon";
 import { useState } from "react";
 
-export const Calendar = ({ streak, onSelectDate }: Props) => {
+interface Props {
+  streak: DayInStreak[];
+  onSelectDate: (date: Date) => void;
+  onUpdateDate: (args: {
+    date: Date;
+    status: DayInStreak["status"] | "NOT_SPECIFIED";
+    notes: DayInStreak["notes"];
+  }) => void;
+}
+
+export const Calendar = ({ streak, onSelectDate, onUpdateDate }: Props) => {
   const [activeDate, setActiveDate] = useState(new Date());
   const [year, month] = [activeDate.getFullYear(), activeDate.getMonth()];
   const numberOfDaysInMonth = new Date(year, month + 1, 0).getDate();
@@ -22,14 +32,15 @@ export const Calendar = ({ streak, onSelectDate }: Props) => {
     (_, number) => {
       const day = number + 1;
       const date = createDate({ year, month, day });
-      const dayInStreak = streak.find((s) => isSameDay(s.date, date));
+      const { status = "NOT_SPECIFIED", notes = "" } =
+        streak.find((s) => isSameDay(s.date, date)) || {};
 
       return {
         number: day,
         date,
         name: getWeekDayName(date),
-        status: dayInStreak?.status ?? "NOT_SPECIFIED",
-        notes: dayInStreak?.notes ?? "",
+        status,
+        notes,
       } as const;
     },
   );
@@ -45,8 +56,8 @@ export const Calendar = ({ streak, onSelectDate }: Props) => {
   ]);
 
   return (
-    <div className="calendar">
-      <div className="calendar-menu">
+    <div className="Calendar">
+      <div className="Calendar-menu">
         <button
           className="icon-button"
           type="button"
@@ -85,7 +96,7 @@ export const Calendar = ({ streak, onSelectDate }: Props) => {
 
       <div>
         {dayNamesInWeek.map((name) => (
-          <div className="calendar-day calendar-day_week-name" key={name}>
+          <div className="Calendar-day Calendar-day_week-name" key={name}>
             {name.charAt(0)}
           </div>
         ))}
@@ -94,19 +105,37 @@ export const Calendar = ({ streak, onSelectDate }: Props) => {
       {weeksWithDays.map((week, weekNumber) => (
         <div key={`week-${weekNumber}`}>
           {week.map((day) => {
-            return typeof day !== "number" ? (
+            if (typeof day === "number") {
+              return <div className="Calendar-day" key={day} />;
+            }
+
+            const activeClassName = isSameDay(day.date, activeDate)
+              ? "Calendar-day_active"
+              : "";
+
+            const hintAboutTodayClassName =
+              isSameDay(day.date, new Date()) && day.status === "NOT_SPECIFIED"
+                ? "Calendar-day_pulsate"
+                : "";
+
+            return (
               <div
-                className={`calendar-day ${classNameByStatus[day.status]} ${isSameDay(day.date, activeDate) ? "calendar-day_active" : ""} ${isSameDay(day.date, new Date()) && day.status === "NOT_SPECIFIED" ? "calendar-day_pulsate" : ""}`}
+                className={`Calendar-day ${classNameByStatus[day.status]} ${activeClassName} ${hintAboutTodayClassName}`}
                 key={day.date.toLocaleDateString()}
-                onClick={() => {
-                  isBeforeOrSameDay(day.date) && onSelectDate(day.date);
-                }}
+                {...(isBeforeOrSameDay(day.date) &&
+                  clickHelpers({
+                    onLongClick: () => onSelectDate(day.date),
+                    onClick: () =>
+                      onUpdateDate({
+                        date: day.date,
+                        status: newStatusMap[day.status],
+                        notes: day.notes,
+                      }),
+                  }))}
               >
                 {day.number}
                 {day.notes ? "*" : ""}
               </div>
-            ) : (
-              <div className="calendar-day" key={day} />
             );
           })}
         </div>
@@ -116,10 +145,16 @@ export const Calendar = ({ streak, onSelectDate }: Props) => {
 };
 
 const classNameByStatus = {
-  GOOD: "calendar-day_success",
-  BAD: "calendar-day_error",
+  GOOD: "Calendar-day_success",
+  BAD: "Calendar-day_error",
   NOT_SPECIFIED: "",
 };
+
+const newStatusMap = {
+  NOT_SPECIFIED: "GOOD",
+  GOOD: "BAD",
+  BAD: "NOT_SPECIFIED",
+} as const;
 
 const dayNamesInWeek = [
   "Monday",
@@ -138,8 +173,38 @@ function splitIntoChunks<T>(arr: T[], size: number = 7): T[][] {
   );
 }
 
-interface Props {
-  activeDate?: Date;
-  streak: DayInStreak[];
-  onSelectDate: (date: Date) => void;
+interface ClickHelpers {
+  onLongClick?: () => void;
+  onClick?: () => void;
+}
+
+function clickHelpers({ onClick, onLongClick }: ClickHelpers) {
+  const ref: { current: NodeJS.Timeout | undefined } = { current: undefined };
+
+  function handleDown(e: React.PointerEvent<HTMLElement>) {
+    if (e.type === "mousedown") e.preventDefault();
+
+    ref.current = setTimeout(() => {
+      onLongClick?.();
+      clearTimer();
+    }, 500);
+  }
+
+  function clearTimer() {
+    clearTimeout(ref.current);
+    ref.current = undefined;
+  }
+
+  function handleUp() {
+    if (ref.current) {
+      onClick?.();
+    }
+
+    clearTimer();
+  }
+
+  return {
+    onPointerDown: handleDown,
+    onPointerUp: handleUp,
+  };
 }
