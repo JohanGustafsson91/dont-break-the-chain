@@ -122,6 +122,7 @@ export const Calendar = ({ streak, onSelectDate, onUpdateDate }: Props) => {
               <div
                 className={`Calendar-day ${classNameByStatus[day.status]} ${activeClassName} ${hintAboutTodayClassName}`}
                 key={day.date.toLocaleDateString()}
+                title={`Day ${day.number}`}
                 {...(isBeforeOrSameDay(day.date) &&
                   clickHelpers({
                     onLongClick: () => onSelectDate(day.date),

@@ -25,7 +25,7 @@ export const StreakTracker = () => {
   const { renderAppBarItems } = useAppBarContext();
 
   useEffect(
-    function fetchHabit() {
+    function fetchAndSetHabit() {
       const fetchHabit = async (id: string) => {
         const data = await getHabitById(id);
         setHabit(data);
@@ -62,7 +62,9 @@ export const StreakTracker = () => {
     [habit?.id, renderAppBarItems, navigate],
   );
 
-  const { longestStreak, currentStreak } = findStreaks(habit?.streak ?? []);
+  if (!habit) {
+    return null;
+  }
 
   function handleSetActiveDate(date: Date) {
     setActiveDate(date);
@@ -76,7 +78,7 @@ export const StreakTracker = () => {
     }
   }
 
-  async function updateStreak({
+  async function handleUpdateStreak({
     date,
     status,
     notes = "",
@@ -94,11 +96,7 @@ export const StreakTracker = () => {
         streak.filter((s) => !isSameDay(s.date, date)),
       add: (streak: Habit["streak"]) => [
         ...streak,
-        {
-          date,
-          status,
-          notes: "",
-        },
+        { date, status, notes: "" },
       ],
       update: (streak: Habit["streak"]) =>
         streak.map((s) =>
@@ -128,17 +126,15 @@ export const StreakTracker = () => {
     }
   }
 
-  if (!habit) {
-    return null;
-  }
-
-  const currentStreakDay = habit?.streak?.find(
-    (s) => activeDate && isSameDay(s.date, activeDate),
-  );
-
   function closeBottomSheet() {
     setActiveDate(undefined);
   }
+
+  const currentStreakDay = habit.streak.find(
+    (s) => activeDate && isSameDay(s.date, activeDate),
+  );
+
+  const { longestStreak, currentStreak } = findStreaks(habit.streak);
 
   return (
     <div className="page">
@@ -182,7 +178,7 @@ export const StreakTracker = () => {
       <Calendar
         onSelectDate={handleSetActiveDate}
         streak={habit.streak}
-        onUpdateDate={updateStreak}
+        onUpdateDate={handleUpdateStreak}
       />
 
       {activeDate ? (
@@ -203,7 +199,7 @@ export const StreakTracker = () => {
                       (currentStreakDay?.status ?? "NOT_SPECIFIED") === status,
                     )}
                     onChange={(e) => {
-                      updateStreak({
+                      handleUpdateStreak({
                         date: activeDate,
                         status: e.target.value as Status,
                         notes: "",
@@ -225,7 +221,8 @@ export const StreakTracker = () => {
               placeholder="Enter notes"
               value={currentStreakDay?.notes ?? ""}
               onUpdate={(notes) =>
-                currentStreakDay && updateStreak({ ...currentStreakDay, notes })
+                currentStreakDay &&
+                handleUpdateStreak({ ...currentStreakDay, notes })
               }
               disabled={!currentStreakDay?.status}
             />
