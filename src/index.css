@@ -130,9 +130,9 @@ button.error {
     background-color 0.2s ease-in-out;
 }
 
-.radio-input:checked + .radio-custom {
-  border-color: var(--primary-color);
-  background-color: var(--primary-color);
+.radio-input_checked + .radio-custom {
+  border-color: var(--primary-color) !important;
+  background-color: var(--primary-color) !important;
 }
 
 .radio-custom::before {
@@ -145,7 +145,7 @@ button.error {
   transition: opacity 0.2s ease-in-out;
 }
 
-.radio-input:checked + .radio-custom::before {
+.radio-input_checked + .radio-custom::before {
   opacity: 1;
 }
 

@@ -13,6 +13,7 @@
 }
 
 .HabitsList-item_title {
+  font-weight: bold;
   margin-bottom: 1rem;
 }
 
@@ -21,4 +22,8 @@
   align-items: center;
   justify-content: space-between;
   margin-bottom: 0.5rem;
+}
+
+.HabitsList-status-text {
+  font-size: 0.8rem;
 }

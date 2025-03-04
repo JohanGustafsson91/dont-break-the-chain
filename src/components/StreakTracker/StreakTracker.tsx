@@ -16,6 +16,8 @@ import { findStreaks } from "../../shared/findStreaks";
 import { LOG } from "../../utils/logger";
 import { BottomSheet } from "./BottomSheet";
 import { useAppBarContext } from "../AppBar/AppBar.Context";
+import { textByStatus } from "../../shared/textByStatus";
+import { Status } from "../../shared/Status";
 
 export const StreakTracker = () => {
   const { id } = useParams();
@@ -208,7 +210,7 @@ export const StreakTracker = () => {
                     }}
                   />
                   <span className="radio-custom"></span>
-                  {textByStatus[status as Status]}
+                  {textByStatus[status]}
                 </label>
               ))}
             </div>
@@ -232,11 +234,3 @@ export const StreakTracker = () => {
     </div>
   );
 };
-
-const textByStatus = {
-  GOOD: "✅",
-  BAD: "❌",
-  NOT_SPECIFIED: "⏳",
-};
-
-type Status = DayInStreak["status"] | "NOT_SPECIFIED";

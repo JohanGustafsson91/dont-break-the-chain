@@ -7,8 +7,10 @@ import { ProgressBar } from "../StreakTracker/ProgressBar";
 import { StreakStat } from "../StreakTracker/StreakStat";
 import { findStreaks } from "../../shared/findStreaks";
 import { LOG } from "../../utils/logger";
-import { isSameDay } from "../../utils/date";
+import { createDate, isSameDay } from "../../utils/date";
 import { useAppBarContext } from "../AppBar/AppBar.Context";
+import { textByStatus } from "../../shared/textByStatus";
+import { Status } from "../../shared/Status";
 
 export const HabitsList = () => {
   const [habits, setHabits] = useState<Habit[]>([]);
@@ -56,9 +58,11 @@ export const HabitsList = () => {
 
       {habits.map(({ id, name, streak }) => {
         const { longestStreak, currentStreak } = findStreaks(streak ?? []);
-        const hasNotMadeSelectionForToday = !streak.find((s) =>
-          isSameDay(s.date, new Date()),
+        const currentStreakDay = streak.find((s) =>
+          isSameDay(s.date, createDate(new Date())),
         );
+        const hasNotMadeSelectionForToday = !currentStreakDay;
+        console.log({ streakForToday: currentStreakDay });
 
         return (
           <div
@@ -91,9 +95,43 @@ export const HabitsList = () => {
             </div>
 
             <div className="HabitsList-item_row">
-              {hasNotMadeSelectionForToday ? (
-                <i>{messages[getRandomInteger(messages.length)]}</i>
-              ) : null}
+              <span className="HabitsList-status-text">
+                {hasNotMadeSelectionForToday ? (
+                  <i>{messages[getRandomInteger(messages.length)]}</i>
+                ) : null}
+              </span>
+            </div>
+
+            <div className="radio-group form-element">
+              {["GOOD", "BAD", "NOT_SPECIFIED"].map((status) => {
+                const checked = Boolean(
+                  (currentStreakDay?.status ?? "NOT_SPECIFIED") === status,
+                );
+
+                console.log({
+                  name,
+                  checked,
+                  status,
+                  currentStreakDay: currentStreakDay?.date,
+                });
+                return (
+                  <label className="radio-label" key={status}>
+                    <input
+                      type="radio"
+                      name="options"
+                      className={`radio-input ${checked ? "radio-input_checked" : ""}`}
+                      value={status}
+                      disabled
+                      checked={Boolean(
+                        (currentStreakDay?.status ?? "NOT_SPECIFIED") ===
+                          status,
+                      )}
+                    />
+                    <span className="radio-custom"></span>
+                    {textByStatus[status]}
+                  </label>
+                );
+              })}
             </div>
           </div>
         );
