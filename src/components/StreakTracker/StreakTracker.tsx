@@ -16,8 +16,11 @@ import { findStreaks } from "../../shared/findStreaks";
 import { LOG } from "../../utils/logger";
 import { BottomSheet } from "./BottomSheet";
 import { useAppBarContext } from "../AppBar/AppBar.Context";
-import { textByStatus } from "../../shared/textByStatus";
-import { Status } from "../../shared/Status";
+import { StreakStatusRadioGroup } from "../StreakStatusRadioGroup/StreakStatusRadioGroup";
+import {
+  getUpdatedStreak,
+  GetUpdatedStreak,
+} from "../../shared/getUpdatedStreak";
 
 export const StreakTracker = () => {
   const { id } = useParams();
@@ -80,51 +83,23 @@ export const StreakTracker = () => {
     }
   }
 
-  async function handleUpdateStreak({
-    date,
-    status,
-    notes = "",
-  }: {
-    date: DayInStreak["date"];
-    status: Status;
-    notes?: DayInStreak["notes"];
-  }) {
+  async function handleUpdateStreak(args: GetUpdatedStreak) {
+    const { habit } = args;
+
     if (!habit) {
       return;
     }
 
-    const actionMap = {
-      remove: (streak: Habit["streak"]) =>
-        streak.filter((s) => !isSameDay(s.date, date)),
-      add: (streak: Habit["streak"]) => [
-        ...streak,
-        { date, status, notes: "" },
-      ],
-      update: (streak: Habit["streak"]) =>
-        streak.map((s) =>
-          isSameDay(s.date, date) ? { ...s, status, notes } : s,
-        ),
-    };
-
-    const doAction =
-      status === "NOT_SPECIFIED"
-        ? "remove"
-        : habit.streak.find((s) => isSameDay(s.date, date))
-          ? "update"
-          : "add";
-
-    const streak = actionMap[doAction](habit.streak) as DayInStreak[];
-    const previousStreak = habit.streak;
+    const { streak, previousStreak } = getUpdatedStreak(args);
+    const updateState = (streak: DayInStreak[]) => (prev: Habit | undefined) =>
+      prev ? ({ ...prev, streak } as Habit) : prev;
 
     try {
-      setHabit((prev) => (prev ? ({ ...prev, streak } as Habit) : prev));
+      setHabit(updateState(streak));
       await updateHabit(habit.id, { streak });
     } catch (error) {
       LOG.error("Could not update habit", { error });
-
-      setHabit((prev) =>
-        prev ? ({ ...prev, streak: previousStreak } as Habit) : prev,
-      );
+      setHabit(updateState(previousStreak));
     }
   }
 
@@ -180,7 +155,7 @@ export const StreakTracker = () => {
       <Calendar
         onSelectDate={handleSetActiveDate}
         streak={habit.streak}
-        onUpdateDate={handleUpdateStreak}
+        onUpdateDate={(args) => handleUpdateStreak({ ...args, habit })}
       />
 
       {activeDate ? (
@@ -190,29 +165,18 @@ export const StreakTracker = () => {
               {activeDate.getDate()} {getMonthName(activeDate)}
             </h3>
             <div className="radio-group form-element">
-              {["GOOD", "BAD", "NOT_SPECIFIED"].map((status) => (
-                <label className="radio-label" key={status}>
-                  <input
-                    type="radio"
-                    name="options"
-                    className="radio-input"
-                    value={status}
-                    checked={Boolean(
-                      (currentStreakDay?.status ?? "NOT_SPECIFIED") === status,
-                    )}
-                    onChange={(e) => {
-                      handleUpdateStreak({
-                        date: activeDate,
-                        status: e.target.value as Status,
-                        notes: "",
-                      });
-                      closeBottomSheet();
-                    }}
-                  />
-                  <span className="radio-custom"></span>
-                  {textByStatus[status]}
-                </label>
-              ))}
+              <StreakStatusRadioGroup
+                currentStreakDay={
+                  currentStreakDay ?? {
+                    status: "NOT_SPECIFIED",
+                    date: activeDate,
+                    notes: "",
+                  }
+                }
+                onUpdateStatus={(values) =>
+                  handleUpdateStreak({ ...values, habit })
+                }
+              />
             </div>
           </div>
 
@@ -224,7 +188,7 @@ export const StreakTracker = () => {
               value={currentStreakDay?.notes ?? ""}
               onUpdate={(notes) =>
                 currentStreakDay &&
-                handleUpdateStreak({ ...currentStreakDay, notes })
+                handleUpdateStreak({ ...currentStreakDay, notes, habit })
               }
               disabled={!currentStreakDay?.status}
             />

@@ -1,16 +1,23 @@
 import "./HabitsList.css";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import type { Habit } from "../../shared/Habit";
-import { addHabit, getAllHabits } from "../../services/habitService";
+import type { DayInStreak, Habit } from "../../shared/Habit";
+import {
+  addHabit,
+  getAllHabits,
+  updateHabit,
+} from "../../services/habitService";
 import { ProgressBar } from "../StreakTracker/ProgressBar";
 import { StreakStat } from "../StreakTracker/StreakStat";
 import { findStreaks } from "../../shared/findStreaks";
 import { LOG } from "../../utils/logger";
 import { createDate, isSameDay } from "../../utils/date";
 import { useAppBarContext } from "../AppBar/AppBar.Context";
-import { textByStatus } from "../../shared/textByStatus";
-import { Status } from "../../shared/Status";
+import { StreakStatusRadioGroup } from "../StreakStatusRadioGroup/StreakStatusRadioGroup";
+import {
+  getUpdatedStreak,
+  GetUpdatedStreak,
+} from "../../shared/getUpdatedStreak";
 
 export const HabitsList = () => {
   const [habits, setHabits] = useState<Habit[]>([]);
@@ -49,26 +56,54 @@ export const HabitsList = () => {
   }, []);
 
   function navigateToDetailView(id: Habit["id"]) {
-    return () => navigate(`/habits/${id}`);
+    return navigate(`/habits/${id}`);
+  }
+
+  async function handleUpdateStreak(args: GetUpdatedStreak) {
+    const { habit } = args;
+
+    if (!habit) {
+      return;
+    }
+
+    const { streak, previousStreak } = getUpdatedStreak(args);
+
+    const updateStateFn = (streak: DayInStreak[]) => (prev: Habit[]) =>
+      prev.map((prevHabit) =>
+        prevHabit.id === habit.id ? { ...prevHabit, streak } : prevHabit,
+      );
+
+    try {
+      setHabits(updateStateFn(streak));
+      await updateHabit(habit.id, { streak });
+    } catch (error) {
+      LOG.error("Could not update habit", { error });
+      setHabits(updateStateFn(previousStreak));
+    }
   }
 
   return (
     <div className="page">
       <h1>Habits</h1>
 
-      {habits.map(({ id, name, streak }) => {
+      {habits.map((habit) => {
+        const { id, name, streak } = habit;
         const { longestStreak, currentStreak } = findStreaks(streak ?? []);
-        const currentStreakDay = streak.find((s) =>
-          isSameDay(s.date, createDate(new Date())),
-        );
+        const today = createDate(new Date());
+        const currentStreakDay = streak.find((s) => isSameDay(s.date, today));
         const hasNotMadeSelectionForToday = !currentStreakDay;
-        console.log({ streakForToday: currentStreakDay });
 
         return (
           <div
             className="HabitsList-item"
             key={id}
-            onClick={navigateToDetailView(id)}
+            onClick={(e) => {
+              if ((e.target as HTMLElement).matches(".radio-custom")) {
+                return;
+              }
+
+              navigateToDetailView(id);
+            }}
           >
             <span className="HabitsList-item_title">{name}</span>
             <div className="HabitsList-item_row">
@@ -98,40 +133,25 @@ export const HabitsList = () => {
               <span className="HabitsList-status-text">
                 {hasNotMadeSelectionForToday ? (
                   <i>{messages[getRandomInteger(messages.length)]}</i>
-                ) : null}
+                ) : (
+                  <i>&nbsp;</i>
+                )}
               </span>
             </div>
 
             <div className="radio-group form-element">
-              {["GOOD", "BAD", "NOT_SPECIFIED"].map((status) => {
-                const checked = Boolean(
-                  (currentStreakDay?.status ?? "NOT_SPECIFIED") === status,
-                );
-
-                console.log({
-                  name,
-                  checked,
-                  status,
-                  currentStreakDay: currentStreakDay?.date,
-                });
-                return (
-                  <label className="radio-label" key={status}>
-                    <input
-                      type="radio"
-                      name="options"
-                      className={`radio-input ${checked ? "radio-input_checked" : ""}`}
-                      value={status}
-                      disabled
-                      checked={Boolean(
-                        (currentStreakDay?.status ?? "NOT_SPECIFIED") ===
-                          status,
-                      )}
-                    />
-                    <span className="radio-custom"></span>
-                    {textByStatus[status]}
-                  </label>
-                );
-              })}
+              <StreakStatusRadioGroup
+                currentStreakDay={
+                  currentStreakDay ?? {
+                    status: "NOT_SPECIFIED",
+                    date: today,
+                    notes: "",
+                  }
+                }
+                onUpdateStatus={(values) =>
+                  handleUpdateStreak({ ...values, habit })
+                }
+              />
             </div>
           </div>
         );
