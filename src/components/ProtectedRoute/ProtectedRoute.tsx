@@ -13,8 +13,8 @@ export const ProtectedRoute = ({
 
   if (status === "PENDING") {
     return (
-      <div className="page">
-        <p>Loading...</p>
+      <div className="page page-center">
+        <p className="loading">Loading</p>
       </div>
     );
   }
