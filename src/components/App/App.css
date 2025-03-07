@@ -3,12 +3,17 @@
   max-width: 1280px;
   padding: 0 1rem;
   width: 100%;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
 }
 
 .page {
   height: calc(100vh - 100px);
   display: flex;
   flex-direction: column;
+  flex: 1;
+  overflow: scroll;
 }
 
 .page-center {

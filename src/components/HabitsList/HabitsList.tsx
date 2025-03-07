@@ -20,7 +20,7 @@ import {
 } from "../../shared/getUpdatedStreak";
 
 export const HabitsList = () => {
-  const [habits, setHabits] = useState<Habit[]>([]);
+  const [habits, setHabits] = useState<State>({ data: [], status: "pending" });
   const navigate = useNavigate();
   const { renderAppBarItems } = useAppBarContext();
 
@@ -48,9 +48,10 @@ export const HabitsList = () => {
     (async () => {
       try {
         const data = await getAllHabits();
-        setHabits(data);
+        setHabits({ data, status: "resolved" });
       } catch (error) {
         LOG.error("Could fetch habits", { error });
+        setHabits({ data: [], status: "rejected" });
       }
     })();
   }, []);
@@ -68,17 +69,20 @@ export const HabitsList = () => {
 
     const { streak, previousStreak } = getUpdatedStreak(args);
 
-    const updateStateFn = (streak: DayInStreak[]) => (prev: Habit[]) =>
-      prev.map((prevHabit) =>
+    const updateStateFn = (streak: DayInStreak[]) => (prev: State) =>
+      prev.data.map((prevHabit) =>
         prevHabit.id === habit.id ? { ...prevHabit, streak } : prevHabit,
       );
 
     try {
-      setHabits(updateStateFn(streak));
+      setHabits((prev) => ({ ...prev, data: updateStateFn(streak)(prev) }));
       await updateHabit(habit.id, { streak });
     } catch (error) {
       LOG.error("Could not update habit", { error });
-      setHabits(updateStateFn(previousStreak));
+      setHabits((prev) => ({
+        ...prev,
+        data: updateStateFn(previousStreak)(prev),
+      }));
     }
   }
 
@@ -86,88 +90,130 @@ export const HabitsList = () => {
     <div className="page">
       <h1>Habits</h1>
 
-      {habits.map((habit) => {
-        const { id, name, streak } = habit;
-        const { longestStreak, currentStreak } = findStreaks(streak ?? []);
-        const today = createDate(new Date());
-        const currentStreakDay = streak.find((s) => isSameDay(s.date, today));
-        const hasNotMadeSelectionForToday = !currentStreakDay;
+      {
+        {
+          resolved: habits.data.map((habit) => {
+            const { id, name, streak } = habit;
+            const { longestStreak, currentStreak } = findStreaks(streak ?? []);
+            const today = createDate(new Date());
+            const currentStreakDay = streak.find((s) =>
+              isSameDay(s.date, today),
+            );
+            const currentDayStatus =
+              currentStreakDay?.status ?? "NOT_SPECIFIED";
 
-        return (
-          <div
-            className="HabitsList-item"
-            key={id}
-            onClick={(e) => {
-              if ((e.target as HTMLElement).matches(".radio-custom")) {
-                return;
-              }
-
-              navigateToDetailView(id);
-            }}
-          >
-            <span className="HabitsList-item_title">{name}</span>
-            <div className="HabitsList-item_row">
-              <ProgressBar
-                goodDays={streak.filter((s) => s.status === "GOOD").length}
-                badDays={streak.filter((s) => s.status === "BAD").length}
-              />
-            </div>
-            <div className="HabitsList-item_row">
-              <StreakStat
-                icon="🔄"
-                label="Current"
-                value={currentStreak.streak}
-                unit={currentStreak.streak === 1 ? "day" : "days"}
-                compact
-              />
-              <StreakStat
-                icon="🔥"
-                label="Longest"
-                value={longestStreak.streak}
-                unit={longestStreak.streak === 1 ? "day" : "days"}
-                compact
-              />
-            </div>
-
-            <div className="HabitsList-item_row">
-              <span className="HabitsList-status-text">
-                {hasNotMadeSelectionForToday ? (
-                  <i>{messages[getRandomInteger(messages.length)]}</i>
-                ) : (
-                  <i>&nbsp;</i>
-                )}
-              </span>
-            </div>
-
-            <div className="radio-group form-element">
-              <StreakStatusRadioGroup
-                currentStreakDay={
-                  currentStreakDay ?? {
-                    status: "NOT_SPECIFIED",
-                    date: today,
-                    notes: "",
+            return (
+              <div
+                className="HabitsList-item"
+                key={id}
+                onClick={(e) => {
+                  if ((e.target as HTMLElement).matches(".radio-custom")) {
+                    return;
                   }
-                }
-                onUpdateStatus={(values) =>
-                  handleUpdateStreak({ ...values, habit })
-                }
-              />
-            </div>
-          </div>
-        );
-      })}
+
+                  navigateToDetailView(id);
+                }}
+              >
+                <span className="HabitsList-item_title">{name}</span>
+                <div className="HabitsList-item_row">
+                  <ProgressBar
+                    goodDays={streak.filter((s) => s.status === "GOOD").length}
+                    badDays={streak.filter((s) => s.status === "BAD").length}
+                  />
+                </div>
+                <div className="HabitsList-item_row">
+                  <StreakStat
+                    icon="🔄"
+                    label="Current"
+                    value={currentStreak.streak}
+                    unit={currentStreak.streak === 1 ? "day" : "days"}
+                    compact
+                  />
+                  <StreakStat
+                    icon="🔥"
+                    label="Longest"
+                    value={longestStreak.streak}
+                    unit={longestStreak.streak === 1 ? "day" : "days"}
+                    compact
+                  />
+                </div>
+
+                <div className="HabitsList-item_row">
+                  <span className="HabitsList-status-text">
+                    <i>
+                      {
+                        messages[currentDayStatus][
+                          getRandomInteger(messages[currentDayStatus].length)
+                        ]
+                      }
+                    </i>
+                  </span>
+                </div>
+
+                <div className="radio-group form-element">
+                  <StreakStatusRadioGroup
+                    currentStreakDay={
+                      currentStreakDay ?? {
+                        status: "NOT_SPECIFIED",
+                        date: today,
+                        notes: "",
+                      }
+                    }
+                    onUpdateStatus={(values) =>
+                      handleUpdateStreak({ ...values, habit })
+                    }
+                  />
+                </div>
+              </div>
+            );
+          }),
+          pending: <p className="loading">Fetching habits</p>,
+          rejected: <p>Could not fetch habits...</p>,
+        }[habits.status]
+      }
     </div>
   );
 };
 
-const messages = [
-  "Keep the streak alive! Mark your progress for today.",
-  "No entry for today yet—tap to stay on track!",
-  "Your chain is waiting! Log today’s progress.",
-  "Don’t let the streak end—check in for today!",
-  "One small action today keeps the momentum going!",
-];
+const messages = {
+  GOOD: [
+    "Great job! Every step counts toward your goal! 🚀",
+    "Consistency is key—you're building something amazing! 🔥",
+    "Another day, another win! Keep up the great work! 💪",
+    "You're on fire! 🔥 Keep the streak alive!",
+    "Your future self is thanking you right now. Keep going! 😊",
+    "Success is built one day at a time. You're doing awesome! 🎯",
+    "Momentum is on your side! Keep pushing forward! 🚀",
+    "That’s another brick in the wall of success! Keep stacking! 🏗️",
+    "Discipline > Motivation. And you’ve got it! 💯",
+    "You're proving to yourself that you can do this! Keep it up! 💪",
+  ],
+  BAD: [
+    "It's okay—every day is a new chance to start fresh. 🌱",
+    "Missed a day? No worries! Just get back on track tomorrow. 😊",
+    "One setback doesn’t define your progress. Keep going! 💪",
+    "Chains get stronger by overcoming breaks—don’t give up! 🔗",
+    "Progress isn’t perfect. What matters is showing up again! 🔄",
+    "Failure is just a stepping stone to success. Keep at it! 🚀",
+    "Even a broken chain can be mended. Restart today! 🔄",
+    "Missed a day? Learn from it and push forward! 💡",
+    "Momentum can be rebuilt. Just take the next step! 👣",
+    "You haven’t failed until you stop trying. Get back up! 💪",
+  ],
+  NOT_SPECIFIED: [
+    "Keep the streak alive! Mark your progress for today.",
+    "No entry for today yet—tap to stay on track!",
+    "Your chain is waiting! Log today’s progress.",
+    "Don’t let the streak end—check in for today!",
+    "One small action today keeps the momentum going!",
+  ],
+};
 
 const getRandomInteger = (max: number) => {
   return Math.floor(Math.random() * max);
 };
+
+interface State {
+  data: Habit[];
+  status: "pending" | "resolved" | "rejected";
+}

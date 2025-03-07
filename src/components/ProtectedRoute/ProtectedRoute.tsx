@@ -32,10 +32,10 @@ export const ProtectedRoute = ({
   }
 
   return (
-    <div>
+    <>
       {user ? <AppBar user={user} /> : null}
       {children}
-    </div>
+    </>
   );
 };
 

@@ -46,7 +46,7 @@ it("should render habits", async () => {
 
   render(<App />);
 
-  expect(screen.getByText(/Loading.../i)).toBeInTheDocument();
+  expect(screen.getByText(/Loading/i)).toBeInTheDocument();
 
   render(<App />);
 
