@@ -90,6 +90,11 @@ export const StreakTracker = () => {
       return;
     }
 
+    const notesWillBeLost = args.notes && args.status === "NOT_SPECIFIED";
+    if (notesWillBeLost && !window.confirm("You notes will be lost")) {
+      return;
+    }
+
     const { streak, previousStreak } = getUpdatedStreak(args);
     const updateState = (streak: DayInStreak[]) => (prev: Habit | undefined) =>
       prev ? ({ ...prev, streak } as Habit) : prev;
