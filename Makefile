@@ -14,8 +14,8 @@ lint:
 preview:
 	$(NPM) run preview
 
-deploy:
-	$(NPM) run test && $(NPM) run build && firebase deploy
+deploy: lint test build
+	firebase deploy
 
 test:
 	$(NPM) run test
