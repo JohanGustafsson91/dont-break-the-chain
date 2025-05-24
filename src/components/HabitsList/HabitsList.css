@@ -8,6 +8,14 @@
   margin-bottom: 1rem;
 }
 
+.HabitsList-item_success {
+  border: 1px solid var(--success-color);
+}
+
+.HabitsList-item_bad {
+  border: 1px solid var(--error-color);
+}
+
 .HabitsList-item:hover {
   border: 1px solid var(--primary-color);
 }

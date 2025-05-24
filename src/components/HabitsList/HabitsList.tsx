@@ -104,7 +104,7 @@ export const HabitsList = () => {
 
             return (
               <div
-                className="HabitsList-item"
+                className={`HabitsList-item ${itemClassByDayStatus[currentDayStatus]}`}
                 key={id}
                 onClick={(e) => {
                   if ((e.target as HTMLElement).matches(".radio-custom")) {
@@ -207,6 +207,12 @@ const messages = {
     "Don’t let the streak end—check in for today!",
     "One small action today keeps the momentum going!",
   ],
+};
+
+const itemClassByDayStatus = {
+  GOOD: "HabitsList-item_success",
+  BAD: "HabitsList-item_bad",
+  NOT_SPECIFIED: "",
 };
 
 const getRandomInteger = (max: number) => {
