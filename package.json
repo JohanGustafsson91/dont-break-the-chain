@@ -9,7 +9,7 @@
     "build:production": "tsc -b && vite build --mode production",
     "lint": "eslint .",
     "preview": "vite preview",
-    "deploy": "npm run test && npm run build && firebase deploy",
+    "deploy": "pnpm test && pnpm build && firebase deploy",
     "deploy:prod": "firebase deploy -P production",
     "test": "vitest --run",
     "test:watch": "vitest"

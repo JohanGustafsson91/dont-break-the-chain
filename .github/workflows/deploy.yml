@@ -28,20 +28,41 @@ jobs:
         with:
           fetch-depth: 0 # Get full history for better caching
 
+      # Setup pnpm package manager
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: latest
+
       # Setup Node.js
       - name: Setup Node.js
         uses: actions/setup-node@v6
         with:
           node-version: "20"
-          cache: "npm"
+          cache: "pnpm"
+
+      # Get pnpm store directory for caching
+      - name: Get pnpm store directory
+        shell: bash
+        run: |
+          echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
+
+      # Cache pnpm dependencies
+      - name: Cache pnpm dependencies
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
 
       # Install dependencies
       - name: Install dependencies
-        run: npm ci
+        run: pnpm install --frozen-lockfile
 
       # Run tests
       - name: Run tests
-        run: npm test
+        run: pnpm test
 
       # Install Firebase CLI
       - name: Install Firebase CLI
@@ -55,7 +76,7 @@ jobs:
 
       # Build for production
       - name: Build for production
-        run: npm run build:production
+        run: pnpm build:production
         env:
           # Firebase production environment variables (from production environment secrets)
           VITE_API_KEY: ${{ secrets.VITE_API_KEY }}
@@ -69,7 +90,7 @@ jobs:
 
       # Deploy to Firebase production
       - name: Deploy to Firebase Production
-        run: npm run deploy:prod
+        run: pnpm deploy:prod
 
       # Create deployment status
       - name: Create deployment status
