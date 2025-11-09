@@ -1,0 +1,313 @@
+# Project Instructions
+
+## Development Workflow
+
+### Running the Project
+
+```bash
+# Development server
+npm run dev
+
+# Run tests
+npm test
+
+# Run tests in watch mode
+npm run test:watch
+
+# Build for production
+npm run build
+
+# Preview production build
+npm run preview
+
+# Lint code
+npm run lint
+
+# Deploy to Firebase (runs tests + build + deploy)
+npm run deploy
+```
+
+### Making Changes
+
+1. **Always run tests first**: `npm test` to ensure baseline
+2. **Make your changes**: Follow KISS, YAGNI, FP principles
+3. **Write/update tests**: Cover new behavior with integration tests
+4. **Run tests again**: Ensure everything still passes
+5. **Lint**: `npm run lint` to catch issues
+6. **Build**: `npm run build` to verify TypeScript compilation
+
+### Committing Code
+
+- Follow existing commit message style (see git history)
+- Ensure all tests pass before committing
+- No console.logs in production code (use logger utility)
+- Keep commits focused on a single logical change
+
+## Code Style
+
+### TypeScript
+
+- Use strict mode (already configured)
+- Prefer `interface` over `type` for object shapes
+- Export types that are used across files
+- No `any` - use `unknown` if type is truly unknown
+
+### React
+
+- Functional components only (no class components)
+- Use hooks for state and side effects
+- Custom hooks for reusable logic (prefix with `use`)
+- Keep components under ~200 lines
+
+### CSS
+
+- Co-locate styles with components (ComponentName.css)
+- Use BEM naming convention: `.ComponentName-element_modifier`
+- Mobile-first approach
+- Avoid inline styles unless dynamic
+
+### File Naming
+
+- Components: PascalCase (e.g., `StreakTracker.tsx`)
+- Utilities/helpers: camelCase (e.g., `findStreaks.ts`)
+- Tests: Same name as source + `.test.tsx` suffix
+- Types: PascalCase (e.g., `Habit.ts`)
+
+## Testing Guidelines
+
+### What to Test
+
+✅ **Do test:**
+- Complete user workflows (login → view → edit → save)
+- Business logic (streak calculations, date utilities)
+- Error handling (network failures, invalid inputs)
+- Edge cases (month boundaries, empty states)
+
+❌ **Don't test:**
+- Implementation details (internal state, private methods)
+- Third-party libraries (Firebase, React Router)
+- Trivial code (simple getters, type definitions)
+- Styling/CSS (unless critical to functionality)
+
+### Test Structure
+
+```typescript
+describe("Feature name - User workflow", () => {
+  beforeEach(() => {
+    // Setup mocks and test data
+  });
+
+  it("should allow user to [complete workflow description]", async () => {
+    // 1. Setup: Create test data
+    // 2. Render: Render component
+    // 3. Act: Simulate user interactions
+    // 4. Assert: Verify expected behavior
+  });
+});
+```
+
+### Test Naming
+
+- Describe user behavior, not implementation
+- Use "should allow user to..." for happy paths
+- Use "should handle [error] when..." for error cases
+- Be specific about what changes
+
+## Common Patterns
+
+### Fetching Data
+
+```typescript
+// In component
+useEffect(() => {
+  const fetchData = async () => {
+    try {
+      const data = await habitService.getAllHabits();
+      setHabits(data);
+    } catch (error) {
+      LOG.error("Failed to fetch habits", { error });
+    }
+  };
+  
+  fetchData();
+}, []);
+```
+
+### Optimistic Updates
+
+```typescript
+// Update UI immediately, rollback on error
+const [habit, setHabit] = useState<Habit>();
+
+async function handleUpdate(newData: Partial<Habit>) {
+  const previousState = habit;
+  
+  try {
+    setHabit({ ...habit, ...newData });  // Optimistic update
+    await habitService.updateHabit(habit.id, newData);
+  } catch (error) {
+    setHabit(previousState);  // Rollback on error
+    LOG.error("Update failed", { error });
+  }
+}
+```
+
+### Date Handling
+
+```typescript
+import { createDate, isSameDay } from "../utils/date";
+
+// Always normalize dates
+const today = createDate(new Date());
+const habitDate = createDate(streak.date);
+
+// Always use isSameDay for comparison
+if (isSameDay(today, habitDate)) {
+  // Match found
+}
+```
+
+### Error Logging
+
+```typescript
+import { LOG } from "../utils/logger";
+
+try {
+  await riskyOperation();
+} catch (error) {
+  LOG.error("Operation failed", { error, context: additionalInfo });
+}
+```
+
+## Firebase Guidelines
+
+### Querying Habits
+
+```typescript
+// Filter by current user
+const q = query(
+  collection(db, "habits"),
+  where("author", "==", auth.currentUser?.uid ?? "")
+);
+```
+
+### Updating Documents
+
+```typescript
+// Use updateDoc for partial updates
+const habitRef = doc(db, "habits", habitId);
+await updateDoc(habitRef, { name: newName });
+
+// Don't fetch, modify, then save entire document
+```
+
+### Date Conversion
+
+```typescript
+// Firestore stores dates as Timestamps, convert them
+const data = doc.data();
+const streak = data.streak.map(s => ({
+  ...s,
+  date: createDate(new Date(s.date.seconds * 1000))
+}));
+```
+
+## Performance Tips
+
+- Memoize expensive calculations with `useMemo`
+- Debounce rapid updates (e.g., text input)
+- Use React.memo for expensive components
+- But: Don't optimize prematurely - measure first!
+
+## Accessibility
+
+- Use semantic HTML (`button`, `nav`, `main`)
+- Provide aria-labels for icon buttons
+- Ensure keyboard navigation works
+- Test with screen readers when possible
+
+## Security
+
+- Never commit secrets (Firebase config is public by design)
+- Always filter habits by `author` field
+- Validate input on client AND server (Firestore rules)
+- Don't trust client-side auth - verify in rules
+
+## Debugging
+
+### Common Issues
+
+**"Can't find element in test"**
+- Wait for async operations: `await waitFor(() => ...)`
+- Check if element is actually rendered
+- Use `screen.debug()` to see current DOM
+
+**"Date comparison not working"**
+- Ensure both dates are normalized with `createDate()`
+- Use `isSameDay()` instead of `===`
+- Check timezone - all dates should be UTC
+
+**"State not updating"**
+- Check if you're mutating state instead of creating new objects
+- Use spread operator or array methods that return new arrays
+- Verify useEffect dependencies
+
+**"Firebase permission denied"**
+- Check Firestore rules in `firestore.rules`
+- Verify user is authenticated
+- Ensure `author` field matches current user UID
+
+## Environment Setup
+
+### Prerequisites
+
+- Node.js 18+
+- npm or pnpm
+- Firebase CLI (for deployment)
+
+### First Time Setup
+
+```bash
+# Install dependencies
+npm install
+
+# Configure Firebase (already done in this project)
+# firebase.json, .firebaserc, and firestore.rules are configured
+
+# Run development server
+npm run dev
+```
+
+### Deployment
+
+```bash
+# Deploy to Firebase hosting (runs tests + build automatically)
+npm run deploy
+```
+
+## Project-Specific Quirks
+
+### Calendar Date Clicking
+
+- Quick click cycles through: NOT_SPECIFIED → GOOD → BAD → NOT_SPECIFIED
+- Long press (500ms) opens bottom sheet for notes
+- This is implemented with pointer events, not click events
+
+### Streak Calculation
+
+- Current streak counts if it ends today OR yesterday
+- Streaks break with a single BAD day (not just missing days)
+- NOT_SPECIFIED days don't count toward streaks
+
+### AppBar Context
+
+- Components can render items in the AppBar using `useAppBarContext()`
+- The StreakTracker renders a "Delete" button in the AppBar
+- This is a shared context pattern, not prop drilling
+
+## Getting Help
+
+- Check existing tests for examples of how to test similar features
+- Look at similar components for patterns to follow
+- Read the agent file for principles and guidelines
+- When in doubt, prefer simplicity and clarity
