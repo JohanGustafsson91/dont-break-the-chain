@@ -1,0 +1,36 @@
+name: CI Pipeline
+
+# Trigger on pull requests to main branch and manual dispatch
+on:
+  pull_request:
+    branches: [main]
+    types: [opened, synchronize, reopened]
+  # Allow manual trigger for debugging
+  workflow_dispatch:
+
+# Set permissions for the workflow
+permissions:
+  pull-requests: write
+  contents: write
+  checks: write
+
+jobs:
+  # Call the reusable validate workflow (lint, test, build)
+  validate:
+    name: Validate PR
+    uses: JohanGustafsson91/github-reusable-actions/.github/workflows/validate.yml@main
+    with:
+      node-version: "20"
+      package-manager: "pnpm"
+      lint-script: "lint"
+      test-script: "test"
+      build-script: "build"
+
+  # Call the reusable auto-merge workflow for Dependabot PRs
+  auto-merge:
+    name: Auto-merge Dependabot PRs
+    needs: [validate]
+    uses: JohanGustafsson91/github-reusable-actions/.github/workflows/auto-merge-dependabot.yml@main
+    with:
+      merge-method: squash
+      exclude: none # Auto-merge all updates (use with caution!)
