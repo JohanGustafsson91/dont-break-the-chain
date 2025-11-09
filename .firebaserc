@@ -1,5 +1,6 @@
 {
   "projects": {
-    "default": "dont-break-the-chain-cb8a0"
+    "default": "dont-break-the-chain-cb8a0",
+    "production": "dont-break-the-chain-cb8a0"
   }
 }

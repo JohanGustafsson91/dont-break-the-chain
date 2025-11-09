@@ -25,3 +25,5 @@ dev-dist
 *.sw?
 
 .firebase/*
+dont-break-the-chain-service-account.json
+
