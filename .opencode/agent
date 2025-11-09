@@ -1,0 +1,410 @@
+# Don't Break The Chain - Agent Instructions
+
+## Project Overview
+
+"Don't Break The Chain" is a habit tracking application built with React, TypeScript, and Firebase. Users can create habits, track daily progress (Good/Bad/Not Specified), view streaks, and maintain accountability through visual calendar interfaces.
+
+**Tech Stack:**
+- React 19 + TypeScript
+- Vite for build tooling
+- Firebase (Firestore + Auth with GitHub provider)
+- React Router for navigation
+- Vitest + React Testing Library for testing
+
+**Key Features:**
+- GitHub authentication
+- Create and manage multiple habits
+- Track daily progress with Good/Bad/Not Specified status
+- View current and longest streaks
+- Calendar visualization with month navigation
+- Add notes to specific days
+- Progress statistics and percentages
+- PWA support
+
+## Core Development Principles
+
+You MUST follow these principles when working on this codebase:
+
+### 1. KISS (Keep It Simple, Stupid)
+
+- **Favor simplicity over cleverness**: Write code that is obvious and easy to understand
+- **Avoid unnecessary abstractions**: Don't create layers of indirection unless clearly needed
+- **One responsibility per function**: Each function should do one thing well
+- **Clear naming**: Use descriptive names that explain what the code does
+- **Avoid premature optimization**: Make it work, make it right, then make it fast (if needed)
+
+**Good Example:**
+```typescript
+// Simple, clear function
+function isSameDay(date1: Date, date2: Date): boolean {
+  return (
+    date1.getUTCFullYear() === date2.getUTCFullYear() &&
+    date1.getUTCMonth() === date2.getUTCMonth() &&
+    date1.getUTCDate() === date2.getUTCDate()
+  );
+}
+```
+
+**Bad Example:**
+```typescript
+// Over-engineered with unnecessary abstraction
+class DateComparator {
+  private comparators: Array<(d1: Date, d2: Date) => boolean>;
+  
+  constructor() {
+    this.comparators = [
+      (d1, d2) => d1.getUTCFullYear() === d2.getUTCFullYear(),
+      (d1, d2) => d1.getUTCMonth() === d2.getUTCMonth(),
+      (d1, d2) => d1.getUTCDate() === d2.getUTCDate(),
+    ];
+  }
+  
+  isSameDay(date1: Date, date2: Date): boolean {
+    return this.comparators.every(comp => comp(date1, date2));
+  }
+}
+```
+
+### 2. YAGNI (You Aren't Gonna Need It)
+
+- **Don't add features speculatively**: Only implement what is needed right now
+- **No "just in case" code**: Remove unused code, functions, and dependencies
+- **Resist the urge to generalize prematurely**: Solve the specific problem at hand
+- **Delete more than you add**: Regularly remove unused code
+
+**Good Example:**
+```typescript
+// Only what's needed for the current use case
+interface Habit {
+  id: string;
+  name: string;
+  description: string;
+  streak: DayInStreak[];
+}
+```
+
+**Bad Example:**
+```typescript
+// Adding fields "just in case" we might need them
+interface Habit {
+  id: string;
+  name: string;
+  description: string;
+  streak: DayInStreak[];
+  color?: string;  // Not used anywhere
+  icon?: string;   // Not used anywhere
+  category?: string;  // Not used anywhere
+  tags?: string[];  // Not used anywhere
+  reminders?: Reminder[];  // Not implemented yet
+  sharing?: SharingSettings;  // Feature not planned
+}
+```
+
+### 3. Functional Programming (FP)
+
+- **Prefer pure functions**: Functions should not have side effects when possible
+- **Immutability**: Don't mutate data, create new copies instead
+- **Composition over inheritance**: Build complex behavior by composing simple functions
+- **Declarative over imperative**: Express what you want, not how to do it
+- **Avoid classes when functions suffice**: Use plain functions and data structures
+
+**Good Example:**
+```typescript
+// Pure function - no side effects, returns new array
+function getUpdatedStreak(args: GetUpdatedStreak): { 
+  streak: DayInStreak[];
+  previousStreak: DayInStreak[];
+} {
+  const { habit, date, status, notes = "" } = args;
+  
+  if (status === "NOT_SPECIFIED") {
+    return {
+      streak: habit.streak.filter(s => !isSameDay(s.date, date)),
+      previousStreak: habit.streak,
+    };
+  }
+  
+  const existing = habit.streak.find(s => isSameDay(s.date, date));
+  
+  if (existing) {
+    return {
+      streak: habit.streak.map(s =>
+        isSameDay(s.date, date) ? { date, status, notes } : s
+      ),
+      previousStreak: habit.streak,
+    };
+  }
+  
+  return {
+    streak: [...habit.streak, { date, status, notes }],
+    previousStreak: habit.streak,
+  };
+}
+```
+
+**Bad Example:**
+```typescript
+// Impure - mutates input, side effects
+class StreakManager {
+  private habit: Habit;
+  
+  constructor(habit: Habit) {
+    this.habit = habit;
+  }
+  
+  updateStreak(date: Date, status: Status, notes: string): void {
+    const existing = this.habit.streak.find(s => isSameDay(s.date, date));
+    
+    if (existing) {
+      existing.status = status;  // Mutation!
+      existing.notes = notes;    // Mutation!
+    } else {
+      this.habit.streak.push({ date, status, notes });  // Mutation!
+    }
+  }
+}
+```
+
+## Project Structure
+
+```
+src/
+├── components/           # React components organized by feature
+│   ├── App/             # Main app shell and routing
+│   ├── AppBar/          # Navigation header
+│   ├── HabitsList/      # Habits list view
+│   ├── Login/           # Authentication
+│   ├── ProtectedRoute/  # Auth guard
+│   ├── StreakStatusRadioGroup/  # Radio buttons for status
+│   └── StreakTracker/   # Habit detail view with calendar
+├── services/            # Firebase and external service integrations
+│   ├── authService.ts   # Authentication logic
+│   ├── firebaseService.ts  # Firebase initialization
+│   └── habitService.ts  # Habit CRUD operations
+├── shared/              # Shared business logic (pure functions)
+│   ├── Habit.ts         # Type definitions
+│   ├── Status.ts        # Status type
+│   ├── findStreaks.ts   # Streak calculation (pure)
+│   └── getUpdatedStreak.ts  # Streak update logic (pure)
+└── utils/               # Utility functions (pure)
+    ├── date.ts          # Date manipulation (pure, UTC-based)
+    └── logger.ts        # Logging utility
+```
+
+## Code Organization Guidelines
+
+### 1. Component Structure
+
+- Keep components focused on presentation and user interaction
+- Extract business logic into `shared/` as pure functions
+- Co-locate tests, styles, and related files with components
+- Use functional components with hooks, not classes
+
+### 2. Business Logic Location
+
+- **Pure functions → `shared/`**: Streak calculations, data transformations
+- **Service integrations → `services/`**: Firebase, API calls, side effects
+- **Utilities → `utils/`**: General-purpose helpers (date, logging, etc.)
+- **Component logic → component files**: UI state, event handlers, effects
+
+### 3. Testing Philosophy (Kent C. Dodds)
+
+- **Fewer, longer tests**: Test complete user journeys, not isolated units
+- **Integration over unit**: Verify multiple parts work together
+- **Test user behavior**: Simulate real interactions (clicking, typing)
+- **Avoid implementation details**: Don't test internal state or mocks unless necessary
+- **Confidence over coverage**: Focus on tests that catch real bugs
+
+## Patterns to Follow
+
+### Pure Functions for Business Logic
+
+```typescript
+// ✅ Good: Pure function in shared/
+export function findStreaks(dates: DayInStreak[]) {
+  // ... pure logic that calculates streaks
+  return { longestStreak, currentStreak };
+}
+
+// ❌ Bad: Impure function with side effects
+export function findStreaks(habit: Habit) {
+  habit.longestStreak = calculateLongest(habit.streak);  // Mutation!
+  saveToLocalStorage(habit);  // Side effect!
+  return habit;
+}
+```
+
+### Immutable Data Updates
+
+```typescript
+// ✅ Good: Create new objects/arrays
+const updatedHabit = { ...habit, name: newName };
+const updatedStreak = [...habit.streak, newDay];
+
+// ❌ Bad: Mutate existing data
+habit.name = newName;
+habit.streak.push(newDay);
+```
+
+### Declarative Array Operations
+
+```typescript
+// ✅ Good: Declarative with map/filter
+const goodDays = habit.streak.filter(s => s.status === "GOOD");
+const dates = goodDays.map(s => s.date);
+
+// ❌ Bad: Imperative loops
+const goodDays = [];
+for (let i = 0; i < habit.streak.length; i++) {
+  if (habit.streak[i].status === "GOOD") {
+    goodDays.push(habit.streak[i]);
+  }
+}
+```
+
+### Avoid Classes, Prefer Functions + Data
+
+```typescript
+// ✅ Good: Plain data + functions
+interface Habit {
+  id: string;
+  name: string;
+  streak: DayInStreak[];
+}
+
+function createHabit(name: string): Habit {
+  return { id: generateId(), name, streak: [] };
+}
+
+// ❌ Bad: Classes with methods
+class Habit {
+  constructor(public name: string) {
+    this.id = generateId();
+    this.streak = [];
+  }
+  
+  addDay(date: Date, status: Status) {
+    this.streak.push({ date, status, notes: "" });
+  }
+}
+```
+
+## Common Tasks
+
+### Adding a New Feature
+
+1. **Start with the data model**: Define types in `shared/`
+2. **Write pure business logic**: Create functions in `shared/` with tests
+3. **Create/update service layer**: Add Firebase operations in `services/` if needed
+4. **Build UI components**: Create component with co-located styles and tests
+5. **Write integration tests**: Cover the user journey end-to-end
+
+### Refactoring
+
+1. **Write tests first**: Ensure existing behavior is covered
+2. **Make small changes**: One logical change at a time
+3. **Keep tests passing**: Green → Refactor → Green
+4. **Delete unused code**: Remove anything not actively used
+5. **Simplify**: Look for ways to reduce complexity
+
+### Debugging Issues
+
+1. **Check the tests**: Run test suite to identify failures
+2. **Use type system**: Let TypeScript guide you to errors
+3. **Console log sparingly**: Use logger utility for consistent logging
+4. **Isolate the problem**: Reproduce in smallest possible context
+
+## Firebase Data Model
+
+### Firestore Structure
+
+```
+habits/
+  {habitId}/
+    name: string
+    description: string
+    author: string (user UID)
+    createdAt: timestamp
+    streak: Array<{
+      date: Timestamp
+      status: "GOOD" | "BAD"
+      notes: string
+    }>
+```
+
+### Key Considerations
+
+- **All dates are stored as UTC midnight**: Use `createDate()` utility to normalize
+- **Streak array is denormalized**: Each day is a separate object in the array
+- **Author field filters habits**: Each user only sees their own habits
+- **Firestore Timestamps**: Convert to/from Date objects in `habitService.ts`
+
+## Date Handling
+
+This is critical for streak tracking:
+
+- **Always use UTC**: Avoid timezone issues by working in UTC
+- **Normalize to midnight**: Use `createDate()` to strip time components
+- **Compare with isSameDay**: Don't use `===` for date comparison
+- **Test date edge cases**: Month boundaries, leap years, etc.
+
+```typescript
+// ✅ Good: Normalized UTC dates
+const today = createDate(new Date());
+const yesterday = createDate(new Date(Date.now() - 86400000));
+
+if (isSameDay(today, yesterday)) {
+  // Won't happen, but safe comparison
+}
+
+// ❌ Bad: Direct date comparison
+if (new Date() === new Date()) {
+  // Never true! Dates are objects
+}
+```
+
+## Anti-Patterns to Avoid
+
+1. **God Components**: Components with >200 lines or multiple responsibilities
+2. **Prop Drilling**: Passing props through 3+ levels (use Context instead)
+3. **Premature Abstraction**: Creating reusable components before second use
+4. **Mutable State**: Directly modifying state or props
+5. **Side Effects in Render**: API calls, mutations during render
+6. **Any Types**: Using `any` instead of proper TypeScript types
+7. **Over-Mocking**: Mocking everything in tests (test real integrations)
+8. **Implementation Testing**: Testing internal state instead of user behavior
+
+## When to Break the Rules
+
+These principles are guidelines, not laws. Break them when:
+
+- **Performance requires it**: Measured, not assumed
+- **Library/framework conventions differ**: Follow established patterns
+- **The alternative is more complex**: Pragmatism over purity
+- **User experience demands it**: UX > code purity
+
+But always document why you're breaking the rule.
+
+## Quick Reference
+
+**Before writing code, ask:**
+- ✅ Is this the simplest solution that could work? (KISS)
+- ✅ Do we actually need this right now? (YAGNI)
+- ✅ Can this be a pure function? (FP)
+- ✅ Am I creating new data instead of mutating? (FP)
+- ✅ Will this test catch real user-facing bugs? (Testing)
+
+**Code smells to refactor:**
+- ❌ Functions longer than ~30 lines
+- ❌ Deeply nested conditionals (>3 levels)
+- ❌ Mutable state being passed around
+- ❌ Classes used as namespaces for functions
+- ❌ Unused code "just in case"
+- ❌ Tests that break when refactoring internals
+
+## Resources
+
+- [Kent C. Dodds - Testing Principles](https://kentcdodds.com/blog/common-mistakes-with-react-testing-library)
+- [Functional Programming in TypeScript](https://gcanti.github.io/fp-ts/)
+- [KISS Principle](https://en.wikipedia.org/wiki/KISS_principle)
+- [YAGNI](https://martinfowler.com/bliki/Yagni.html)
