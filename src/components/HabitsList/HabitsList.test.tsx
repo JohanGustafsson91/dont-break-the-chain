@@ -7,6 +7,7 @@ import { BrowserRouter } from "react-router-dom";
 import * as habitService from "../../services/habitService";
 import { AppBarProvider } from "../AppBar/AppBar.Provider";
 import { AppBar } from "../AppBar/AppBar";
+import type { User } from "firebase/auth";
 
 const mockNavigate = vi.fn();
 
@@ -45,12 +46,12 @@ describe("HabitsList - User workflows", () => {
       uid: "test-user",
       email: "test@example.com",
       photoURL: "https://example.com/photo.jpg",
-    };
+    } as User;
 
     return render(
       <BrowserRouter>
         <AppBarProvider>
-          <AppBar user={mockUser as any} />
+          <AppBar user={mockUser} />
           <HabitsList />
         </AppBarProvider>
       </BrowserRouter>,

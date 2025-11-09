@@ -4,6 +4,7 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { Login } from "./Login";
 import * as authService from "../../services/authService";
+import type { User } from "firebase/auth";
 
 vi.mock("../../services/authService", () => ({
   login: vi.fn(),
@@ -18,8 +19,8 @@ vi.mock("../../utils/logger", () => ({
 describe("Login - User authentication flow", () => {
   it("should allow user to login with GitHub", async () => {
     vi.mocked(authService.login).mockResolvedValue({
-      user: { uid: "123", email: "user@example.com" },
-    } as any);
+      user: { uid: "123", email: "user@example.com" } as User,
+    } as Awaited<ReturnType<typeof authService.login>>);
 
     render(<Login />);
 

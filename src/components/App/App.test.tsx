@@ -30,6 +30,7 @@ import { getAllHabits, getHabitById } from "../../services/habitService";
 import userEvent from "@testing-library/user-event";
 import { App } from "./App";
 import type { Habit } from "../../shared/Habit";
+import type { User } from "firebase/auth";
 
 describe("App - End-to-end user journeys", () => {
   beforeEach(() => {
@@ -43,7 +44,7 @@ describe("App - End-to-end user journeys", () => {
     // Setup: User is authenticated
     vi.mocked(useAuth).mockReturnValue({
       status: "RESOLVED",
-      user: { uid: "123", email: "test@example.com" } as any,
+      user: { uid: "123", email: "test@example.com" } as User,
     });
 
     const mockHabit = habitData();
