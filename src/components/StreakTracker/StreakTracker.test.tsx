@@ -8,6 +8,7 @@ import * as habitService from "../../services/habitService";
 import { AppBarProvider } from "../AppBar/AppBar.Provider";
 import { AppBar } from "../AppBar/AppBar";
 import type { Habit } from "../../shared/Habit";
+import type { User } from "firebase/auth";
 
 const mockNavigate = vi.fn();
 
@@ -55,13 +56,13 @@ describe("StreakTracker - Complete user journey", () => {
     uid: "test-user",
     email: "test@example.com",
     photoURL: "https://example.com/photo.jpg",
-  };
+  } as User;
 
   const renderStreakTracker = () => {
     return render(
       <BrowserRouter>
         <AppBarProvider>
-          <AppBar user={mockUser as any} />
+          <AppBar user={mockUser} />
           <Routes>
             <Route path="/habits/:id" element={<StreakTracker />} />
           </Routes>
