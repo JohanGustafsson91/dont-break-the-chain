@@ -18,7 +18,7 @@ jobs:
   # Call the reusable validate workflow (lint, test, build)
   validate:
     name: Validate PR
-    uses: JohanGustafsson91/github-reusable-actions/.github/workflows/validate.yml@main
+    uses: JohanGustafsson91/toolkit/.github/workflows/validate.yml@main
     with:
       node-version: "20"
       package-manager: "pnpm"
@@ -30,7 +30,7 @@ jobs:
   auto-merge:
     name: Auto-merge Dependabot PRs
     needs: [validate]
-    uses: JohanGustafsson91/github-reusable-actions/.github/workflows/auto-merge-dependabot.yml@main
+    uses: JohanGustafsson91/toolkit/.github/workflows/auto-merge-dependabot.yml@main
     with:
       merge-method: squash
       exclude: none # Auto-merge all updates (use with caution!)
