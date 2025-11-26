@@ -1,4 +1,5 @@
 import type { PropsWithChildren } from "react";
+import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../services/authService";
 import { AppBar } from "../AppBar/AppBar";
@@ -11,6 +12,23 @@ export const ProtectedRoute = ({
   const navigate = useNavigate();
   const { user, status } = useAuth();
 
+  useEffect(() => {
+    if (status === "PENDING") {
+      return;
+    }
+
+    const isUnauthenticatedOnProtectedPage = !user && !isLoginPage;
+    if (isUnauthenticatedOnProtectedPage) {
+      navigate(redirectPath);
+      return;
+    }
+
+    const isAuthenticatedOnLoginPage = user && isLoginPage;
+    if (isAuthenticatedOnLoginPage) {
+      navigate("/");
+    }
+  }, [user, status, isLoginPage, redirectPath, navigate]);
+
   if (status === "PENDING") {
     return (
       <div className="page page-center">
@@ -21,13 +39,11 @@ export const ProtectedRoute = ({
 
   const isUnauthenticatedOnProtectedPage = !user && !isLoginPage;
   if (isUnauthenticatedOnProtectedPage) {
-    navigate(redirectPath);
     return null;
   }
 
   const isAuthenticatedOnLoginPage = user && isLoginPage;
   if (isAuthenticatedOnLoginPage) {
-    navigate("/");
     return null;
   }
 
@@ -43,5 +59,3 @@ interface ProtectedRouteProps {
   redirectPath?: string;
   isLoginPage?: true;
 }
-
-export default ProtectedRoute;

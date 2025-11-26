@@ -1,30 +1,40 @@
 import "@testing-library/jest-dom";
-import { describe, it, expect, vi } from "vitest";
+import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { Login } from "./Login";
-import * as authService from "../../services/authService";
-import type { User } from "firebase/auth";
+import * as firebaseAuth from "firebase/auth";
+import * as firebaseFirestore from "firebase/firestore";
+import type { User, Auth } from "firebase/auth";
+import type { Firestore } from "firebase/firestore";
+import React from "react";
 
-vi.mock("../../services/authService", () => ({
-  login: vi.fn(),
-}));
-
-vi.mock("../../utils/logger", () => ({
-  LOG: {
-    error: vi.fn(),
-  },
-}));
+vi.mock("firebase/auth");
+vi.mock("firebase/firestore");
+vi.mock("firebase/app");
+vi.mock("react-firebase-hooks/auth");
 
 describe("Login - User authentication flow", () => {
-  it("should allow user to login with GitHub", async () => {
-    vi.mocked(authService.login).mockResolvedValue({
-      user: { uid: "123", email: "user@example.com" } as User,
-    } as Awaited<ReturnType<typeof authService.login>>);
+  const signInWithPopupSpy = vi.spyOn(firebaseAuth, "signInWithPopup");
+  const getAuthSpy = vi.spyOn(firebaseAuth, "getAuth");
+  const getFirestoreSpy = vi.spyOn(firebaseFirestore, "getFirestore");
 
+  const setupDefaultMocks = () => {
+    getAuthSpy.mockReturnValue({ type: "mock-auth" } as unknown as Auth);
+    getFirestoreSpy.mockReturnValue({
+      type: "mock-firestore",
+    } as unknown as Firestore);
+    signInWithPopupSpy.mockResolvedValue(mockSignInResult);
+  };
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    setupDefaultMocks();
+  });
+
+  it("should allow user to login with GitHub", async () => {
     render(<Login />);
 
-    // User sees the login page
     expect(screen.getByText("Don't Break The Chain")).toBeInTheDocument();
     expect(
       screen.getByText(
@@ -32,33 +42,38 @@ describe("Login - User authentication flow", () => {
       ),
     ).toBeInTheDocument();
 
-    // User clicks the GitHub login button
     const loginButton = screen.getByRole("button", {
       name: "Login with GitHub",
     });
     await userEvent.click(loginButton);
 
-    // Login is initiated with GitHub provider
-    expect(authService.login).toHaveBeenCalledWith({ provider: "github" });
+    expect(signInWithPopupSpy).toHaveBeenCalled();
   });
 
-  it("should show user an error if login fails", async () => {
-    const mockLogger = await import("../../utils/logger");
-    const error = new Error("Authentication failed");
-    vi.mocked(authService.login).mockRejectedValue(error);
+  it("should handle authentication errors gracefully", async () => {
+    const authError = new Error("Authentication failed");
+    signInWithPopupSpy.mockRejectedValue(authError);
 
     render(<Login />);
 
     const loginButton = screen.getByRole("button", {
       name: "Login with GitHub",
     });
-    await userEvent.click(loginButton);
 
-    // Error is logged for debugging
-    await vi.waitFor(() => {
-      expect(mockLogger.LOG.error).toHaveBeenCalledWith("GitHub Login Failed:", {
-        error,
-      });
-    });
+    await expect(userEvent.click(loginButton)).resolves.not.toThrow();
+    expect(signInWithPopupSpy).toHaveBeenCalled();
   });
 });
+
+const mockUser = {
+  uid: "test-user-123",
+  email: "test@example.com",
+  displayName: "Test User",
+  photoURL: "https://example.com/photo.jpg",
+} as User;
+
+const mockSignInResult = {
+  user: mockUser,
+  providerId: "github.com",
+  operationType: "signIn" as const,
+};

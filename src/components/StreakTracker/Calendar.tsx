@@ -180,7 +180,7 @@ interface ClickHelpers {
 }
 
 function clickHelpers({ onClick, onLongClick }: ClickHelpers) {
-  const ref: { current: NodeJS.Timeout | undefined } = { current: undefined };
+  const ref: { current: ReturnType<typeof setTimeout> | undefined } = { current: undefined };
 
   function handleDown(e: React.PointerEvent<HTMLElement>) {
     if (e.type === "mousedown") e.preventDefault();

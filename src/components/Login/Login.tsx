@@ -1,5 +1,4 @@
 import { login } from "../../services/authService";
-import { LOG } from "../../utils/logger";
 import "./Login.css";
 
 export const Login = () => {
@@ -7,7 +6,7 @@ export const Login = () => {
     try {
       await login({ provider: "github" });
     } catch (error) {
-      LOG.error("GitHub Login Failed:", { error });
+      console.error("GitHub Login Failed:", { error });
     }
   };
 

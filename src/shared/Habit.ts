@@ -5,8 +5,10 @@ export interface Habit {
   streak: DayInStreak[];
 }
 
+export type HabitStatus = "GOOD" | "BAD";
+
 export interface DayInStreak {
   date: Date;
-  status: "GOOD" | "BAD";
+  status: HabitStatus;
   notes: string;
 }

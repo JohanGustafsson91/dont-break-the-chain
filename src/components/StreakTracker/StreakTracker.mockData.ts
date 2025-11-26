@@ -1,4 +1,5 @@
 import { createDate } from "../../utils/date";
+import { HABIT_STATUS } from "../../shared/constants";
 
 const today = new Date();
 
@@ -9,7 +10,7 @@ const goodStreak = Array.from({ length: 5 }, (_, i) => ({
     month: today.getMonth(),
     day: today.getDate() - i,
   }),
-  status: "GOOD" as const,
+  status: HABIT_STATUS.GOOD,
   notes: "",
 }));
 
@@ -20,7 +21,7 @@ const badDays = Array.from({ length: 2 }, (_, i) => ({
     month: today.getMonth(),
     day: today.getDate() - 5 - i,
   }),
-  status: "BAD" as const,
+  status: HABIT_STATUS.BAD,
   notes: "",
 }));
 
@@ -31,7 +32,7 @@ const previousGoodStreak = Array.from({ length: 9 }, (_, i) => ({
     month: today.getMonth(),
     day: today.getDate() - 7 - i,
   }),
-  status: "GOOD" as const,
+  status: HABIT_STATUS.GOOD,
   notes: "",
 }));
 

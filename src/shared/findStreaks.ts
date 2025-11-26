@@ -1,5 +1,6 @@
 import { createDate, isNextDay, isSameDay, isYesterday } from "../utils/date";
 import { DayInStreak } from "./Habit";
+import { HABIT_STATUS } from "./constants";
 
 export function findStreaks(dates: DayInStreak[]): {
   longestStreak: { from: Date; to: Date; streak: number };
@@ -12,7 +13,7 @@ export function findStreaks(dates: DayInStreak[]): {
     };
 
   const goodDates = dates
-    .filter((day) => day.status === "GOOD")
+    .filter((day) => day.status === HABIT_STATUS.GOOD)
     .map((day) => createDate(day.date));
 
   if (goodDates.length === 0)
@@ -55,7 +56,7 @@ export function findStreaks(dates: DayInStreak[]): {
     isSameDay(lastDateInLastStreak, today) || isYesterday(lastDateInLastStreak);
 
   const badDatesSorted = dates
-    .filter((day) => day.status === "BAD")
+    .filter((day) => day.status === HABIT_STATUS.BAD)
     .map((day) => createDate(day.date))
     .sort((a, b) => a.getTime() - b.getTime());
 
