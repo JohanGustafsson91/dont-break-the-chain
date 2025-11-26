@@ -32,9 +32,9 @@ export const logout = async () => {
   await signOut(auth);
 };
 
-export const login = ({ provider }: { provider: typeof AUTH_PROVIDERS.GITHUB }) => {
+export const login = ({ provider }: { provider: typeof AUTH_PROVIDERS[keyof typeof AUTH_PROVIDERS] }) => {
   if (provider !== AUTH_PROVIDERS.GITHUB) {
-    throw new Error(`Invalid provider ${provider}`);
+    throw new Error(`Provider ${provider} is not supported yet`);
   }
 
   return signInWithPopup(auth, githubProvider);

@@ -3,6 +3,7 @@ import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../services/authService";
 import { AppBar } from "../AppBar/AppBar";
+import { AUTH_STATUS } from "../../shared/constants";
 
 export const ProtectedRoute = ({
   redirectPath = "/login",
@@ -13,7 +14,7 @@ export const ProtectedRoute = ({
   const { user, status } = useAuth();
 
   useEffect(() => {
-    if (status === "PENDING") {
+    if (status === AUTH_STATUS.PENDING) {
       return;
     }
 
@@ -29,7 +30,7 @@ export const ProtectedRoute = ({
     }
   }, [user, status, isLoginPage, redirectPath, navigate]);
 
-  if (status === "PENDING") {
+  if (status === AUTH_STATUS.PENDING) {
     return (
       <div className="page page-center">
         <p className="loading">Loading</p>

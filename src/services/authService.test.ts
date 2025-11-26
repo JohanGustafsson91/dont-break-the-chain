@@ -4,6 +4,7 @@ import * as firebaseAuth from "firebase/auth";
 import * as firebaseFirestore from "firebase/firestore";
 import * as reactFirebaseHooks from "react-firebase-hooks/auth";
 import { useAuth, login, logout } from "./authService";
+import { AUTH_STATUS, AUTH_PROVIDERS } from "../shared/constants";
 import type { User, Auth } from "firebase/auth";
 import type { Firestore } from "firebase/firestore";
 
@@ -54,7 +55,7 @@ describe("authService - Authentication workflows", () => {
       const { result } = renderHook(() => useAuth());
 
       expect(result.current).toEqual({
-        status: "PENDING",
+        status: AUTH_STATUS.PENDING,
         user: undefined,
       });
     });
@@ -70,7 +71,7 @@ describe("authService - Authentication workflows", () => {
       const { result } = renderHook(() => useAuth());
 
       expect(result.current).toEqual({
-        status: "REJECTED",
+        status: AUTH_STATUS.REJECTED,
         user: undefined,
       });
     });
@@ -85,7 +86,7 @@ describe("authService - Authentication workflows", () => {
       const { result } = renderHook(() => useAuth());
 
       expect(result.current).toEqual({
-        status: "RESOLVED",
+        status: AUTH_STATUS.RESOLVED,
         user: mockUser,
       });
     });
@@ -100,7 +101,7 @@ describe("authService - Authentication workflows", () => {
       const { result } = renderHook(() => useAuth());
 
       expect(result.current).toEqual({
-        status: "RESOLVED",
+        status: AUTH_STATUS.RESOLVED,
         user: undefined,
       });
     });
@@ -114,7 +115,7 @@ describe("authService - Authentication workflows", () => {
 
       const { result, rerender } = renderHook(() => useAuth());
 
-      expect(result.current.status).toBe("PENDING");
+      expect(result.current.status).toBe(AUTH_STATUS.PENDING);
 
       useAuthStateSpy.mockReturnValue([
         mockUser,
@@ -124,14 +125,14 @@ describe("authService - Authentication workflows", () => {
 
       rerender();
 
-      expect(result.current.status).toBe("RESOLVED");
+      expect(result.current.status).toBe(AUTH_STATUS.RESOLVED);
       expect(result.current.user).toEqual(mockUser);
     });
   });
 
   describe("login - GitHub authentication", () => {
     it("should successfully login with GitHub provider", async () => {
-      const result = await login({ provider: "github" });
+      const result = await login({ provider: AUTH_PROVIDERS.GITHUB });
 
       expect(signInWithPopupSpy).toHaveBeenCalledWith(
         expect.anything(),
@@ -142,15 +143,15 @@ describe("authService - Authentication workflows", () => {
 
     it("should throw error for invalid provider", () => {
       expect(() => {
-        login({ provider: "invalid" as "github" });
-      }).toThrow("Invalid provider invalid");
+        login({ provider: "invalid" as typeof AUTH_PROVIDERS.GITHUB });
+      }).toThrow("Provider invalid is not supported yet");
     });
 
     it("should handle Firebase authentication errors", async () => {
       const authError = new Error("Firebase: Auth failed");
       signInWithPopupSpy.mockRejectedValue(authError);
 
-      await expect(login({ provider: "github" })).rejects.toThrow(
+      await expect(login({ provider: AUTH_PROVIDERS.GITHUB })).rejects.toThrow(
         "Firebase: Auth failed",
       );
     });
@@ -181,7 +182,7 @@ describe("authService - Authentication workflows", () => {
 
       const { result, rerender } = renderHook(() => useAuth());
 
-      expect(result.current.status).toBe("RESOLVED");
+      expect(result.current.status).toBe(AUTH_STATUS.RESOLVED);
       expect(result.current.user).toBeUndefined();
 
       useAuthStateSpy.mockReturnValue([
@@ -191,7 +192,7 @@ describe("authService - Authentication workflows", () => {
       ] as ReturnType<typeof reactFirebaseHooks.useAuthState>);
       rerender();
 
-      expect(result.current.status).toBe("PENDING");
+      expect(result.current.status).toBe(AUTH_STATUS.PENDING);
 
       useAuthStateSpy.mockReturnValue([
         mockUser,
@@ -200,7 +201,7 @@ describe("authService - Authentication workflows", () => {
       ] as ReturnType<typeof reactFirebaseHooks.useAuthState>);
       rerender();
 
-      expect(result.current.status).toBe("RESOLVED");
+      expect(result.current.status).toBe(AUTH_STATUS.RESOLVED);
       expect(result.current.user).toEqual(mockUser);
     });
 
@@ -213,7 +214,7 @@ describe("authService - Authentication workflows", () => {
 
       const { result, rerender } = renderHook(() => useAuth());
 
-      expect(result.current.status).toBe("PENDING");
+      expect(result.current.status).toBe(AUTH_STATUS.PENDING);
 
       const authError = new Error("Network error");
       useAuthStateSpy.mockReturnValue([
@@ -223,7 +224,7 @@ describe("authService - Authentication workflows", () => {
       ] as ReturnType<typeof reactFirebaseHooks.useAuthState>);
       rerender();
 
-      expect(result.current.status).toBe("REJECTED");
+      expect(result.current.status).toBe(AUTH_STATUS.REJECTED);
       expect(result.current.user).toBeUndefined();
     });
   });
