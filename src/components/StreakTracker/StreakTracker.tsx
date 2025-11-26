@@ -13,7 +13,7 @@ import {
 import { StreakStat } from "./StreakStat";
 import { ProgressBar } from "./ProgressBar";
 import { findStreaks } from "../../shared/findStreaks";
-import { LOG } from "../../utils/logger";
+
 import { BottomSheet } from "./BottomSheet";
 import { useAppBarContext } from "../AppBar/AppBar.Context";
 import { StreakStatusRadioGroup } from "../StreakStatusRadioGroup/StreakStatusRadioGroup";
@@ -54,7 +54,7 @@ export const StreakTracker = () => {
             navigate("/");
           }
         } catch (error) {
-          LOG.error("Could not delete habit...", { error });
+          console.error("Could not delete habit...", { error });
         }
       }
 
@@ -79,7 +79,7 @@ export const StreakTracker = () => {
     try {
       await updateHabit(id, data);
     } catch (error) {
-      LOG.error("Could not update habit", { error });
+      console.error("Could not update habit", { error });
     }
   }
 
@@ -103,7 +103,7 @@ export const StreakTracker = () => {
       setHabit(updateState(streak));
       await updateHabit(habit.id, { streak });
     } catch (error) {
-      LOG.error("Could not update habit", { error });
+      console.error("Could not update habit", { error });
       setHabit(updateState(previousStreak));
     }
   }

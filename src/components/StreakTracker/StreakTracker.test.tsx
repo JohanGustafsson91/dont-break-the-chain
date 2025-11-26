@@ -212,7 +212,7 @@ describe("StreakTracker - Complete user journey", () => {
 
   it("should handle errors gracefully when habit operations fail", async () => {
     const user = userEvent.setup();
-    const mockLogger = await import("../../utils/logger");
+    const consoleErrorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
 
     const mockHabit: Habit = {
       id: "habit-123",
@@ -241,7 +241,7 @@ describe("StreakTracker - Complete user journey", () => {
     await user.tab();
 
     await waitFor(() => {
-      expect(mockLogger.LOG.error).toHaveBeenCalledWith(
+      expect(consoleErrorSpy).toHaveBeenCalledWith(
         "Could not update habit",
         { error: updateError }
       );
@@ -255,7 +255,7 @@ describe("StreakTracker - Complete user journey", () => {
     await user.click(deleteButton);
 
     await waitFor(() => {
-      expect(mockLogger.LOG.error).toHaveBeenCalledWith(
+      expect(consoleErrorSpy).toHaveBeenCalledWith(
         "Could not delete habit...",
         { error: deleteError }
       );

@@ -1,6 +1,4 @@
-/// <reference types="vitest" />
-
-import { defineConfig } from "vite";
+import { defineConfig } from "vitest/config";
 import react from "@vitejs/plugin-react";
 import { VitePWA } from "vite-plugin-pwa";
 
@@ -42,5 +40,25 @@ export default defineConfig({
     environment: "jsdom",
     setupFiles: "./test-setup.ts",
     css: false,
+    coverage: {
+      provider: "v8",
+      reporter: ["text", "html", "lcov"],
+      exclude: [
+        "node_modules/",
+        "test-setup.ts",
+        "**/*.css",
+        "**/*.d.ts",
+        "**/*.test.{ts,tsx}",
+        "**/*.mockData.ts",
+        "src/main.tsx",
+        "src/vite-env.d.ts",
+      ],
+      thresholds: {
+        statements: 85,
+        branches: 75,
+        functions: 80,
+        lines: 85,
+      },
+    },
   },
 });
