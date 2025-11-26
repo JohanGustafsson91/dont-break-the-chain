@@ -5,6 +5,8 @@ import { AUTH_STATUS, AUTH_PROVIDERS } from "../shared/constants";
 
 export const githubProvider = new GithubAuthProvider();
 
+type AuthProvider = typeof AUTH_PROVIDERS[keyof typeof AUTH_PROVIDERS];
+
 export const useAuth = () => {
   const [user, loading, error] = useAuthState(auth);
 
@@ -32,7 +34,7 @@ export const logout = async () => {
   await signOut(auth);
 };
 
-export const login = ({ provider }: { provider: typeof AUTH_PROVIDERS[keyof typeof AUTH_PROVIDERS] }) => {
+export const login = ({ provider }: { provider: AuthProvider }) => {
   if (provider !== AUTH_PROVIDERS.GITHUB) {
     throw new Error(`Provider ${provider} is not supported yet`);
   }

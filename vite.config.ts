@@ -49,7 +49,7 @@ export default defineConfig({
         "**/*.css",
         "**/*.d.ts",
         "**/*.test.{ts,tsx}",
-        "**/mockData.ts",
+        "**/*.mockData.ts",
         "src/main.tsx",
         "src/vite-env.d.ts",
       ],

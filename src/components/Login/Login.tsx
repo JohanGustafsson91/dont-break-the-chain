@@ -1,10 +1,11 @@
 import { login } from "../../services/authService";
+import { AUTH_PROVIDERS } from "../../shared/constants";
 import "./Login.css";
 
 export const Login = () => {
   const handleLogin = async () => {
     try {
-      await login({ provider: "github" });
+      await login({ provider: AUTH_PROVIDERS.GITHUB });
     } catch (error) {
       console.error("GitHub Login Failed:", { error });
     }

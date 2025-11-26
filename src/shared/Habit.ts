@@ -1,3 +1,5 @@
+import { HABIT_STATUS } from "./constants";
+
 export interface Habit {
   id: string;
   name: string;
@@ -5,7 +7,7 @@ export interface Habit {
   streak: DayInStreak[];
 }
 
-export type HabitStatus = "GOOD" | "BAD";
+type HabitStatus = (typeof HABIT_STATUS)[keyof typeof HABIT_STATUS];
 
 export interface DayInStreak {
   date: Date;
