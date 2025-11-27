@@ -11,7 +11,7 @@ import {
   where,
   Timestamp,
 } from "firebase/firestore";
-import type { Habit } from "../domain/Habit";
+import type { Habit, StreakDay } from "../domain/Habit";
 import { auth, db } from "./firebaseService";
 import { createDate } from "../utils/date";
 import { COLLECTIONS } from "../shared/constants";
@@ -63,7 +63,7 @@ export const addHabit = async () => {
   return docRef.id;
 };
 
-import type { StreakDay } from "../domain/Habit";
+
 
 interface FirestoreStreakDay {
   date: Timestamp;

@@ -144,12 +144,10 @@ export const HabitsList = () => {
             const currentStreakData = calculateCurrentStreak(habit);
             const longestStreakData = calculateLongestStreak(habit);
             const today = createDate(new Date());
-            
             const currentStreakDay = habit.streak.find((s) => {
               const sDate = createDate(s.date);
               return sDate.getTime() === today.getTime();
             });
-            
             const currentDayStatus =
               currentStreakDay?.status ?? HABIT_STATUS.NOT_SPECIFIED;
 
