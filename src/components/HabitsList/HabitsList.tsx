@@ -1,7 +1,14 @@
 import "./HabitsList.css";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import type { DayInStreak, Habit } from "../../shared/Habit";
+import type { Habit } from "../../domain/Habit";
+import {
+  calculateCurrentStreak,
+  calculateLongestStreak,
+  getGoodDays,
+  getBadDays,
+  markDay,
+} from "../../domain/Habit";
 import {
   addHabit,
   getAllHabits,
@@ -9,17 +16,11 @@ import {
 } from "../../services/habitService";
 import { ProgressBar } from "../StreakTracker/ProgressBar";
 import { StreakStat } from "../StreakTracker/StreakStat";
-import { findStreaks } from "../../shared/findStreaks";
 import { HABIT_STATUS, STREAK_ICONS } from "../../shared/constants";
-import { getGoodDays, getBadDays } from "../../shared/streakUtils";
-import { createDate, isSameDay } from "../../utils/date";
+import { createDate } from "../../utils/date";
 import { pluralize } from "../../utils/string";
 import { useAppBarContext } from "../AppBar/AppBar.Context";
 import { StreakStatusRadioGroup } from "../StreakStatusRadioGroup/StreakStatusRadioGroup";
-import {
-  getUpdatedStreak,
-  GetUpdatedStreak,
-} from "../../shared/getUpdatedStreak";
 
 const motivationalMessages = {
   [HABIT_STATUS.GOOD]: [
@@ -106,28 +107,28 @@ export const HabitsList = () => {
     return navigate(`/habits/${id}`);
   }
 
-  async function handleUpdateStreak(args: GetUpdatedStreak) {
-    const { habit } = args;
-
-    if (!habit) {
-      return;
-    }
-
-    const { streak, previousStreak } = getUpdatedStreak(args);
-
-    const updateStateFn = (streak: DayInStreak[]) => (prev: State) =>
-      prev.data.map((prevHabit) =>
-        prevHabit.id === habit.id ? { ...prevHabit, streak } : prevHabit,
-      );
+  async function handleUpdateDay(
+    habit: Habit,
+    date: Date,
+    status: typeof HABIT_STATUS[keyof typeof HABIT_STATUS],
+    notes: string,
+  ) {
+    const previousHabit = habit;
+    const updatedHabit = markDay(habit, date, status, notes);
 
     try {
-      setHabits((prev) => ({ ...prev, data: updateStateFn(streak)(prev) }));
-      await updateHabit(habit.id, { streak });
-    } catch (error) {
-      console.error("Could not update habit", { error });
+      // Optimistic update
       setHabits((prev) => ({
         ...prev,
-        data: updateStateFn(previousStreak)(prev),
+        data: prev.data.map((h) => (h.id === habit.id ? updatedHabit : h)),
+      }));
+      await updateHabit(habit.id, { streak: updatedHabit.streak });
+    } catch (error) {
+      console.error("Could not update habit", { error });
+      // Rollback
+      setHabits((prev) => ({
+        ...prev,
+        data: prev.data.map((h) => (h.id === habit.id ? previousHabit : h)),
       }));
     }
   }
@@ -139,12 +140,16 @@ export const HabitsList = () => {
       {
         {
           resolved: habits.data.map((habit) => {
-            const { id, name, streak } = habit;
-            const { longestStreak, currentStreak } = findStreaks(streak ?? []);
+            const { id, name } = habit;
+            const currentStreakData = calculateCurrentStreak(habit);
+            const longestStreakData = calculateLongestStreak(habit);
             const today = createDate(new Date());
-            const currentStreakDay = streak.find((s) =>
-              isSameDay(s.date, today),
-            );
+            
+            const currentStreakDay = habit.streak.find((s) => {
+              const sDate = createDate(s.date);
+              return sDate.getTime() === today.getTime();
+            });
+            
             const currentDayStatus =
               currentStreakDay?.status ?? HABIT_STATUS.NOT_SPECIFIED;
 
@@ -163,23 +168,23 @@ export const HabitsList = () => {
                 <span className="HabitsList-item_title">{name}</span>
                 <div className="HabitsList-item_row">
                   <ProgressBar
-                    goodDays={getGoodDays(streak).length}
-                    badDays={getBadDays(streak).length}
+                    goodDays={getGoodDays(habit).length}
+                    badDays={getBadDays(habit).length}
                   />
                 </div>
                 <div className="HabitsList-item_row">
                   <StreakStat
                     icon={STREAK_ICONS.CURRENT}
                     label="Current"
-                    value={currentStreak.streak}
-                    unit={pluralize(currentStreak.streak, "day")}
+                    value={currentStreakData.count}
+                    unit={pluralize(currentStreakData.count, "day")}
                     compact
                   />
                   <StreakStat
                     icon={STREAK_ICONS.LONGEST}
                     label="Longest"
-                    value={longestStreak.streak}
-                    unit={pluralize(longestStreak.streak, "day")}
+                    value={longestStreakData.count}
+                    unit={pluralize(longestStreakData.count, "day")}
                     compact
                   />
                 </div>
@@ -208,7 +213,7 @@ export const HabitsList = () => {
                       }
                     }
                     onUpdateStatus={(values) =>
-                      handleUpdateStreak({ ...values, habit })
+                      handleUpdateDay(habit, values.date, values.status, currentStreakDay?.notes ?? "")
                     }
                   />
                 </div>
