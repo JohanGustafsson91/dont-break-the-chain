@@ -8,6 +8,7 @@ import * as habitService from "../../services/habitService";
 import { AppBarProvider } from "../AppBar/AppBar.Provider";
 import { AppBar } from "../AppBar/AppBar";
 import type { User } from "firebase/auth";
+import type { Habit } from "../../domain/Habit";
 
 const mockNavigate = vi.fn();
 
@@ -60,7 +61,7 @@ describe("HabitsList - User workflows", () => {
 
   it("should allow user to view their habits, see streaks, and navigate to details", async () => {
     // Setup: User has two habits with different streak patterns
-    const mockHabits = [
+    const mockHabits: Habit[] = [
       {
         id: "habit-1",
         name: "Morning Exercise",
@@ -68,17 +69,17 @@ describe("HabitsList - User workflows", () => {
         streak: [
           {
             date: new Date("2025-02-09T00:00:00.000Z"),
-            status: "GOOD" as const,
+            status: "GOOD",
             notes: "Great session!",
           },
           {
             date: new Date("2025-02-08T00:00:00.000Z"),
-            status: "GOOD" as const,
+            status: "GOOD",
             notes: "",
           },
           {
             date: new Date("2025-02-07T00:00:00.000Z"),
-            status: "BAD" as const,
+            status: "BAD",
             notes: "Skipped",
           },
         ],
@@ -137,7 +138,7 @@ describe("HabitsList - User workflows", () => {
   });
 
   it("should allow user to mark today's status for a habit", async () => {
-    const mockHabits = [
+    const mockHabits: Habit[] = [
       {
         id: "habit-1",
         name: "Meditation",
@@ -175,7 +176,7 @@ describe("HabitsList - User workflows", () => {
   });
 
   it("should display habits with no streak data", async () => {
-    const mockHabits = [
+    const mockHabits: Habit[] = [
       {
         id: "habit-1",
         name: "New Habit",

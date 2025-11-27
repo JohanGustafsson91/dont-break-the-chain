@@ -11,13 +11,14 @@ import {
 import { NextMonthIcon } from "./NextMonthIcon";
 import { PrevMonthIcon } from "./PrevMonthIcon";
 import { useState } from "react";
+import { HABIT_STATUS } from "../../shared/constants";
 
 interface Props {
   streak: DayInStreak[];
   onSelectDate: (date: Date) => void;
   onUpdateDate: (args: {
     date: Date;
-    status: DayInStreak["status"] | "NOT_SPECIFIED";
+    status: DayInStreak["status"] | typeof HABIT_STATUS.NOT_SPECIFIED;
     notes: DayInStreak["notes"];
   }) => void;
 }
@@ -32,7 +33,7 @@ export const Calendar = ({ streak, onSelectDate, onUpdateDate }: Props) => {
     (_, number) => {
       const day = number + 1;
       const date = createDate({ year, month, day });
-      const { status = "NOT_SPECIFIED", notes = "" } =
+      const { status = HABIT_STATUS.NOT_SPECIFIED, notes = "" } =
         streak.find((s) => isSameDay(s.date, date)) || {};
 
       return {

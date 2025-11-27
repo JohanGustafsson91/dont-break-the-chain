@@ -9,11 +9,11 @@ import {
   QueryDocumentSnapshot,
   updateDoc,
   where,
+  Timestamp,
 } from "firebase/firestore";
-import type { DayInStreak, Habit } from "../shared/Habit";
+import type { Habit, StreakDay } from "../domain/Habit";
 import { auth, db } from "./firebaseService";
 import { createDate } from "../utils/date";
-import type firebase from "firebase/compat/app";
 import { COLLECTIONS } from "../shared/constants";
 
 export const getHabitById = async (
@@ -63,19 +63,31 @@ export const addHabit = async () => {
   return docRef.id;
 };
 
-function formatHabit(doc: QueryDocumentSnapshot) {
-  const data = doc.data();
+
+
+interface FirestoreStreakDay {
+  date: Timestamp;
+  status: StreakDay["status"];
+  notes: string;
+}
+
+interface FirestoreHabit {
+  name: string;
+  description: string;
+  streak: FirestoreStreakDay[];
+}
+
+function formatHabit(doc: QueryDocumentSnapshot): Habit {
+  const data = doc.data() as FirestoreHabit;
 
   return {
     id: doc.id,
-    ...data,
-    streak: data.streak.map((s: DayInStreak) => ({
-      ...s,
-      date: createDate(
-        new Date(
-          (s.date as unknown as firebase.firestore.Timestamp)?.seconds * 1000,
-        ),
-      ),
+    name: data.name,
+    description: data.description,
+    streak: data.streak.map((s) => ({
+      date: createDate(new Date(s.date.seconds * 1000)),
+      status: s.status,
+      notes: s.notes,
     })),
-  } as Habit;
+  };
 }

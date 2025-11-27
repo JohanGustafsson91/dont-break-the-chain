@@ -1,8 +1,8 @@
 import { createContext, useContext, ReactElement } from "react";
 
 type AppBarContextType = {
-  childrenComponents: ReactElement | null;
-  renderAppBarItems: (items: ReactElement | null) => void;
+  childrenComponents: ReactElement | undefined;
+  renderAppBarItems: (items: ReactElement | undefined) => void;
 };
 
 export const AppBarContext = createContext<AppBarContextType | undefined>(

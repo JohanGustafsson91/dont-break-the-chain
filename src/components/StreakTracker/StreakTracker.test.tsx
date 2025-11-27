@@ -7,7 +7,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import * as habitService from "../../services/habitService";
 import { AppBarProvider } from "../AppBar/AppBar.Provider";
 import { AppBar } from "../AppBar/AppBar";
-import type { Habit } from "../../shared/Habit";
+import type { Habit } from "../../domain/Habit";
 import type { User } from "firebase/auth";
 
 const mockNavigate = vi.fn();
@@ -41,7 +41,7 @@ describe("StreakTracker - Complete user journey", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     // Mock window.confirm for delete operations
-    global.confirm = vi.fn(() => true);
+    window.confirm = vi.fn(() => true);
   });
 
   beforeAll(() => {
@@ -242,7 +242,7 @@ describe("StreakTracker - Complete user journey", () => {
 
     await waitFor(() => {
       expect(consoleErrorSpy).toHaveBeenCalledWith(
-        "Could not update habit",
+        "Could not update habit name",
         { error: updateError }
       );
     });

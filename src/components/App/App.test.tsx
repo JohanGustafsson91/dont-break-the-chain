@@ -29,7 +29,6 @@ import { useAuth } from "../../services/authService";
 import { getAllHabits, getHabitById } from "../../services/habitService";
 import userEvent from "@testing-library/user-event";
 import { App } from "./App";
-import type { Habit } from "../../shared/Habit";
 import type { User } from "firebase/auth";
 
 describe("App - End-to-end user journeys", () => {
@@ -100,7 +99,7 @@ describe("App - End-to-end user journeys", () => {
 
 });
 
-const habitData = (): Habit => ({
+const habitData = () => ({
   id: "H2Jui9vlLL4fVLZViudr",
   name: "Healthy",
   description: "Eat and be healthy",
@@ -108,32 +107,32 @@ const habitData = (): Habit => ({
     {
       notes: "",
       date: new Date("2025-02-09T00:00:00.000Z"),
-      status: "GOOD",
+      status: "GOOD" as const,
     },
     {
       notes: "",
       date: new Date("2025-02-08T00:00:00.000Z"),
-      status: "GOOD",
+      status: "GOOD" as const,
     },
     {
       notes: "Dålig sömn. ",
       date: new Date("2025-02-07T00:00:00.000Z"),
-      status: "BAD",
+      status: "BAD" as const,
     },
     {
       notes: "",
       date: new Date("2025-02-06T00:00:00.000Z"),
-      status: "GOOD",
+      status: "GOOD" as const,
     },
     {
       notes: "",
       date: new Date("2025-02-05T00:00:00.000Z"),
-      status: "GOOD",
+      status: "GOOD" as const,
     },
     {
       notes: "",
       date: new Date("2025-02-04T00:00:00.000Z"),
-      status: "GOOD",
+      status: "GOOD" as const,
     },
   ],
 });
