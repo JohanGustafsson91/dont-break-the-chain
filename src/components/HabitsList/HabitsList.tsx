@@ -10,8 +10,10 @@ import {
 import { ProgressBar } from "../StreakTracker/ProgressBar";
 import { StreakStat } from "../StreakTracker/StreakStat";
 import { findStreaks } from "../../shared/findStreaks";
-
+import { HABIT_STATUS, STREAK_ICONS } from "../../shared/constants";
+import { getGoodDays, getBadDays } from "../../shared/streakUtils";
 import { createDate, isSameDay } from "../../utils/date";
+import { pluralize } from "../../utils/string";
 import { useAppBarContext } from "../AppBar/AppBar.Context";
 import { StreakStatusRadioGroup } from "../StreakStatusRadioGroup/StreakStatusRadioGroup";
 import {
@@ -20,7 +22,7 @@ import {
 } from "../../shared/getUpdatedStreak";
 
 const motivationalMessages = {
-  GOOD: [
+  [HABIT_STATUS.GOOD]: [
     "Great job! Every step counts toward your goal! 🚀",
     "Consistency is key—you're building something amazing! 🔥",
     "Another day, another win! Keep up the great work! 💪",
@@ -32,7 +34,7 @@ const motivationalMessages = {
     "Discipline > Motivation. And you've got it! 💯",
     "You're proving to yourself that you can do this! Keep it up! 💪",
   ],
-  BAD: [
+  [HABIT_STATUS.BAD]: [
     "It's okay—every day is a new chance to start fresh. 🌱",
     "Missed a day? No worries! Just get back on track tomorrow. 😊",
     "One setback doesn't define your progress. Keep going! 💪",
@@ -44,7 +46,7 @@ const motivationalMessages = {
     "Momentum can be rebuilt. Just take the next step! 👣",
     "You haven't failed until you stop trying. Get back up! 💪",
   ],
-  NOT_SPECIFIED: [
+  [HABIT_STATUS.NOT_SPECIFIED]: [
     "Keep the streak alive! Mark your progress for today.",
     "No entry for today yet—tap to stay on track!",
     "Your chain is waiting! Log today's progress.",
@@ -54,9 +56,9 @@ const motivationalMessages = {
 } as const;
 
 const itemClassByDayStatus = {
-  GOOD: "HabitsList-item_success",
-  BAD: "HabitsList-item_bad",
-  NOT_SPECIFIED: "",
+  [HABIT_STATUS.GOOD]: "HabitsList-item_success",
+  [HABIT_STATUS.BAD]: "HabitsList-item_bad",
+  [HABIT_STATUS.NOT_SPECIFIED]: "",
 };
 
 const getRandomInteger = (max: number) => {
@@ -144,7 +146,7 @@ export const HabitsList = () => {
               isSameDay(s.date, today),
             );
             const currentDayStatus =
-              currentStreakDay?.status ?? "NOT_SPECIFIED";
+              currentStreakDay?.status ?? HABIT_STATUS.NOT_SPECIFIED;
 
             return (
               <div
@@ -161,23 +163,23 @@ export const HabitsList = () => {
                 <span className="HabitsList-item_title">{name}</span>
                 <div className="HabitsList-item_row">
                   <ProgressBar
-                    goodDays={streak.filter((s) => s.status === "GOOD").length}
-                    badDays={streak.filter((s) => s.status === "BAD").length}
+                    goodDays={getGoodDays(streak).length}
+                    badDays={getBadDays(streak).length}
                   />
                 </div>
                 <div className="HabitsList-item_row">
                   <StreakStat
-                    icon="🔄"
+                    icon={STREAK_ICONS.CURRENT}
                     label="Current"
                     value={currentStreak.streak}
-                    unit={currentStreak.streak === 1 ? "day" : "days"}
+                    unit={pluralize(currentStreak.streak, "day")}
                     compact
                   />
                   <StreakStat
-                    icon="🔥"
+                    icon={STREAK_ICONS.LONGEST}
                     label="Longest"
                     value={longestStreak.streak}
-                    unit={longestStreak.streak === 1 ? "day" : "days"}
+                    unit={pluralize(longestStreak.streak, "day")}
                     compact
                   />
                 </div>
@@ -187,7 +189,9 @@ export const HabitsList = () => {
                     <i>
                       {
                         motivationalMessages[currentDayStatus][
-                          getRandomInteger(motivationalMessages[currentDayStatus].length)
+                          getRandomInteger(
+                            motivationalMessages[currentDayStatus].length,
+                          )
                         ]
                       }
                     </i>
@@ -198,7 +202,7 @@ export const HabitsList = () => {
                   <StreakStatusRadioGroup
                     currentStreakDay={
                       currentStreakDay ?? {
-                        status: "NOT_SPECIFIED",
+                        status: HABIT_STATUS.NOT_SPECIFIED,
                         date: today,
                         notes: "",
                       }

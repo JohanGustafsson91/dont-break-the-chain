@@ -3,9 +3,9 @@ import { AppBarContext } from "./AppBar.Context";
 
 export const AppBarProvider = ({ children }: { children: ReactNode }) => {
   const [childrenComponents, setChildrenComponents] =
-    useState<ReactElement | null>(null);
+    useState<ReactElement | undefined>(undefined);
 
-  const renderAppBarItems = useRef((items: ReactElement | null) => {
+  const renderAppBarItems = useRef((items: ReactElement | undefined) => {
     setChildrenComponents(items);
   });
 

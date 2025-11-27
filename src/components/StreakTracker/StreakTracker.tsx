@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import type { Habit, DayInStreak } from "../../shared/Habit";
 import { Calendar } from "./Calendar";
 import { getMonthName, isSameDay } from "../../utils/date";
+import { pluralize } from "../../utils/string";
 import { useNavigate, useParams } from "react-router-dom";
 import { EditableTextField } from "./EditableTextField";
 import "./StreakTracker.css";
@@ -13,7 +14,8 @@ import {
 import { StreakStat } from "./StreakStat";
 import { ProgressBar } from "./ProgressBar";
 import { findStreaks } from "../../shared/findStreaks";
-
+import { HABIT_STATUS, STREAK_ICONS } from "../../shared/constants";
+import { getGoodDays, getBadDays } from "../../shared/streakUtils";
 import { BottomSheet } from "./BottomSheet";
 import { useAppBarContext } from "../AppBar/AppBar.Context";
 import { StreakStatusRadioGroup } from "../StreakStatusRadioGroup/StreakStatusRadioGroup";
@@ -90,7 +92,7 @@ export const StreakTracker = () => {
       return;
     }
 
-    const notesWillBeLost = args.notes && args.status === "NOT_SPECIFIED";
+    const notesWillBeLost = args.notes && args.status === HABIT_STATUS.NOT_SPECIFIED;
     if (notesWillBeLost && !window.confirm("You notes will be lost")) {
       return;
     }
@@ -138,22 +140,22 @@ export const StreakTracker = () => {
       </div>
       <div className="stats-row">
         <ProgressBar
-          goodDays={habit.streak.filter((s) => s.status === "GOOD").length}
-          badDays={habit.streak.filter((s) => s.status === "BAD").length}
+          goodDays={getGoodDays(habit.streak).length}
+          badDays={getBadDays(habit.streak).length}
         />
       </div>
       <div className="stats-row">
         <StreakStat
-          icon="🔥"
+          icon={STREAK_ICONS.LONGEST}
           label="Longest"
           value={longestStreak.streak}
-          unit={longestStreak.streak === 1 ? "day" : "days"}
+          unit={pluralize(longestStreak.streak, "day")}
         />
         <StreakStat
-          icon="🔄"
+          icon={STREAK_ICONS.CURRENT}
           label="Current"
           value={currentStreak.streak}
-          unit={currentStreak.streak === 1 ? "day" : "days"}
+          unit={pluralize(currentStreak.streak, "day")}
         />
       </div>
 
@@ -173,7 +175,7 @@ export const StreakTracker = () => {
               <StreakStatusRadioGroup
                 currentStreakDay={
                   currentStreakDay ?? {
-                    status: "NOT_SPECIFIED",
+                    status: HABIT_STATUS.NOT_SPECIFIED,
                     date: activeDate,
                     notes: "",
                   }

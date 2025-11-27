@@ -14,7 +14,7 @@ export const AppBar = ({ user }: Props) => {
 
   useEffect(
     function clearChildrenComponentsOnNewLocation() {
-      renderAppBarItems(null);
+      renderAppBarItems(undefined);
     },
     [location.pathname, renderAppBarItems],
   );
@@ -25,11 +25,11 @@ export const AppBar = ({ user }: Props) => {
 
   return (
     <div className="AppBar">
-      {location.pathname !== "/" ? <BackArrowIcon onClick={goBack} /> : null}
+      {location.pathname !== "/" && <BackArrowIcon onClick={goBack} />}
 
-      {user.photoURL && location.pathname === "/" ? (
+      {user.photoURL && location.pathname === "/" && (
         <img alt="profile" src={user.photoURL} className="AppBar_avatar" />
-      ) : null}
+      )}
 
       <div className="AppBar-right">
         {childrenComponents}
