@@ -157,7 +157,7 @@ describe("HabitsList - User workflows", () => {
     });
 
     // User marks today as GOOD by clicking the good radio button
-    const goodRadio = screen.getByRole("radio", { name: "✅" });
+    const goodRadio = screen.getByRole("radio", { name: "✓" });
     await userEvent.click(goodRadio);
 
     // The habit service should be called to update the streak
