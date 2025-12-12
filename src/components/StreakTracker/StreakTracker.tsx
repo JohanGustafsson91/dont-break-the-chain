@@ -62,7 +62,7 @@ export const StreakTracker = () => {
       }
 
       renderAppBarItems(
-        <button type="button" onClick={() => onDelete(habit.id)}>
+        <button type="button" className="error" onClick={() => onDelete(habit.id)}>
           Delete
         </button>,
       );
@@ -152,6 +152,7 @@ export const StreakTracker = () => {
           value={habit.description}
           type="textarea"
           onUpdate={onUpdateDescription}
+          placeholder="Add a description for this habit..."
         />
       </div>
       <div className="stats-row">

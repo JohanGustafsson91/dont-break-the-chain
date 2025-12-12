@@ -19,7 +19,16 @@ textarea:focus {
 }
 
 input[type="text"] {
-  font-size: 1.5rem;
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--primary-color);
+  letter-spacing: 0.01em;
+  padding-bottom: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+input[type="text"]:focus {
+  border-bottom: 2px solid var(--primary-color);
 }
 
 textarea {

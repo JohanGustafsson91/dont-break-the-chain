@@ -139,85 +139,97 @@ export const HabitsList = () => {
 
       {
         {
-          resolved: habits.data.map((habit) => {
-            const { id, name } = habit;
-            const currentStreakData = calculateCurrentStreak(habit);
-            const longestStreakData = calculateLongestStreak(habit);
-            const today = createDate(new Date());
-            const currentStreakDay = habit.streak.find((s) => {
-              const sDate = createDate(s.date);
-              return sDate.getTime() === today.getTime();
-            });
-            const currentDayStatus =
-              currentStreakDay?.status ?? HABIT_STATUS.NOT_SPECIFIED;
-
-            return (
-              <div
-                className={`HabitsList-item ${itemClassByDayStatus[currentDayStatus]}`}
-                key={id}
-                onClick={(e) => {
-                  if ((e.target as HTMLElement).matches(".radio-custom")) {
-                    return;
-                  }
-
-                  navigateToDetailView(id);
-                }}
-              >
-                <span className="HabitsList-item_title">{name}</span>
-                <div className="HabitsList-item_row">
-                  <ProgressBar
-                    goodDays={getGoodDays(habit).length}
-                    badDays={getBadDays(habit).length}
-                  />
-                </div>
-                <div className="HabitsList-item_row">
-                  <StreakStat
-                    icon={STREAK_ICONS.CURRENT}
-                    label="Current"
-                    value={currentStreakData.count}
-                    unit={pluralize(currentStreakData.count, "day")}
-                    compact
-                  />
-                  <StreakStat
-                    icon={STREAK_ICONS.LONGEST}
-                    label="Longest"
-                    value={longestStreakData.count}
-                    unit={pluralize(longestStreakData.count, "day")}
-                    compact
-                  />
-                </div>
-
-                <div className="HabitsList-item_row">
-                  <span className="HabitsList-status-text">
-                    <i>
-                      {
-                        motivationalMessages[currentDayStatus][
-                          getRandomInteger(
-                            motivationalMessages[currentDayStatus].length,
-                          )
-                        ]
-                      }
-                    </i>
-                  </span>
-                </div>
-
-                <div className="radio-group form-element">
-                  <StreakStatusRadioGroup
-                    currentStreakDay={
-                      currentStreakDay ?? {
-                        status: HABIT_STATUS.NOT_SPECIFIED,
-                        date: today,
-                        notes: "",
-                      }
-                    }
-                    onUpdateStatus={(values) =>
-                      handleUpdateDay(habit, values.date, values.status, values.notes)
-                    }
-                  />
-                </div>
+          resolved: habits.data.length === 0 ? (
+            <div className="HabitsList-empty">
+              <div className="HabitsList-empty-icon">🎯</div>
+              <div className="HabitsList-empty-title">No habits yet</div>
+              <div className="HabitsList-empty-text">
+                Start building your streaks by creating your first habit!
               </div>
-            );
-          }),
+            </div>
+          ) : (
+            habits.data.map((habit) => {
+              const { id, name } = habit;
+              const currentStreakData = calculateCurrentStreak(habit);
+              const longestStreakData = calculateLongestStreak(habit);
+              const today = createDate(new Date());
+              const currentStreakDay = habit.streak.find((s) => {
+                const sDate = createDate(s.date);
+                return sDate.getTime() === today.getTime();
+              });
+              const currentDayStatus =
+                currentStreakDay?.status ?? HABIT_STATUS.NOT_SPECIFIED;
+
+              return (
+                <div
+                  className={`HabitsList-item ${itemClassByDayStatus[currentDayStatus]}`}
+                  key={id}
+                  onClick={(e) => {
+                    const target = e.target as HTMLElement;
+                    if (target.closest(".radio-group")) {
+                      return;
+                    }
+
+                    navigateToDetailView(id);
+                  }}
+                >
+                  <span className="HabitsList-item_title">{name}</span>
+                  <div className="HabitsList-item_row">
+                    <ProgressBar
+                      goodDays={getGoodDays(habit).length}
+                      badDays={getBadDays(habit).length}
+                    />
+                  </div>
+                  <div className="HabitsList-item_row">
+                    <StreakStat
+                      icon={STREAK_ICONS.CURRENT}
+                      label="Current"
+                      value={currentStreakData.count}
+                      unit={pluralize(currentStreakData.count, "day")}
+                      compact
+                    />
+                    <StreakStat
+                      icon={STREAK_ICONS.LONGEST}
+                      label="Longest"
+                      value={longestStreakData.count}
+                      unit={pluralize(longestStreakData.count, "day")}
+                      compact
+                    />
+                  </div>
+
+                  <div className="HabitsList-item_row">
+                    <span className="HabitsList-status-text">
+                      <i>
+                        {
+                          motivationalMessages[currentDayStatus][
+                            getRandomInteger(
+                              motivationalMessages[currentDayStatus].length,
+                            )
+                          ]
+                        }
+                      </i>
+                    </span>
+                  </div>
+
+                  <div className="radio-group form-element">
+                    <StreakStatusRadioGroup
+                      currentStreakDay={
+                        currentStreakDay ?? {
+                          status: HABIT_STATUS.NOT_SPECIFIED,
+                          date: today,
+                          notes: "",
+                        }
+                      }
+                      groupName={`habit-${id}`}
+                      onUpdateStatus={(values) =>
+                        handleUpdateDay(habit, values.date, values.status, values.notes)
+                      }
+                    />
+                  </div>
+                </div>
+              );
+            })
+          ),
           pending: <p className="loading">Fetching habits</p>,
           rejected: <p>Could not fetch habits...</p>,
         }[habits.status]

@@ -8,14 +8,13 @@ export const StreakStat: React.FC<StreakStatProps> = ({
   compact = false,
 }) => {
   return (
-    <div className={compact ? "" : "streak"}>
-      <span>
+    <div className={`streak ${compact ? "compact" : ""}`}>
+      <div className="streak-header">
         <span className="icon">{icon}</span>
-        {!compact && <strong>{label}</strong>}
-      </span>
-      <span>
-        {value} {unit}
-      </span>
+        <span>{label}</span>
+      </div>
+      <div className="streak-value">{value}</div>
+      <div className="streak-unit">{unit}</div>
     </div>
   );
 };
