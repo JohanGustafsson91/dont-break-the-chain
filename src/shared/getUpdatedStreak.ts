@@ -1,6 +1,8 @@
 import { isSameDay } from "../utils/date";
 import { DayInStreak, Habit } from "./Habit";
-import { Status } from "./Status";
+import { HABIT_STATUS } from "./constants";
+
+type Status = DayInStreak["status"] | typeof HABIT_STATUS.NOT_SPECIFIED;
 
 export const getUpdatedStreak = ({
   habit,
@@ -19,7 +21,7 @@ export const getUpdatedStreak = ({
   };
 
   const doAction =
-    status === "NOT_SPECIFIED"
+    status === HABIT_STATUS.NOT_SPECIFIED
       ? "remove"
       : habit.streak.find((s) => isSameDay(s.date, date))
         ? "update"

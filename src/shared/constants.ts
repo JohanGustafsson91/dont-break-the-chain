@@ -11,8 +11,14 @@ export const AUTH_STATUS = {
 export const HABIT_STATUS = {
   GOOD: "GOOD" as const,
   BAD: "BAD" as const,
+  NOT_SPECIFIED: "NOT_SPECIFIED" as const,
 } as const;
 
 export const COLLECTIONS = {
   HABITS: "habits" as const,
+} as const;
+
+export const STREAK_ICONS = {
+  CURRENT: "🔄",
+  LONGEST: "🔥",
 } as const;

@@ -1,26 +1,29 @@
 import { useEffect, useState } from "react";
-import type { Habit, DayInStreak } from "../../shared/Habit";
+import type { Habit } from "../../domain/Habit";
+import {
+  calculateCurrentStreak,
+  calculateLongestStreak,
+  getGoodDays,
+  getBadDays,
+  markDay,
+} from "../../domain/Habit";
+import {
+  getHabitById,
+  updateHabit,
+  deleteHabit,
+} from "../../services/habitService";
 import { Calendar } from "./Calendar";
-import { getMonthName, isSameDay } from "../../utils/date";
+import { getMonthName, createDate } from "../../utils/date";
+import { pluralize } from "../../utils/string";
 import { useNavigate, useParams } from "react-router-dom";
 import { EditableTextField } from "./EditableTextField";
 import "./StreakTracker.css";
-import {
-  deleteHabit,
-  getHabitById,
-  updateHabit,
-} from "../../services/habitService";
 import { StreakStat } from "./StreakStat";
 import { ProgressBar } from "./ProgressBar";
-import { findStreaks } from "../../shared/findStreaks";
-
+import { HABIT_STATUS, STREAK_ICONS } from "../../shared/constants";
 import { BottomSheet } from "./BottomSheet";
 import { useAppBarContext } from "../AppBar/AppBar.Context";
 import { StreakStatusRadioGroup } from "../StreakStatusRadioGroup/StreakStatusRadioGroup";
-import {
-  getUpdatedStreak,
-  GetUpdatedStreak,
-} from "../../shared/getUpdatedStreak";
 
 export const StreakTracker = () => {
   const { id } = useParams();
@@ -75,36 +78,47 @@ export const StreakTracker = () => {
     setActiveDate(date);
   }
 
-  async function onUpdateHabit(id: Habit["id"], data: Partial<Habit>) {
+  async function onUpdateName(name: string) {
+    if (!habit) return;
     try {
-      await updateHabit(id, data);
+      await updateHabit(habit.id, { name });
+      setHabit((prev) => prev ? { ...prev, name } : prev);
     } catch (error) {
-      console.error("Could not update habit", { error });
+      console.error("Could not update habit name", { error });
     }
   }
 
-  async function handleUpdateStreak(args: GetUpdatedStreak) {
-    const { habit } = args;
+  async function onUpdateDescription(description: string) {
+    if (!habit) return;
+    try {
+      await updateHabit(habit.id, { description });
+      setHabit((prev) => prev ? { ...prev, description } : prev);
+    } catch (error) {
+      console.error("Could not update habit description", { error });
+    }
+  }
 
-    if (!habit) {
+  async function handleUpdateDay(
+    date: Date,
+    status: typeof HABIT_STATUS[keyof typeof HABIT_STATUS],
+    notes: string,
+  ) {
+    if (!habit) return;
+    const previousHabit = habit;
+
+    const notesWillBeLost = notes && status === HABIT_STATUS.NOT_SPECIFIED;
+    if (notesWillBeLost && !window.confirm("Your notes will be lost")) {
       return;
     }
 
-    const notesWillBeLost = args.notes && args.status === "NOT_SPECIFIED";
-    if (notesWillBeLost && !window.confirm("You notes will be lost")) {
-      return;
-    }
-
-    const { streak, previousStreak } = getUpdatedStreak(args);
-    const updateState = (streak: DayInStreak[]) => (prev: Habit | undefined) =>
-      prev ? ({ ...prev, streak } as Habit) : prev;
+    const updatedHabit = markDay(habit, date, status, notes);
 
     try {
-      setHabit(updateState(streak));
-      await updateHabit(habit.id, { streak });
+      setHabit(updatedHabit);
+      await updateHabit(habit.id, { streak: updatedHabit.streak });
     } catch (error) {
       console.error("Could not update habit", { error });
-      setHabit(updateState(previousStreak));
+      setHabit(previousHabit);
     }
   }
 
@@ -112,11 +126,15 @@ export const StreakTracker = () => {
     setActiveDate(undefined);
   }
 
-  const currentStreakDay = habit.streak.find(
-    (s) => activeDate && isSameDay(s.date, activeDate),
-  );
+  const currentStreakDay = habit.streak.find((s) => {
+    if (!activeDate) return false;
+    const sDate = createDate(s.date);
+    const aDate = createDate(activeDate);
+    return sDate.getTime() === aDate.getTime();
+  });
 
-  const { longestStreak, currentStreak } = findStreaks(habit.streak);
+  const currentStreakData = calculateCurrentStreak(habit);
+  const longestStreakData = calculateLongestStreak(habit);
 
   return (
     <div className="page">
@@ -124,7 +142,7 @@ export const StreakTracker = () => {
         <EditableTextField
           value={habit.name}
           type="text"
-          onUpdate={(name) => onUpdateHabit(habit.id, { name })}
+          onUpdate={onUpdateName}
           allowEmpty={false}
         />
       </div>
@@ -133,34 +151,34 @@ export const StreakTracker = () => {
         <EditableTextField
           value={habit.description}
           type="textarea"
-          onUpdate={(description) => onUpdateHabit(habit.id, { description })}
+          onUpdate={onUpdateDescription}
         />
       </div>
       <div className="stats-row">
         <ProgressBar
-          goodDays={habit.streak.filter((s) => s.status === "GOOD").length}
-          badDays={habit.streak.filter((s) => s.status === "BAD").length}
+          goodDays={getGoodDays(habit).length}
+          badDays={getBadDays(habit).length}
         />
       </div>
       <div className="stats-row">
         <StreakStat
-          icon="🔥"
+          icon={STREAK_ICONS.LONGEST}
           label="Longest"
-          value={longestStreak.streak}
-          unit={longestStreak.streak === 1 ? "day" : "days"}
+          value={longestStreakData.count}
+          unit={pluralize(longestStreakData.count, "day")}
         />
         <StreakStat
-          icon="🔄"
+          icon={STREAK_ICONS.CURRENT}
           label="Current"
-          value={currentStreak.streak}
-          unit={currentStreak.streak === 1 ? "day" : "days"}
+          value={currentStreakData.count}
+          unit={pluralize(currentStreakData.count, "day")}
         />
       </div>
 
       <Calendar
         onSelectDate={handleSetActiveDate}
         streak={habit.streak}
-        onUpdateDate={(args) => handleUpdateStreak({ ...args, habit })}
+        onUpdateDate={(args) => handleUpdateDay(args.date, args.status, args.notes)}
       />
 
       {activeDate ? (
@@ -173,13 +191,13 @@ export const StreakTracker = () => {
               <StreakStatusRadioGroup
                 currentStreakDay={
                   currentStreakDay ?? {
-                    status: "NOT_SPECIFIED",
+                    status: HABIT_STATUS.NOT_SPECIFIED,
                     date: activeDate,
                     notes: "",
                   }
                 }
                 onUpdateStatus={(values) =>
-                  handleUpdateStreak({ ...values, habit })
+                  handleUpdateDay(values.date, values.status, values.notes)
                 }
               />
             </div>
@@ -193,7 +211,7 @@ export const StreakTracker = () => {
               value={currentStreakDay?.notes ?? ""}
               onUpdate={(notes) =>
                 currentStreakDay &&
-                handleUpdateStreak({ ...currentStreakDay, notes, habit })
+                handleUpdateDay(currentStreakDay.date, currentStreakDay.status, notes)
               }
               disabled={!currentStreakDay?.status}
             />

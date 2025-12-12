@@ -1,18 +1,20 @@
-import { DayInStreak } from "../../shared/Habit";
-import { Status } from "../../shared/Status";
+import type { DayInStreak } from "../../shared/Habit";
+import { HABIT_STATUS } from "../../shared/constants";
+
+type Status = DayInStreak["status"];
 
 interface Props {
   currentStreakDay: Omit<DayInStreak, "status"> & { status: Status };
-  onUpdateStatus: (arg: { status: Status; date: Date }) => void;
+  onUpdateStatus: (arg: { status: Status; date: Date; notes: string }) => void;
 }
 
 export const StreakStatusRadioGroup = ({
   currentStreakDay,
   onUpdateStatus,
 }: Props) => {
-  return ["GOOD", "BAD", "NOT_SPECIFIED"].map((status) => {
+  return [HABIT_STATUS.GOOD, HABIT_STATUS.BAD, HABIT_STATUS.NOT_SPECIFIED].map((status) => {
     const checked = Boolean(
-      (currentStreakDay?.status ?? "NOT_SPECIFIED") === status,
+      (currentStreakDay?.status ?? HABIT_STATUS.NOT_SPECIFIED) === status,
     );
 
     return (
@@ -31,10 +33,11 @@ export const StreakStatusRadioGroup = ({
             onUpdateStatus({
               status: status as Status,
               date: currentStreakDay?.date,
+              notes: currentStreakDay?.notes,
             });
           }}
         />
-        <span className="radio-custom"></span>
+        <span className="radio-custom" />
         {textByStatus[status as Status]}
       </label>
     );
@@ -42,7 +45,7 @@ export const StreakStatusRadioGroup = ({
 };
 
 const textByStatus: Record<Status, string> = {
-  GOOD: "✅",
-  BAD: "❌",
-  NOT_SPECIFIED: "⏳",
+  [HABIT_STATUS.GOOD]: "✅",
+  [HABIT_STATUS.BAD]: "❌",
+  [HABIT_STATUS.NOT_SPECIFIED]: "⏳",
 };
