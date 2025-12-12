@@ -3,7 +3,8 @@
   max-width: 1280px;
   padding: 0 1rem;
   width: 100%;
-  overflow-x: hidden;
+  height: 100vh;
+  overflow: hidden;
   display: flex;
   flex-direction: column;
   box-sizing: border-box;

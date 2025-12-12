@@ -66,6 +66,7 @@ body {
   height: 100vh;
   background-color: var(--bg-color);
   color: var(--text-color);
+  overflow: hidden;
 }
 
 button {
