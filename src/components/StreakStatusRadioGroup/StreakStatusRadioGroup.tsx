@@ -18,8 +18,8 @@ export const StreakStatusRadioGroup = ({
     const checked = currentStreakDay.status === status;
 
     return (
-      <label 
-        className={`radio-label ${checked ? 'radio-label-checked' : ''}`}
+      <label
+        className={`radio-label ${checked ? "radio-label-checked" : ""}`}
         data-status={status}
         key={status}
       >
@@ -32,6 +32,7 @@ export const StreakStatusRadioGroup = ({
           onClick={(e) => {
             e.preventDefault();
             e.stopPropagation();
+
             // Toggle behavior: if already checked, uncheck (set to NOT_SPECIFIED)
             if (checked) {
               onUpdateStatus({
@@ -60,7 +61,7 @@ export const StreakStatusRadioGroup = ({
 };
 
 const textByStatus: Record<Status, string> = {
-  [HABIT_STATUS.GOOD]: "✅",
-  [HABIT_STATUS.BAD]: "❌",
+  [HABIT_STATUS.GOOD]: "✓",
+  [HABIT_STATUS.BAD]: "✗",
   [HABIT_STATUS.NOT_SPECIFIED]: "⏳",
 };

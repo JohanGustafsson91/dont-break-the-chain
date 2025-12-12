@@ -53,6 +53,10 @@
   margin-bottom: 0;
 }
 
+.HabitsList-item .radio-group {
+  margin: 0;
+}
+
 .HabitsList-status-text {
   font-size: 0.8rem;
   margin-top: 0.5rem;
@@ -91,7 +95,15 @@
   margin-bottom: 2rem;
 }
 
-/* Radio button selected state colors based on which button is checked */
+/* Radio button colors - colored when unchecked, white bg when checked */
+.radio-label[data-status="GOOD"] {
+  color: var(--success-color);
+}
+
+.radio-label[data-status="BAD"] {
+  color: var(--error-color);
+}
+
 .radio-label.radio-label-checked[data-status="GOOD"] {
   background: var(--success-color) !important;
   color: white;
