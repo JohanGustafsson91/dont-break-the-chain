@@ -1,11 +1,11 @@
-import { DayInStreak } from "../../shared/Habit";
+import type { DayInStreak } from "../../shared/Habit";
 import { HABIT_STATUS } from "../../shared/constants";
 
-type Status = DayInStreak["status"] | typeof HABIT_STATUS.NOT_SPECIFIED;
+type Status = DayInStreak["status"];
 
 interface Props {
   currentStreakDay: Omit<DayInStreak, "status"> & { status: Status };
-  onUpdateStatus: (arg: { status: Status; date: Date }) => void;
+  onUpdateStatus: (arg: { status: Status; date: Date; notes: string }) => void;
 }
 
 export const StreakStatusRadioGroup = ({
@@ -33,10 +33,11 @@ export const StreakStatusRadioGroup = ({
             onUpdateStatus({
               status: status as Status,
               date: currentStreakDay?.date,
+              notes: currentStreakDay?.notes,
             });
           }}
         />
-        <span className="radio-custom"></span>
+        <span className="radio-custom" />
         {textByStatus[status as Status]}
       </label>
     );

@@ -211,7 +211,7 @@ export const HabitsList = () => {
                       }
                     }
                     onUpdateStatus={(values) =>
-                      handleUpdateDay(habit, values.date, values.status, currentStreakDay?.notes ?? "")
+                      handleUpdateDay(habit, values.date, values.status, values.notes)
                     }
                   />
                 </div>

@@ -177,8 +177,8 @@ export const StreakTracker = () => {
 
       <Calendar
         onSelectDate={handleSetActiveDate}
-        streak={Array.from(habit.streak)}
-        onUpdateDate={(args) => handleUpdateDay(args.date, args.status, currentStreakDay?.notes ?? "")}
+        streak={habit.streak}
+        onUpdateDate={(args) => handleUpdateDay(args.date, args.status, args.notes)}
       />
 
       {activeDate ? (
@@ -197,7 +197,7 @@ export const StreakTracker = () => {
                   }
                 }
                 onUpdateStatus={(values) =>
-                  handleUpdateDay(values.date, values.status, currentStreakDay?.notes ?? "")
+                  handleUpdateDay(values.date, values.status, values.notes)
                 }
               />
             </div>
