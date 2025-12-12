@@ -129,13 +129,15 @@ describe("StreakTracker - Complete user journey", () => {
     expect(screen.getByText("🔥")).toBeInTheDocument(); // Longest streak icon
     expect(screen.getByText("🔄")).toBeInTheDocument(); // Current streak icon
     
-    // Longest streak is 3 days (Feb 10-11 are broken by bad day on 12, then 13-14)
-    const longestStreakStat = screen.getByText("Longest").closest("div");
-    expect(within(longestStreakStat!).getByText("2 days")).toBeInTheDocument();
+    // Longest streak is 2 days (Feb 13-14)
+    const longestStreakStat = screen.getByText("Longest").closest(".streak") as HTMLElement;
+    expect(within(longestStreakStat).getByText("2")).toBeInTheDocument();
+    expect(within(longestStreakStat).getByText("days")).toBeInTheDocument();
     
     // Current streak is 2 days (Feb 13-14, still active as of Feb 15)
-    const currentStreakStat = screen.getByText("Current").closest("div");
-    expect(within(currentStreakStat!).getByText("2 days")).toBeInTheDocument();
+    const currentStreakStat = screen.getByText("Current").closest(".streak") as HTMLElement;
+    expect(within(currentStreakStat).getByText("2")).toBeInTheDocument();
+    expect(within(currentStreakStat).getByText("days")).toBeInTheDocument();
 
     // User sees the calendar for February 2025
     expect(screen.getByText("February 2025")).toBeInTheDocument();
