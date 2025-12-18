@@ -9,13 +9,19 @@ import { AppBarProvider } from "../AppBar/AppBar.Provider";
 import { initializeNotifications } from "../../services/notificationService";
 import { DebugNotificationButton } from "../DebugNotificationButton/DebugNotificationButton";
 
+const hasNotificationPermission = (): boolean =>
+  typeof window !== "undefined" &&
+  "Notification" in window &&
+  (Notification.permission === "granted" || Notification.permission === "denied");
+
 export const App = () => {
   useEffect(() => {
-    // Initialize notifications after a short delay to not interrupt initial load
-    const timer = setTimeout(() => {
+    if (hasNotificationPermission()) {
       initializeNotifications();
-    }, 2000);
+      return;
+    }
 
+    const timer = setTimeout(() => initializeNotifications(), 2000);
     return () => clearTimeout(timer);
   }, []);
 

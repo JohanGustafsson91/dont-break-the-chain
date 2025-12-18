@@ -1,13 +1,12 @@
-import {onSchedule} from "firebase-functions/v2/scheduler";
+import { onSchedule } from "firebase-functions/v2/scheduler";
 import * as admin from "firebase-admin";
 
 admin.initializeApp();
 
 const COLLECTIONS = {
   HABITS: "habits",
-  USERS: "users",
   FCM_TOKENS: "fcmTokens",
-};
+} as const;
 
 interface StreakDay {
   date: FirebaseFirestore.Timestamp;
@@ -25,198 +24,121 @@ interface Habit {
 interface FCMToken {
   userId: string;
   token: string;
-  createdAt: FirebaseFirestore.Timestamp;
-  updatedAt: FirebaseFirestore.Timestamp;
 }
 
-/**
- * Check if a habit has been logged for today
- */
 const hasLoggedToday = (habit: Habit): boolean => {
-  if (!habit.streak || habit.streak.length === 0) {
-    return false;
-  }
+  if (!habit.streak?.length) return false;
 
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
-  const lastStreakDay = habit.streak[habit.streak.length - 1];
-  const lastStreakDate = lastStreakDay.date.toDate();
+  const lastStreakDate = habit.streak[habit.streak.length - 1].date.toDate();
   lastStreakDate.setHours(0, 0, 0, 0);
 
   return lastStreakDate.getTime() === today.getTime();
 };
 
-/**
- * Get FCM tokens for a user
- */
 const getUserTokens = async (userId: string): Promise<string[]> => {
-  const tokensSnapshot = await admin
+  const snapshot = await admin
     .firestore()
     .collection(COLLECTIONS.FCM_TOKENS)
     .where("userId", "==", userId)
     .get();
 
-  return tokensSnapshot.docs.map((doc) => (doc.data() as FCMToken).token);
+  return snapshot.docs.map((doc) => (doc.data() as FCMToken).token);
 };
 
-/**
- * Send notification to user
- */
+const cleanupInvalidToken = async (token: string): Promise<void> => {
+  await admin.firestore().collection(COLLECTIONS.FCM_TOKENS).doc(token).delete();
+};
+
 const sendNotification = async (
   tokens: string[],
   title: string,
   body: string
 ): Promise<void> => {
-  if (tokens.length === 0) {
-    return;
-  }
+  if (!tokens.length) return;
 
-  try {
-    await admin.messaging().sendEachForMulticast({
-      tokens,
+  const response = await admin.messaging().sendEachForMulticast({
+    tokens,
+    notification: { title, body },
+    webpush: {
+      fcmOptions: { link: "/" },
       notification: {
-        title,
-        body,
+        icon: "/icon.svg",
+        badge: "/icon.svg",
+        requireInteraction: false,
       },
-      webpush: {
-        fcmOptions: {
-          link: "/",
-        },
-        notification: {
-          icon: "/icon.svg",
-          badge: "/icon.svg",
-          requireInteraction: false,
-        },
-      },
-    });
-  } catch (error) {
-    console.error("Error sending notification:", error);
-  }
+    },
+  });
+
+  const invalidTokens = response.responses
+    .map((r, idx) => (r.success ? null : tokens[idx]))
+    .filter((token): token is string => token !== null);
+
+  await Promise.all(invalidTokens.map(cleanupInvalidToken));
 };
 
-/**
- * Morning reminder - sent at 7:30 AM daily
- * Reminds users to check in on their habits
- */
+const groupHabitsByUser = (
+  habits: Habit[],
+  filterFn?: (habit: Habit) => boolean
+): Map<string, Habit[]> => {
+  const filtered = filterFn ? habits.filter(filterFn) : habits;
+  
+  return filtered.reduce((acc, habit) => {
+    const userHabits = acc.get(habit.author) || [];
+    acc.set(habit.author, [...userHabits, habit]);
+    return acc;
+  }, new Map<string, Habit[]>());
+};
+
+const sendUserNotifications = async (
+  userHabitsMap: Map<string, Habit[]>,
+  getMessage: (count: number) => { title: string; body: string }
+): Promise<void> => {
+  const notifications = Array.from(userHabitsMap.entries()).map(
+    async ([userId, habits]) => {
+      const tokens = await getUserTokens(userId);
+      const { title, body } = getMessage(habits.length);
+      await sendNotification(tokens, title, body);
+    }
+  );
+
+  await Promise.all(notifications);
+};
+
 export const morningReminder = onSchedule(
   {
-    schedule: "30 7 * * *", // Every day at 7:30 AM
-    timeZone: "Europe/Stockholm", // Sweden timezone
+    schedule: "30 7 * * *",
+    timeZone: "Europe/Stockholm",
     region: "us-central1",
   },
   async () => {
-    console.log("Running morning reminder...");
+    const snapshot = await admin.firestore().collection(COLLECTIONS.HABITS).get();
+    const habits = snapshot.docs.map((doc) => doc.data() as Habit);
+    const userHabitsMap = groupHabitsByUser(habits);
 
-    try {
-      // Get all users with habits
-      const habitsSnapshot = await admin
-        .firestore()
-        .collection(COLLECTIONS.HABITS)
-        .get();
-
-      // Group habits by user
-      const userHabits = new Map<string, Habit[]>();
-      for (const doc of habitsSnapshot.docs) {
-        const habit = doc.data() as Habit;
-        const userId = habit.author;
-
-        if (!userHabits.has(userId)) {
-          userHabits.set(userId, []);
-        }
-        const habits = userHabits.get(userId);
-        if (habits) {
-          habits.push(habit);
-        }
-      }
-
-      // Send notifications to each user
-      const promises = Array.from(userHabits.entries()).map(
-        async ([userId, habits]) => {
-          const tokens = await getUserTokens(userId);
-
-          if (tokens.length > 0) {
-            const habitCount = habits.length;
-            await sendNotification(
-              tokens,
-              "Good morning!",
-              `Time to check in on your ${habitCount} habit${
-                habitCount > 1 ? "s" : ""
-              } for today`
-            );
-          }
-        }
-      );
-
-      await Promise.all(promises);
-      console.log(`Morning reminders sent to ${userHabits.size} users`);
-    } catch (error) {
-      console.error("Error in morning reminder:", error);
-    }
+    await sendUserNotifications(userHabitsMap, (count) => ({
+      title: "Good morning!",
+      body: `Time to check in on your ${count} habit${count > 1 ? "s" : ""} for today`,
+    }));
   }
 );
 
-/**
- * Evening reminder - sent at 8:00 PM daily
- * Reminds users about unlogged habits
- */
 export const eveningReminder = onSchedule(
   {
-    schedule: "0 20 * * *", // Every day at 8:00 PM
-    timeZone: "Europe/Stockholm", // Sweden timezone
+    schedule: "0 20 * * *",
+    timeZone: "Europe/Stockholm",
     region: "us-central1",
   },
   async () => {
-    console.log("Running evening reminder...");
+    const snapshot = await admin.firestore().collection(COLLECTIONS.HABITS).get();
+    const habits = snapshot.docs.map((doc) => doc.data() as Habit);
+    const userHabitsMap = groupHabitsByUser(habits, (h) => !hasLoggedToday(h));
 
-    try {
-      // Get all habits
-      const habitsSnapshot = await admin
-        .firestore()
-        .collection(COLLECTIONS.HABITS)
-        .get();
-
-      // Group habits by user and check if logged
-      const userUnloggedHabits = new Map<string, Habit[]>();
-      for (const doc of habitsSnapshot.docs) {
-        const habit = doc.data() as Habit;
-        const userId = habit.author;
-
-        if (!hasLoggedToday(habit)) {
-          if (!userUnloggedHabits.has(userId)) {
-            userUnloggedHabits.set(userId, []);
-          }
-          const unloggedHabits = userUnloggedHabits.get(userId);
-          if (unloggedHabits) {
-            unloggedHabits.push(habit);
-          }
-        }
-      }
-
-      // Send notifications to users with unlogged habits
-      const promises = Array.from(userUnloggedHabits.entries()).map(
-        async ([userId, unloggedHabits]) => {
-          const tokens = await getUserTokens(userId);
-
-          if (tokens.length > 0) {
-            const count = unloggedHabits.length;
-            await sendNotification(
-              tokens,
-              "Habit reminder",
-              `Don't forget to log ${count} habit${
-                count > 1 ? "s" : ""
-              } for today!`
-            );
-          }
-        }
-      );
-
-      await Promise.all(promises);
-      console.log(
-        `Evening reminders sent to ${userUnloggedHabits.size} users`
-      );
-    } catch (error) {
-      console.error("Error in evening reminder:", error);
-    }
+    await sendUserNotifications(userHabitsMap, (count) => ({
+      title: "Habit reminder",
+      body: `Don't forget to log ${count} habit${count > 1 ? "s" : ""} for today!`,
+    }));
   }
 );

@@ -5,7 +5,33 @@ import { VitePWA } from "vite-plugin-pwa";
 import { readFileSync, writeFileSync } from "node:fs";
 import { resolve } from "node:path";
 
-// https://vite.dev/config/
+const replaceEnvVars = (content: string, env: Record<string, string>): string =>
+  content
+    .replace("${VITE_API_KEY}", env.VITE_API_KEY || "")
+    .replace("${VITE_AUTH_DOMAIN}", env.VITE_AUTH_DOMAIN || "")
+    .replace("${VITE_PROJECT_ID}", env.VITE_PROJECT_ID || "")
+    .replace("${VITE_STORAGE_BUCKET}", env.VITE_STORAGE_BUCKET || "")
+    .replace("${VITE_MESSAGING_SENDER_ID}", env.VITE_MESSAGING_SENDER_ID || "")
+    .replace("${VITE_APP_ID}", env.VITE_APP_ID || "");
+
+const createFirebaseConfigPlugin = (env: Record<string, string>) => ({
+  name: "inject-firebase-config",
+  writeBundle() {
+    const swPath = resolve(__dirname, "dist/firebase-messaging-sw.js");
+    const templatePath = resolve(__dirname, "public/firebase-messaging-sw.js");
+
+    try {
+      const template = readFileSync(templatePath, "utf-8");
+      const swContent = replaceEnvVars(template, env);
+      writeFileSync(swPath, swContent);
+      console.log("✓ Firebase messaging service worker generated");
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      throw new Error(`Service worker generation failed: ${message}`);
+    }
+  },
+});
+
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), "");
 
@@ -42,41 +68,7 @@ export default defineConfig(({ mode }) => {
           globPatterns: ["**/*.{js,css,html,ico,png,svg}"],
         },
       }),
-      // Plugin to inject Firebase config into service worker
-      {
-        name: "inject-firebase-config",
-        writeBundle() {
-          const swPath = resolve(__dirname, "dist/firebase-messaging-sw.js");
-          const templatePath = resolve(
-            __dirname,
-            "public/firebase-messaging-sw.js"
-          );
-
-          try {
-            let swContent = readFileSync(templatePath, "utf-8");
-
-            // Replace placeholders with actual env values
-            swContent = swContent
-              .replace("${VITE_API_KEY}", env.VITE_API_KEY || "")
-              .replace("${VITE_AUTH_DOMAIN}", env.VITE_AUTH_DOMAIN || "")
-              .replace("${VITE_PROJECT_ID}", env.VITE_PROJECT_ID || "")
-              .replace("${VITE_STORAGE_BUCKET}", env.VITE_STORAGE_BUCKET || "")
-              .replace(
-                "${VITE_MESSAGING_SENDER_ID}",
-                env.VITE_MESSAGING_SENDER_ID || ""
-              )
-              .replace("${VITE_APP_ID}", env.VITE_APP_ID || "");
-
-            writeFileSync(swPath, swContent);
-            console.log("✓ Firebase messaging service worker generated");
-          } catch (error) {
-            console.warn(
-              "Could not generate firebase-messaging-sw.js:",
-              error
-            );
-          }
-        },
-      },
+      createFirebaseConfigPlugin(env),
     ],
 
     test: {

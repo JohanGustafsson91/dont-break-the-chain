@@ -1,130 +1,81 @@
-/**
- * Notification Service with Firebase Cloud Messaging (FCM)
- * Handles push notification permissions and FCM token management
- */
-
 import { getMessaging, getToken, onMessage } from "firebase/messaging";
 import { doc, setDoc, serverTimestamp } from "firebase/firestore";
 import { db, auth } from "./firebaseService";
+import { COLLECTIONS } from "../shared/constants";
 
-const COLLECTIONS = {
-  FCM_TOKENS: "fcmTokens",
-};
-
-// Your Firebase Cloud Messaging VAPID key (public key)
-// Get this from: Firebase Console > Project Settings > Cloud Messaging > Web Push certificates
 const VAPID_KEY = import.meta.env.VITE_FCM_VAPID_KEY;
 
-/**
- * Request notification permission and get FCM token
- */
-export const requestNotificationPermission = async (): Promise<boolean> => {
-  if (!("Notification" in window)) {
-    console.warn("This browser does not support notifications");
-    return false;
-  }
+const isNotificationSupported = (): boolean =>
+  "Notification" in window;
 
-  if (Notification.permission === "granted") {
+const isPermissionGranted = (): boolean =>
+  Notification.permission === "granted";
+
+const saveFCMToken = async (): Promise<void> => {
+  if (!VAPID_KEY) return;
+
+  const messaging = getMessaging();
+  const token = await getToken(messaging, { vapidKey: VAPID_KEY });
+
+  if (!token || !auth.currentUser) return;
+
+  const tokenRef = doc(db, COLLECTIONS.FCM_TOKENS, token);
+  await setDoc(tokenRef, {
+    userId: auth.currentUser.uid,
+    token,
+    createdAt: serverTimestamp(),
+    updatedAt: serverTimestamp(),
+  });
+};
+
+export const requestNotificationPermission = async (): Promise<boolean> => {
+  if (!isNotificationSupported()) return false;
+  if (isPermissionGranted()) {
     await saveFCMToken();
     return true;
   }
+  if (Notification.permission === "denied") return false;
 
-  if (Notification.permission !== "denied") {
-    const permission = await Notification.requestPermission();
-    if (permission === "granted") {
-      await saveFCMToken();
-      return true;
-    }
-  }
-
-  return false;
+  const permission = await Notification.requestPermission();
+  const granted = permission === "granted";
+  
+  if (granted) await saveFCMToken();
+  
+  return granted;
 };
 
-/**
- * Get FCM token and save to Firestore
- */
-const saveFCMToken = async (): Promise<void> => {
-  try {
-    const messaging = getMessaging();
-    const token = await getToken(messaging, {
-      vapidKey: VAPID_KEY,
-    });
+export const areNotificationsEnabled = (): boolean =>
+  isNotificationSupported() && isPermissionGranted();
 
-    if (token && auth.currentUser) {
-      const userId = auth.currentUser.uid;
-      const tokenRef = doc(db, COLLECTIONS.FCM_TOKENS, token);
-
-      await setDoc(tokenRef, {
-        userId,
-        token,
-        createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp(),
-      });
-
-      console.log("FCM token saved successfully");
-    }
-  } catch (error) {
-    console.error("Error getting FCM token:", error);
-  }
-};
-
-/**
- * Check if notifications are currently enabled
- */
-export const areNotificationsEnabled = (): boolean => {
-  return "Notification" in window && Notification.permission === "granted";
-};
-
-/**
- * Initialize FCM and listen for foreground messages
- */
-export const initializeNotifications = async (): Promise<void> => {
-  const hasPermission = await requestNotificationPermission();
-
-  if (!hasPermission) {
-    console.log("Notification permission denied");
-    return;
-  }
-
-  // Listen for foreground messages
-  const messaging = getMessaging();
-  onMessage(messaging, (payload) => {
-    console.log("Foreground message received:", payload);
-
-    if (payload.notification) {
-      const { title, body } = payload.notification;
-      if (title && body) {
-        showNotification(title, body);
-      }
-    }
-  });
-
-  console.log("FCM initialized successfully");
-};
-
-/**
- * Show a notification (for foreground messages)
- */
 const showNotification = (title: string, body: string): void => {
-  if (!areNotificationsEnabled()) {
-    return;
-  }
+  if (!areNotificationsEnabled()) return;
+
+  const notificationOptions = {
+    body,
+    icon: "/icon.svg",
+    badge: "/icon.svg",
+    tag: "habit-reminder",
+  };
 
   if ("serviceWorker" in navigator) {
-    navigator.serviceWorker.ready.then((registration) => {
-      registration.showNotification(title, {
-        body,
-        icon: "/icon.svg",
-        badge: "/icon.svg",
-        tag: "habit-reminder",
-        requireInteraction: false,
-      });
-    });
-  } else {
-    new Notification(title, {
-      body,
-      icon: "/icon.svg",
-      tag: "habit-reminder",
-    });
+    navigator.serviceWorker.ready.then((registration) =>
+      registration.showNotification(title, notificationOptions)
+    );
+    return;
   }
+
+  new Notification(title, notificationOptions);
+};
+
+export const initializeNotifications = async (): Promise<void> => {
+  const hasPermission = await requestNotificationPermission();
+  if (!hasPermission) return;
+
+  const messaging = getMessaging();
+  onMessage(messaging, (payload) => {
+    const title = payload.notification?.title;
+    const body = payload.notification?.body;
+    
+    if (title && body) showNotification(title, body);
+  });
 };
