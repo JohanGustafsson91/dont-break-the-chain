@@ -7,7 +7,6 @@ import { Login } from "../Login/Login";
 import { HabitsList } from "../HabitsList/HabitsList";
 import { AppBarProvider } from "../AppBar/AppBar.Provider";
 import { initializeNotifications } from "../../services/notificationService";
-import { DebugNotificationButton } from "../DebugNotificationButton/DebugNotificationButton";
 
 const hasNotificationPermission = (): boolean =>
   typeof window !== "undefined" &&
@@ -55,7 +54,6 @@ export const App = () => {
           />
         </Routes>
       </Router>
-      <DebugNotificationButton />
     </AppBarProvider>
   );
 };
