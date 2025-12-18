@@ -96,12 +96,12 @@ const sendNotification = async (
 };
 
 /**
- * Morning reminder - sent at 9:00 AM daily
+ * Morning reminder - sent at 7:30 AM daily
  * Reminds users to check in on their habits
  */
 export const morningReminder = onSchedule(
   {
-    schedule: "0 9 * * *", // Every day at 9:00 AM
+    schedule: "30 7 * * *", // Every day at 7:30 AM
     timeZone: "Europe/Stockholm", // Sweden timezone
     region: "us-central1",
   },

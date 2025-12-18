@@ -54,7 +54,7 @@ Note: You may need to upgrade to the Firebase Blaze plan (pay-as-you-go) to depl
 
 ### Notification Schedule
 
-- **9:00 AM**: Morning reminder sent to all users
+- **7:30 AM**: Morning reminder sent to all users
   - "Good morning! Time to check in on your X habit(s) for today"
 
 - **8:00 PM**: Evening reminder sent to users with unlogged habits
