@@ -9,22 +9,23 @@ import { AppBarProvider } from "../AppBar/AppBar.Provider";
 import { initializeNotifications } from "../../services/notificationService";
 import { useAuth } from "../../services/authService";
 
-const hasNotificationPermission = (): boolean =>
-  typeof window !== "undefined" &&
-  "Notification" in window &&
-  (Notification.permission === "granted" || Notification.permission === "denied");
-
 export const App = () => {
   const { user } = useAuth();
 
   useEffect(() => {
     if (!user) return;
 
-    if (hasNotificationPermission()) {
+    const hasPermission =
+      "Notification" in window &&
+      (Notification.permission === "granted" || Notification.permission === "denied");
+
+    if (hasPermission) {
       initializeNotifications();
       return;
     }
 
+    // Delay notification permission request by 2 seconds after login
+    // to avoid interrupting the user immediately after authentication
     const timer = setTimeout(() => initializeNotifications(), 2000);
     return () => clearTimeout(timer);
   }, [user]);

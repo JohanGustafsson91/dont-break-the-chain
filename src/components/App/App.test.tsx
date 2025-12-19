@@ -24,6 +24,12 @@ vi.mock("../../utils/logger", () => ({
   },
 }));
 
+vi.mock("../../services/notificationService.ts", () => ({
+  initializeNotifications: vi.fn(),
+  areNotificationsEnabled: vi.fn(),
+  requestNotificationPermission: vi.fn(),
+}));
+
 import { render, screen, waitFor } from "@testing-library/react";
 import { useAuth } from "../../services/authService";
 import { getAllHabits, getHabitById } from "../../services/habitService";

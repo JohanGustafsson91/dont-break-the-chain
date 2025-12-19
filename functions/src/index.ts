@@ -10,7 +10,7 @@ const COLLECTIONS = {
 
 interface StreakDay {
   date: FirebaseFirestore.Timestamp;
-  status: "success" | "failure" | "skipped";
+  status: "GOOD" | "BAD" | "NOT_SPECIFIED";
   notes: string;
 }
 

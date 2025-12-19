@@ -5,6 +5,13 @@ import { COLLECTIONS } from "../shared/constants";
 
 const VAPID_KEY = import.meta.env.VITE_FCM_VAPID_KEY;
 
+if (!VAPID_KEY) {
+  throw new Error(
+    "VITE_FCM_VAPID_KEY environment variable is required. " +
+    "Please add it to your .env.development.local or .env.production.local file."
+  );
+}
+
 const isNotificationSupported = (): boolean =>
   "Notification" in window;
 
@@ -13,12 +20,14 @@ const isPermissionGranted = (): boolean =>
 
 const saveFCMToken = async (): Promise<void> => {
   try {
-    if (!VAPID_KEY || !auth.currentUser) return;
+    if (!auth.currentUser) return;
 
     const messaging = getMessaging();
     
     if (!("serviceWorker" in navigator)) return;
     
+    // Register Firebase Messaging service worker separately from VitePWA
+    // FCM requires its own dedicated service worker to handle background messages
     await navigator.serviceWorker.register("/firebase-messaging-sw.js");
     const swRegistration = await navigator.serviceWorker.ready;
     
