@@ -14,5 +14,12 @@
         "headers": [{ "key": "Cache-Control", "value": "no-cache" }]
       }
     ]
+  },
+  "functions": {
+    "source": "functions"
+  },
+  "firestore": {
+    "rules": "firestore.rules",
+    "indexes": "firestore.indexes.json"
   }
 }
