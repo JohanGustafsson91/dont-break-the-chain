@@ -16,8 +16,8 @@ messaging.onBackgroundMessage((payload) => {
   const title = payload.notification?.title || 'Habit Reminder';
   const options = {
     body: payload.notification?.body || 'Don\'t forget to log your habits!',
-    icon: '/icon.svg',
-    badge: '/icon.svg',
+    icon: '/web-app-manifest-192x192.png',
+    badge: '/web-app-manifest-192x192.png',
     tag: 'habit-reminder',
   };
 

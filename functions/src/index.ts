@@ -65,8 +65,8 @@ const sendNotification = async (
     webpush: {
       fcmOptions: { link: "/" },
       notification: {
-        icon: "/icon.svg",
-        badge: "/icon.svg",
+        icon: "/web-app-manifest-192x192.png",
+        badge: "/web-app-manifest-192x192.png",
         requireInteraction: false,
       },
     },

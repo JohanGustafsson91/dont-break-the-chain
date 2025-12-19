@@ -12,20 +12,33 @@ const isPermissionGranted = (): boolean =>
   Notification.permission === "granted";
 
 const saveFCMToken = async (): Promise<void> => {
-  if (!VAPID_KEY) return;
+  try {
+    if (!VAPID_KEY || !auth.currentUser) return;
 
-  const messaging = getMessaging();
-  const token = await getToken(messaging, { vapidKey: VAPID_KEY });
+    const messaging = getMessaging();
+    
+    if (!("serviceWorker" in navigator)) return;
+    
+    await navigator.serviceWorker.register("/firebase-messaging-sw.js");
+    const swRegistration = await navigator.serviceWorker.ready;
+    
+    const token = await getToken(messaging, { 
+      vapidKey: VAPID_KEY,
+      serviceWorkerRegistration: swRegistration
+    });
 
-  if (!token || !auth.currentUser) return;
+    if (!token) return;
 
-  const tokenRef = doc(db, COLLECTIONS.FCM_TOKENS, token);
-  await setDoc(tokenRef, {
-    userId: auth.currentUser.uid,
-    token,
-    createdAt: serverTimestamp(),
-    updatedAt: serverTimestamp(),
-  });
+    const tokenRef = doc(db, COLLECTIONS.FCM_TOKENS, token);
+    await setDoc(tokenRef, {
+      userId: auth.currentUser.uid,
+      token,
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
+    });
+  } catch (error) {
+    console.error("Error saving FCM token:", error);
+  }
 };
 
 export const requestNotificationPermission = async (): Promise<boolean> => {
@@ -52,8 +65,8 @@ const showNotification = (title: string, body: string): void => {
 
   const notificationOptions = {
     body,
-    icon: "/icon.svg",
-    badge: "/icon.svg",
+    icon: "/web-app-manifest-192x192.png",
+    badge: "/web-app-manifest-192x192.png",
     tag: "habit-reminder",
   };
 

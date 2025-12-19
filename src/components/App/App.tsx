@@ -7,6 +7,7 @@ import { Login } from "../Login/Login";
 import { HabitsList } from "../HabitsList/HabitsList";
 import { AppBarProvider } from "../AppBar/AppBar.Provider";
 import { initializeNotifications } from "../../services/notificationService";
+import { useAuth } from "../../services/authService";
 
 const hasNotificationPermission = (): boolean =>
   typeof window !== "undefined" &&
@@ -14,7 +15,11 @@ const hasNotificationPermission = (): boolean =>
   (Notification.permission === "granted" || Notification.permission === "denied");
 
 export const App = () => {
+  const { user } = useAuth();
+
   useEffect(() => {
+    if (!user) return;
+
     if (hasNotificationPermission()) {
       initializeNotifications();
       return;
@@ -22,7 +27,7 @@ export const App = () => {
 
     const timer = setTimeout(() => initializeNotifications(), 2000);
     return () => clearTimeout(timer);
-  }, []);
+  }, [user]);
 
   return (
     <AppBarProvider>
