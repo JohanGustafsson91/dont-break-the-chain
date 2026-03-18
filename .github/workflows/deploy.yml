@@ -30,7 +30,7 @@ jobs:
 
       # Setup pnpm package manager
       - name: Setup pnpm
-        uses: pnpm/action-setup@v4
+        uses: pnpm/action-setup@v5
         with:
           version: latest
 
