@@ -16,6 +16,7 @@ export const HABIT_STATUS = {
 
 export const COLLECTIONS = {
   HABITS: "habits" as const,
+  FCM_TOKENS: "fcmTokens" as const,
 } as const;
 
 export const STREAK_ICONS = {
