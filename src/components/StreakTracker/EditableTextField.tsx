@@ -21,7 +21,7 @@ export const EditableTextField = ({
         ? setText(value)
         : onUpdate(updatedValue);
     },
-    placeholder: disabled ? "" : placeholder,
+    placeholder,
     disabled,
   };
 

@@ -68,17 +68,17 @@ describe("App - End-to-end user journeys", () => {
     });
 
     // User sees all the key information
-    expect(screen.getByText(/83.3%/i)).toBeInTheDocument();
+    expect(screen.getByText("Good 83 %")).toBeInTheDocument();
     expect(screen.getByText(/February 2025/i)).toBeInTheDocument();
     expect(screen.getByText(/Longest/i)).toBeInTheDocument();
     expect(screen.getByText(/Current/i)).toBeInTheDocument();
     // Streak values are displayed (number and unit are in separate elements now)
     const longestStreak = screen.getByText(/Longest/i).closest('.streak');
     expect(longestStreak).toHaveTextContent('3');
-    expect(longestStreak).toHaveTextContent('days');
+    expect(longestStreak).toHaveTextContent('days, best chain');
     const currentStreak = screen.getByText(/Current/i).closest('.streak');
     expect(currentStreak).toHaveTextContent('2');
-    expect(currentStreak).toHaveTextContent('days');
+    expect(currentStreak).toHaveTextContent('days in a row');
 
     // User sees the calendar with correct number of days for February
     const daysInMonth = Array.from({ length: 28 }, (_, i) => i + 1);

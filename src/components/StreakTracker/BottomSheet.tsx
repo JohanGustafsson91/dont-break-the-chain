@@ -1,9 +1,8 @@
 import "./BottomSheet.css";
-import { PropsWithChildren, useEffect, useRef, useState } from "react";
+import { ReactNode, useState } from "react";
 
 export const BottomSheet = ({ onClose, children }: Props) => {
   const [isClosing, setIsClosing] = useState(false);
-  const ref = useClickOutside<HTMLDivElement>(() => handleClose());
 
   function handleClose() {
     setIsClosing(true);
@@ -16,32 +15,14 @@ export const BottomSheet = ({ onClose, children }: Props) => {
         className={`BottomSheet-backdrop ${isClosing ? "hidden" : ""}`}
         onClick={handleClose}
       />
-      <div className={`BottomSheet ${isClosing ? "hidden" : ""}`} ref={ref}>
-        {children}
+      <div className={`BottomSheet ${isClosing ? "hidden" : ""}`}>
+        {children(handleClose)}
       </div>
     </>
   );
 };
 
-function useClickOutside<T extends HTMLElement>(callback: () => void) {
-  const ref = useRef<T>(null);
-
-  useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      if (ref.current && !ref.current.contains(event.target as Node)) {
-        callback();
-      }
-    }
-
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, [callback]);
-
-  return ref;
-}
-
-type Props = PropsWithChildren<{
+interface Props {
   onClose: () => void;
-}>;
+  children: (close: () => void) => ReactNode;
+}

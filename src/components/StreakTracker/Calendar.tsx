@@ -62,6 +62,7 @@ export const Calendar = ({ streak, onSelectDate, onUpdateDate }: Props) => {
         <button
           className="icon-button"
           type="button"
+          aria-label="Previous month"
           onClick={() =>
             setActiveDate(
               createDate({
@@ -80,6 +81,7 @@ export const Calendar = ({ streak, onSelectDate, onUpdateDate }: Props) => {
         <button
           className="icon-button"
           type="button"
+          aria-label="Next month"
           disabled={isNextMonthDisabled(activeDate)}
           onClick={() =>
             setActiveDate(
@@ -105,23 +107,34 @@ export const Calendar = ({ streak, onSelectDate, onUpdateDate }: Props) => {
 
       {weeksWithDays.map((week, weekNumber) => (
         <div key={`week-${weekNumber}`}>
-          {week.map((day) => {
+          {week.map((day, weekDay) => {
             if (typeof day === "number") {
-              return <div className="Calendar-day" key={day} />;
+              return <div className="Calendar-day Calendar-day_empty" key={day} />;
             }
 
-            const activeClassName = isSameDay(day.date, activeDate)
-              ? "Calendar-day_active"
-              : "";
+            const isToday = isSameDay(day.date, new Date());
+            const todayClassName = isToday ? "Calendar-day_today" : "";
+            const futureClassName = isBeforeOrSameDay(day.date)
+              ? ""
+              : "Calendar-day_future";
+
+            // Links don't wrap to the next week row or into the next month.
+            const nextDay = daysInMonthWithStreakData[day.number];
+            const linkedClassName =
+              day.status === HABIT_STATUS.GOOD &&
+              nextDay?.status === HABIT_STATUS.GOOD &&
+              weekDay < 6
+                ? "Calendar-day_linked"
+                : "";
 
             const hintAboutTodayClassName =
-              isSameDay(day.date, new Date()) && day.status === "NOT_SPECIFIED"
+              isToday && day.status === "NOT_SPECIFIED"
                 ? "Calendar-day_pulsate"
                 : "";
 
             return (
               <div
-                className={`Calendar-day ${classNameByStatus[day.status]} ${activeClassName} ${hintAboutTodayClassName}`}
+                className={`Calendar-day ${classNameByStatus[day.status]} ${todayClassName} ${futureClassName} ${linkedClassName} ${hintAboutTodayClassName}`}
                 key={day.date.toLocaleDateString()}
                 title={`Day ${day.number}`}
                 {...(isBeforeOrSameDay(day.date) &&
@@ -142,6 +155,12 @@ export const Calendar = ({ streak, onSelectDate, onUpdateDate }: Props) => {
           })}
         </div>
       ))}
+
+      <div className="Calendar-legend">
+        <span>Tap to cycle status</span>
+        <span>Hold to add a note</span>
+        <span>* has a note</span>
+      </div>
     </div>
   );
 };

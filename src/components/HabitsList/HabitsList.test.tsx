@@ -1,6 +1,6 @@
 import "@testing-library/jest-dom";
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { HabitsList } from "./HabitsList";
 import { BrowserRouter } from "react-router-dom";
@@ -9,6 +9,7 @@ import { AppBarProvider } from "../AppBar/AppBar.Provider";
 import { AppBar } from "../AppBar/AppBar";
 import type { User } from "firebase/auth";
 import type { Habit } from "../../domain/Habit";
+import { createDate } from "../../utils/date";
 
 const mockNavigate = vi.fn();
 
@@ -106,8 +107,9 @@ describe("HabitsList - User workflows", () => {
     expect(screen.getAllByText("🔄")).toHaveLength(2); // Current streak icons
     expect(screen.getAllByText("🔥")).toHaveLength(2); // Longest streak icons
 
-    // User can see progress (66.7% = 2 good / 3 total)
-    expect(screen.getByText("66.7%")).toBeInTheDocument();
+    // User can see progress (67% = 2 good / 3 total)
+    expect(screen.getByText("Good 67 %")).toBeInTheDocument();
+    expect(screen.getByText("No days yet")).toBeInTheDocument();
 
     // User clicks on a habit to see details
     const exerciseHabit = screen.getByText("Morning Exercise");
@@ -124,10 +126,11 @@ describe("HabitsList - User workflows", () => {
 
     // User clicks create habit button
     await waitFor(() => {
-      expect(screen.getByText("Habits")).toBeInTheDocument();
+      expect(screen.getByText("Your habits")).toBeInTheDocument();
+      expect(screen.getByText("No habits yet")).toBeInTheDocument();
     });
 
-    const createButton = screen.getByRole("button", { name: "Create habit" });
+    const createButton = screen.getByRole("button", { name: "+ Create habit" });
     await userEvent.click(createButton);
 
     // User is navigated to the new habit
@@ -172,6 +175,47 @@ describe("HabitsList - User workflows", () => {
           ]),
         }),
       );
+    });
+  });
+
+  it("should ask before unmarking today when it has a note", async () => {
+    const mockHabits: Habit[] = [
+      {
+        id: "habit-1",
+        name: "Meditation",
+        description: "10 min daily",
+        streak: [
+          { date: createDate(new Date()), status: "GOOD", notes: "Felt calm" },
+        ],
+      },
+    ];
+
+    vi.mocked(habitService.getAllHabits).mockResolvedValue(mockHabits);
+    vi.mocked(habitService.updateHabit).mockResolvedValue();
+
+    renderHabitsList();
+
+    await waitFor(() => {
+      expect(screen.getByText("Meditation")).toBeInTheDocument();
+    });
+
+    // Clicking the already checked ✓ unmarks today, which would delete the note
+    await userEvent.click(screen.getByRole("radio", { name: "✓" }));
+
+    const dialog = screen.getByRole("alertdialog");
+    expect(within(dialog).getByText(/Felt calm/)).toBeInTheDocument();
+    await userEvent.click(within(dialog).getByRole("button", { name: "Cancel" }));
+    expect(habitService.updateHabit).not.toHaveBeenCalled();
+
+    await userEvent.click(screen.getByRole("radio", { name: "✓" }));
+    await userEvent.click(
+      within(screen.getByRole("alertdialog")).getByRole("button", { name: "Remove" }),
+    );
+
+    await waitFor(() => {
+      expect(habitService.updateHabit).toHaveBeenCalledWith("habit-1", {
+        streak: [],
+      });
     });
   });
 

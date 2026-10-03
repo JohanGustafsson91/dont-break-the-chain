@@ -16,8 +16,8 @@ export default defineConfig({
         name: "Don't break the chain",
         short_name: "Don't break the chain",
         description: "Don't break the chain",
-        theme_color: "#ffffff",
-        background_color: "#ffffff",
+        theme_color: "#011627",
+        background_color: "#011627",
         display: "standalone",
         icons: [
           {

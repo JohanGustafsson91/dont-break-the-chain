@@ -1,32 +1,20 @@
-import type React from "react";
 import "./ProgressBar.css";
 
-interface ProgressBarProps {
-  goodDays: number;
-  badDays: number;
-}
-
-export const ProgressBar: React.FC<ProgressBarProps> = ({
-  goodDays,
-  badDays,
-}) => {
+export const ProgressBar = ({ goodDays, badDays, thick = false }: Props) => {
   const total = goodDays + badDays;
-  const goodPercentage = (goodDays / total) * 100;
-  const badPercentage = (badDays / total) * 100;
+  const toWidth = (days: number) =>
+    total === 0 ? "0%" : `${(days / total) * 100}%`;
 
   return (
-    <div className="progress-bar-container">
-      {Number.isNaN(goodPercentage) ? null : (
-        <div className="progress-bar">
-          <div className="good" style={{ width: `${goodPercentage}%` }} />
-          <div className="bad" style={{ width: `${badPercentage}%` }} />
-          <span className="progress-label">{goodPercentage.toFixed(1)}%</span>
-        </div>
-      )}
-      <div className="legend">
-        <span className="good">Good: {goodDays} days</span>
-        <span className="bad">Bad: {badDays} days</span>
-      </div>
+    <div className={`progress-bar ${thick ? "progress-bar_thick" : ""}`}>
+      <div className="good" style={{ width: toWidth(goodDays) }} />
+      <div className="bad" style={{ width: toWidth(badDays) }} />
     </div>
   );
 };
+
+interface Props {
+  goodDays: number;
+  badDays: number;
+  thick?: boolean;
+}

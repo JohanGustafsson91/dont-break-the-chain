@@ -40,8 +40,6 @@ vi.mock("../../services/firebaseService", () => ({
 describe("StreakTracker - Complete user journey", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    // Mock window.confirm for delete operations
-    window.confirm = vi.fn(() => true);
   });
 
   beforeAll(() => {
@@ -123,7 +121,11 @@ describe("StreakTracker - Complete user journey", () => {
     expect(screen.getByDisplayValue("10 minutes daily meditation")).toBeInTheDocument();
     
     // User sees progress stats (4 good days, 1 bad day = 80%)
-    expect(screen.getByText("80.0%")).toBeInTheDocument();
+    expect(screen.getByText("Good 80 %")).toBeInTheDocument();
+    expect(screen.getByText("4 good · 1 bad")).toBeInTheDocument();
+
+    // Today (Feb 15) is not marked yet
+    expect(screen.getByText(/Today isn't marked yet/)).toBeInTheDocument();
     
     // User sees streak stats
     expect(screen.getByText("🔥")).toBeInTheDocument(); // Longest streak icon
@@ -132,15 +134,21 @@ describe("StreakTracker - Complete user journey", () => {
     // Longest streak is 2 days (Feb 13-14)
     const longestStreakStat = screen.getByText("Longest").closest(".streak") as HTMLElement;
     expect(within(longestStreakStat).getByText("2")).toBeInTheDocument();
-    expect(within(longestStreakStat).getByText("days")).toBeInTheDocument();
+    expect(within(longestStreakStat).getByText("days, best chain")).toBeInTheDocument();
     
     // Current streak is 2 days (Feb 13-14, still active as of Feb 15)
     const currentStreakStat = screen.getByText("Current").closest(".streak") as HTMLElement;
     expect(within(currentStreakStat).getByText("2")).toBeInTheDocument();
-    expect(within(currentStreakStat).getByText("days")).toBeInTheDocument();
+    expect(within(currentStreakStat).getByText("days in a row")).toBeInTheDocument();
 
     // User sees the calendar for February 2025
     expect(screen.getByText("February 2025")).toBeInTheDocument();
+
+    // Consecutive good days are linked into a chain, broken by the bad day
+    expect(screen.getByTitle("Day 10")).toHaveClass("Calendar-day_linked");
+    expect(screen.getByTitle("Day 11")).not.toHaveClass("Calendar-day_linked");
+    expect(screen.getByTitle("Day 13")).toHaveClass("Calendar-day_linked");
+    expect(screen.getByTitle("Day 14")).not.toHaveClass("Calendar-day_linked");
 
     // PART 2: User edits habit name
     const nameInput = screen.getByDisplayValue("Morning Meditation");
@@ -187,24 +195,30 @@ describe("StreakTracker - Complete user journey", () => {
       );
     });
 
+    await waitFor(() => {
+      expect(screen.queryByText(/Today isn't marked yet/)).not.toBeInTheDocument();
+    });
+
     // PART 5: User navigates to previous month to view history
-    const prevMonthButtons = screen.getAllByRole("button");
-    const prevButton = prevMonthButtons.find(btn => 
-      btn.querySelector('svg path[d="M15 18l-6-6 6-6"]')
-    );
-    
-    if (prevButton) {
-      await user.click(prevButton);
-    }
+    await user.click(screen.getByRole("button", { name: "Previous month" }));
 
     // Should show January 2025
     await waitFor(() => {
       expect(screen.getByText("January 2025")).toBeInTheDocument();
     });
 
-    // PART 6: User deletes the habit
-    const deleteButton = screen.getByRole("button", { name: "Delete" });
-    await user.click(deleteButton);
+    // PART 6: User starts deleting, changes their mind, then deletes for real
+    await user.click(screen.getByRole("button", { name: "Delete" }));
+    await user.click(
+      within(screen.getByRole("alertdialog")).getByRole("button", { name: "Cancel" }),
+    );
+    expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument();
+    expect(habitService.deleteHabit).not.toHaveBeenCalled();
+
+    await user.click(screen.getByRole("button", { name: "Delete" }));
+    await user.click(
+      within(screen.getByRole("alertdialog")).getByRole("button", { name: "Delete" }),
+    );
 
     await waitFor(() => {
       expect(habitService.deleteHabit).toHaveBeenCalledWith("habit-123");
@@ -253,8 +267,10 @@ describe("StreakTracker - Complete user journey", () => {
     const deleteError = new Error("Permission denied");
     vi.mocked(habitService.deleteHabit).mockRejectedValue(deleteError);
 
-    const deleteButton = screen.getByRole("button", { name: "Delete" });
-    await user.click(deleteButton);
+    await user.click(screen.getByRole("button", { name: "Delete" }));
+    await user.click(
+      within(screen.getByRole("alertdialog")).getByRole("button", { name: "Delete" }),
+    );
 
     await waitFor(() => {
       expect(consoleErrorSpy).toHaveBeenCalledWith(
@@ -306,6 +322,53 @@ describe("StreakTracker - Complete user journey", () => {
 
     // The UI should still show original data due to rollback
     // This tests that optimistic updates are properly reversed on error
+  });
+
+  it("should ask before removing a day that has a note", async () => {
+    const user = userEvent.setup();
+
+    const mockHabit: Habit = {
+      id: "habit-123",
+      name: "Test Habit",
+      description: "Test",
+      streak: [
+        {
+          date: new Date("2025-02-14T00:00:00.000Z"),
+          status: "BAD",
+          notes: "Was sick",
+        },
+      ],
+    };
+
+    vi.mocked(habitService.getHabitById).mockResolvedValue(mockHabit);
+    vi.mocked(habitService.updateHabit).mockResolvedValue();
+
+    window.history.pushState({}, "", "/habits/habit-123");
+    renderStreakTracker();
+
+    await waitFor(() => {
+      expect(screen.getByDisplayValue("Test Habit")).toBeInTheDocument();
+    });
+
+    // Clicking a BAD day cycles it to unmarked, which would delete the note
+    await user.click(screen.getByTitle("Day 14"));
+
+    const dialog = screen.getByRole("alertdialog");
+    expect(within(dialog).getByText(/Was sick/)).toBeInTheDocument();
+
+    await user.click(within(dialog).getByRole("button", { name: "Cancel" }));
+    expect(habitService.updateHabit).not.toHaveBeenCalled();
+
+    await user.click(screen.getByTitle("Day 14"));
+    await user.click(
+      within(screen.getByRole("alertdialog")).getByRole("button", { name: "Remove" }),
+    );
+
+    await waitFor(() => {
+      expect(habitService.updateHabit).toHaveBeenCalledWith("habit-123", {
+        streak: [],
+      });
+    });
   });
 
   it("should prevent users from marking future dates", async () => {

@@ -15,12 +15,13 @@ import {
   updateHabit,
 } from "../../services/habitService";
 import { ProgressBar } from "../StreakTracker/ProgressBar";
-import { StreakStat } from "../StreakTracker/StreakStat";
 import { HABIT_STATUS, STREAK_ICONS } from "../../shared/constants";
 import { createDate } from "../../utils/date";
-import { pluralize } from "../../utils/string";
-import { useAppBarContext } from "../AppBar/AppBar.Context";
+import { formatGoodShare } from "../../utils/string";
 import { StreakStatusRadioGroup } from "../StreakStatusRadioGroup/StreakStatusRadioGroup";
+import { ConfirmDialog } from "../ConfirmDialog/ConfirmDialog";
+
+type Status = (typeof HABIT_STATUS)[keyof typeof HABIT_STATUS];
 
 const motivationalMessages = {
   [HABIT_STATUS.GOOD]: [
@@ -62,34 +63,35 @@ const itemClassByDayStatus = {
   [HABIT_STATUS.NOT_SPECIFIED]: "",
 };
 
-const getRandomInteger = (max: number) => {
-  return Math.floor(Math.random() * max);
+// Stable for the whole day, so the message doesn't change on every re-render.
+const pickMessage = (
+  status: keyof typeof motivationalMessages,
+  habitIndex: number,
+) => {
+  const messages = motivationalMessages[status];
+  return messages[(new Date().getDate() + habitIndex) % messages.length];
 };
+
+const todayLabel = () =>
+  new Date().toLocaleDateString("en-US", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+  });
 
 export const HabitsList = () => {
   const [habits, setHabits] = useState<State>({ data: [], status: "pending" });
+  const [pendingRemoval, setPendingRemoval] = useState<PendingRemoval>();
   const navigate = useNavigate();
-  const { renderAppBarItems } = useAppBarContext();
 
-  useEffect(
-    function renderCreateHabitOptionInAppBar() {
-      async function onCreateHabit() {
-        try {
-          const habitId = await addHabit();
-          navigate(`/habits/${habitId}`);
-        } catch (error) {
-          console.error("Could not create habit", { error });
-        }
-      }
-
-      renderAppBarItems(
-        <button type="button" onClick={onCreateHabit}>
-          Create habit
-        </button>,
-      );
-    },
-    [navigate, renderAppBarItems],
-  );
+  async function onCreateHabit() {
+    try {
+      const habitId = await addHabit();
+      navigate(`/habits/${habitId}`);
+    } catch (error) {
+      console.error("Could not create habit", { error });
+    }
+  }
 
   useEffect(function fetchAndSetHabits() {
     (async () => {
@@ -107,10 +109,26 @@ export const HabitsList = () => {
     return navigate(`/habits/${id}`);
   }
 
-  async function handleUpdateDay(
+  function handleUpdateDay(
     habit: Habit,
     date: Date,
-    status: typeof HABIT_STATUS[keyof typeof HABIT_STATUS],
+    status: Status,
+    notes: string,
+  ) {
+    const notesWillBeLost = notes && status === HABIT_STATUS.NOT_SPECIFIED;
+
+    if (notesWillBeLost) {
+      setPendingRemoval({ notes, remove: () => saveDay(habit, date, status, notes) });
+      return;
+    }
+
+    saveDay(habit, date, status, notes);
+  }
+
+  async function saveDay(
+    habit: Habit,
+    date: Date,
+    status: Status,
     notes: string,
   ) {
     const previousHabit = habit;
@@ -134,109 +152,130 @@ export const HabitsList = () => {
   }
 
   return (
-    <div className="page">
-      <h1>Habits</h1>
+    <>
+      <div className="page HabitsList">
+        <div className="HabitsList-date">{todayLabel()}</div>
+        <h1 className="HabitsList-title">Your habits</h1>
 
-      {
         {
-          resolved: habits.data.length === 0 ? (
-            <div className="HabitsList-empty">
-              <div className="HabitsList-empty-icon">🎯</div>
-              <div className="HabitsList-empty-title">No habits yet</div>
-              <div className="HabitsList-empty-text">
-                Start building your streaks by creating your first habit!
-              </div>
-            </div>
-          ) : (
-            habits.data.map((habit) => {
-              const { id, name } = habit;
-              const currentStreakData = calculateCurrentStreak(habit);
-              const longestStreakData = calculateLongestStreak(habit);
-              const today = createDate(new Date());
-              const currentStreakDay = habit.streak.find((s) => {
-                const sDate = createDate(s.date);
-                return sDate.getTime() === today.getTime();
-              });
-              const currentDayStatus =
-                currentStreakDay?.status ?? HABIT_STATUS.NOT_SPECIFIED;
-
-              return (
-                <div
-                  className={`HabitsList-item ${itemClassByDayStatus[currentDayStatus]}`}
-                  key={id}
-                  onClick={(e) => {
-                    const target = e.target as HTMLElement;
-                    if (target.closest(".radio-group")) {
-                      return;
-                    }
-
-                    navigateToDetailView(id);
-                  }}
-                >
-                  <span className="HabitsList-item_title">{name}</span>
-                  <div className="HabitsList-item_row">
-                    <ProgressBar
-                      goodDays={getGoodDays(habit).length}
-                      badDays={getBadDays(habit).length}
-                    />
-                  </div>
-                  <div className="HabitsList-item_row">
-                    <StreakStat
-                      icon={STREAK_ICONS.CURRENT}
-                      label="Current"
-                      value={currentStreakData.count}
-                      unit={pluralize(currentStreakData.count, "day")}
-                      compact
-                    />
-                    <StreakStat
-                      icon={STREAK_ICONS.LONGEST}
-                      label="Longest"
-                      value={longestStreakData.count}
-                      unit={pluralize(longestStreakData.count, "day")}
-                      compact
-                    />
-                  </div>
-
-                  <div className="HabitsList-item_row">
-                    <span className="HabitsList-status-text">
-                      <i>
-                        {
-                          motivationalMessages[currentDayStatus][
-                            getRandomInteger(
-                              motivationalMessages[currentDayStatus].length,
-                            )
-                          ]
-                        }
-                      </i>
-                    </span>
-                  </div>
-
-                  <div className="radio-group form-element">
-                    <StreakStatusRadioGroup
-                      currentStreakDay={
-                        currentStreakDay ?? {
-                          status: HABIT_STATUS.NOT_SPECIFIED,
-                          date: today,
-                          notes: "",
-                        }
-                      }
-                      groupName={`habit-${id}`}
-                      onUpdateStatus={(values) =>
-                        handleUpdateDay(habit, values.date, values.status, values.notes)
-                      }
-                    />
+          {
+            resolved:
+              habits.data.length === 0 ? (
+                <div className="HabitsList-empty">
+                  <div className="HabitsList-empty-icon">🎯</div>
+                  <div className="HabitsList-empty-title">No habits yet</div>
+                  <div className="HabitsList-empty-text">
+                    Pick one thing you want to do every day and create your
+                    first habit.
                   </div>
                 </div>
-              );
-            })
-          ),
-          pending: <p className="loading">Fetching habits</p>,
-          rejected: <p>Could not fetch habits...</p>,
-        }[habits.status]
-      }
-    </div>
+              ) : (
+                habits.data.map((habit, index) => {
+                  const { id, name } = habit;
+                  const goodDays = getGoodDays(habit).length;
+                  const badDays = getBadDays(habit).length;
+                  const today = createDate(new Date());
+                  const currentStreakDay = habit.streak.find(
+                    (s) => createDate(s.date).getTime() === today.getTime(),
+                  );
+                  const currentDayStatus =
+                    currentStreakDay?.status ?? HABIT_STATUS.NOT_SPECIFIED;
+
+                  return (
+                    <div
+                      className={`HabitsList-item ${itemClassByDayStatus[currentDayStatus]}`}
+                      key={id}
+                      onClick={(e) => {
+                        const target = e.target as HTMLElement;
+                        if (target.closest(".radio-group")) {
+                          return;
+                        }
+
+                        navigateToDetailView(id);
+                      }}
+                    >
+                      <div className="HabitsList-item_row HabitsList-item_header">
+                        <div className="HabitsList-item_text">
+                          <span className="HabitsList-item_title">{name}</span>
+                          <span className="HabitsList-status-text">
+                            {pickMessage(currentDayStatus, index)}
+                          </span>
+                        </div>
+
+                        <div className="radio-group">
+                          <StreakStatusRadioGroup
+                            currentStreakDay={
+                              currentStreakDay ?? {
+                                status: HABIT_STATUS.NOT_SPECIFIED,
+                                date: today,
+                                notes: "",
+                              }
+                            }
+                            groupName={`habit-${id}`}
+                            onUpdateStatus={(values) =>
+                              handleUpdateDay(
+                                habit,
+                                values.date,
+                                values.status,
+                                values.notes,
+                              )
+                            }
+                          />
+                        </div>
+                      </div>
+
+                      <div className="HabitsList-item_progress">
+                        <ProgressBar goodDays={goodDays} badDays={badDays} />
+                        <div className="HabitsList-item_row HabitsList-item_stats">
+                          <span>{formatGoodShare(goodDays, badDays)}</span>
+                          <div className="HabitsList-item_streaks">
+                            <span>
+                              <span>{STREAK_ICONS.CURRENT}</span> Current{" "}
+                              <b>{calculateCurrentStreak(habit).count}</b>
+                            </span>
+                            <span>
+                              <span>{STREAK_ICONS.LONGEST}</span> Longest{" "}
+                              <b>{calculateLongestStreak(habit).count}</b>
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })
+              ),
+            pending: <p className="loading">Fetching habits</p>,
+            rejected: <p>Could not fetch habits...</p>,
+          }[habits.status]
+        }
+      </div>
+
+      <div className="HabitsList-create">
+        <button type="button" onClick={onCreateHabit}>
+          + Create habit
+        </button>
+      </div>
+
+      {pendingRemoval ? (
+        <ConfirmDialog
+          title="Remove status?"
+          body={`The note for this day will be deleted too: “${pendingRemoval.notes}”`}
+          confirmLabel="Remove"
+          onCancel={() => setPendingRemoval(undefined)}
+          onConfirm={() => {
+            setPendingRemoval(undefined);
+            pendingRemoval.remove();
+          }}
+        />
+      ) : null}
+    </>
   );
 };
+
+interface PendingRemoval {
+  notes: string;
+  remove: () => void;
+}
 
 interface State {
   data: Habit[];

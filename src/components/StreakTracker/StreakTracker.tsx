@@ -13,8 +13,8 @@ import {
   deleteHabit,
 } from "../../services/habitService";
 import { Calendar } from "./Calendar";
-import { getMonthName, createDate } from "../../utils/date";
-import { pluralize } from "../../utils/string";
+import { createDate, isSameDay } from "../../utils/date";
+import { formatGoodShare, pluralize } from "../../utils/string";
 import { useNavigate, useParams } from "react-router-dom";
 import { EditableTextField } from "./EditableTextField";
 import "./StreakTracker.css";
@@ -24,12 +24,30 @@ import { HABIT_STATUS, STREAK_ICONS } from "../../shared/constants";
 import { BottomSheet } from "./BottomSheet";
 import { useAppBarContext } from "../AppBar/AppBar.Context";
 import { StreakStatusRadioGroup } from "../StreakStatusRadioGroup/StreakStatusRadioGroup";
+import { ConfirmDialog } from "../ConfirmDialog/ConfirmDialog";
+
+type Status = (typeof HABIT_STATUS)[keyof typeof HABIT_STATUS];
+
+interface Confirmation {
+  title: string;
+  body: string;
+  confirmLabel: string;
+  onConfirm: () => void;
+}
+
+const formatDay = (date: Date) =>
+  date.toLocaleDateString("en-US", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+  });
 
 export const StreakTracker = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const [habit, setHabit] = useState<Habit>();
   const [activeDate, setActiveDate] = useState<Date | undefined>();
+  const [confirmation, setConfirmation] = useState<Confirmation>();
   const { renderAppBarItems } = useAppBarContext();
 
   useEffect(
@@ -44,45 +62,55 @@ export const StreakTracker = () => {
     [id],
   );
 
+  const habitId = habit?.id;
+  const habitName = habit?.name;
+
   useEffect(
     function renderDeleteOptionInAppBar() {
-      if (!habit?.id) {
+      if (!habitId) {
         return;
       }
 
-      async function onDelete(id: Habit["id"]) {
+      const id = habitId;
+
+      async function onDelete() {
         try {
-          if (window.confirm("Are you sure you want to proceed?")) {
-            await deleteHabit(id);
-            navigate("/");
-          }
+          await deleteHabit(id);
+          navigate("/");
         } catch (error) {
           console.error("Could not delete habit...", { error });
         }
       }
 
       renderAppBarItems(
-        <button type="button" className="error" onClick={() => onDelete(habit.id)}>
+        <button
+          type="button"
+          className="error"
+          onClick={() =>
+            setConfirmation({
+              title: "Delete habit?",
+              body: `“${habitName}” and its whole history will be removed.`,
+              confirmLabel: "Delete",
+              onConfirm: onDelete,
+            })
+          }
+        >
           Delete
         </button>,
       );
     },
-    [habit?.id, renderAppBarItems, navigate],
+    [habitId, habitName, renderAppBarItems, navigate],
   );
 
   if (!habit) {
     return null;
   }
 
-  function handleSetActiveDate(date: Date) {
-    setActiveDate(date);
-  }
-
   async function onUpdateName(name: string) {
     if (!habit) return;
     try {
       await updateHabit(habit.id, { name });
-      setHabit((prev) => prev ? { ...prev, name } : prev);
+      setHabit((prev) => (prev ? { ...prev, name } : prev));
     } catch (error) {
       console.error("Could not update habit name", { error });
     }
@@ -92,25 +120,15 @@ export const StreakTracker = () => {
     if (!habit) return;
     try {
       await updateHabit(habit.id, { description });
-      setHabit((prev) => prev ? { ...prev, description } : prev);
+      setHabit((prev) => (prev ? { ...prev, description } : prev));
     } catch (error) {
       console.error("Could not update habit description", { error });
     }
   }
 
-  async function handleUpdateDay(
-    date: Date,
-    status: typeof HABIT_STATUS[keyof typeof HABIT_STATUS],
-    notes: string,
-  ) {
+  async function saveDay(date: Date, status: Status, notes: string) {
     if (!habit) return;
     const previousHabit = habit;
-
-    const notesWillBeLost = notes && status === HABIT_STATUS.NOT_SPECIFIED;
-    if (notesWillBeLost && !window.confirm("Your notes will be lost")) {
-      return;
-    }
-
     const updatedHabit = markDay(habit, date, status, notes);
 
     try {
@@ -122,102 +140,156 @@ export const StreakTracker = () => {
     }
   }
 
-  function closeBottomSheet() {
-    setActiveDate(undefined);
+  function handleUpdateDay(date: Date, status: Status, notes: string) {
+    const notesWillBeLost = notes && status === HABIT_STATUS.NOT_SPECIFIED;
+
+    if (!notesWillBeLost) {
+      saveDay(date, status, notes);
+      return;
+    }
+
+    setConfirmation({
+      title: "Remove status?",
+      body: `The note for this day will be deleted too: “${notes}”`,
+      confirmLabel: "Remove",
+      onConfirm: () => saveDay(date, status, notes),
+    });
   }
 
-  const currentStreakDay = habit.streak.find((s) => {
-    if (!activeDate) return false;
-    const sDate = createDate(s.date);
-    const aDate = createDate(activeDate);
-    return sDate.getTime() === aDate.getTime();
-  });
+  const findDay = (date: Date) =>
+    habit.streak.find((s) => isSameDay(createDate(s.date), createDate(date)));
 
-  const currentStreakData = calculateCurrentStreak(habit);
-  const longestStreakData = calculateLongestStreak(habit);
+  const activeStreakDay = activeDate ? findDay(activeDate) : undefined;
+  const isTodayMarked = Boolean(findDay(new Date()));
+  const goodDays = getGoodDays(habit).length;
+  const badDays = getBadDays(habit).length;
+  const currentStreak = calculateCurrentStreak(habit).count;
+  const longestStreak = calculateLongestStreak(habit).count;
 
   return (
-    <div className="page">
-      <div className="form-element">
+    <div className="page StreakTracker">
+      <div className="StreakTracker-info">
         <EditableTextField
           value={habit.name}
           type="text"
           onUpdate={onUpdateName}
           allowEmpty={false}
         />
-      </div>
-
-      <div className="form-element">
         <EditableTextField
           value={habit.description}
           type="textarea"
           onUpdate={onUpdateDescription}
-          placeholder="Add a description for this habit..."
+          placeholder="Add a description"
         />
       </div>
-      <div className="stats-row">
-        <ProgressBar
-          goodDays={getGoodDays(habit).length}
-          badDays={getBadDays(habit).length}
-        />
-      </div>
-      <div className="stats-row">
-        <StreakStat
-          icon={STREAK_ICONS.LONGEST}
-          label="Longest"
-          value={longestStreakData.count}
-          unit={pluralize(longestStreakData.count, "day")}
-        />
+
+      <div className="StreakTracker-stats">
         <StreakStat
           icon={STREAK_ICONS.CURRENT}
           label="Current"
-          value={currentStreakData.count}
-          unit={pluralize(currentStreakData.count, "day")}
+          value={currentStreak}
+          unit={pluralize(currentStreak, "day in a row", "days in a row")}
         />
+        <StreakStat
+          icon={STREAK_ICONS.LONGEST}
+          label="Longest"
+          value={longestStreak}
+          unit={pluralize(longestStreak, "day, best chain", "days, best chain")}
+        />
+        <div className="StreakTracker-share">
+          <div className="StreakTracker-share_header">
+            <span className="StreakTracker-share_label">
+              {formatGoodShare(goodDays, badDays)}
+            </span>
+            <span className="StreakTracker-share_counts">
+              {goodDays} good · {badDays} bad
+            </span>
+          </div>
+          <ProgressBar goodDays={goodDays} badDays={badDays} thick />
+        </div>
       </div>
 
       <Calendar
-        onSelectDate={handleSetActiveDate}
+        onSelectDate={setActiveDate}
         streak={habit.streak}
-        onUpdateDate={(args) => handleUpdateDay(args.date, args.status, args.notes)}
+        onUpdateDate={(args) =>
+          handleUpdateDay(args.date, args.status, args.notes)
+        }
       />
 
-      {activeDate ? (
-        <BottomSheet onClose={closeBottomSheet}>
-          <div className="edit-day-pane">
-            <h3>
-              {activeDate.getDate()} {getMonthName(activeDate)}
-            </h3>
-            <div className="radio-group form-element">
-              <StreakStatusRadioGroup
-                currentStreakDay={
-                  currentStreakDay ?? {
-                    status: HABIT_STATUS.NOT_SPECIFIED,
-                    date: activeDate,
-                    notes: "",
-                  }
-                }
-                onUpdateStatus={(values) =>
-                  handleUpdateDay(values.date, values.status, values.notes)
-                }
-              />
-            </div>
-          </div>
+      {/* Below the calendar on purpose: toggling it above would shift the
+          grid under the user's finger and turn the next tap into a month change. */}
+      {isTodayMarked ? null : (
+        <div className="StreakTracker-hint">
+          Today isn't marked yet. Tap today to log it.
+        </div>
+      )}
 
-          <div className="form-element">
-            <EditableTextField
-              key={currentStreakDay?.date?.toISOString()}
-              type="textarea"
-              placeholder="Enter notes"
-              value={currentStreakDay?.notes ?? ""}
-              onUpdate={(notes) =>
-                currentStreakDay &&
-                handleUpdateDay(currentStreakDay.date, currentStreakDay.status, notes)
-              }
-              disabled={!currentStreakDay?.status}
-            />
-          </div>
+      {activeDate ? (
+        <BottomSheet onClose={() => setActiveDate(undefined)}>
+          {(close) => (
+            <div className="StreakTracker-sheet">
+              <div className="StreakTracker-sheet_heading">
+                <span className="StreakTracker-sheet_habit">{habit.name}</span>
+                <h3>{formatDay(activeDate)}</h3>
+              </div>
+
+              <div className="radio-group">
+                <StreakStatusRadioGroup
+                  verbose
+                  currentStreakDay={
+                    activeStreakDay ?? {
+                      status: HABIT_STATUS.NOT_SPECIFIED,
+                      date: activeDate,
+                      notes: "",
+                    }
+                  }
+                  onUpdateStatus={(values) =>
+                    handleUpdateDay(values.date, values.status, values.notes)
+                  }
+                />
+              </div>
+
+              <label className="StreakTracker-sheet_note">
+                <span>Note</span>
+                <EditableTextField
+                  key={activeStreakDay?.date?.toISOString()}
+                  type="textarea"
+                  placeholder={
+                    activeStreakDay
+                      ? "e.g. Ran 5 km"
+                      : "Mark the day ✓ or ✗ to add a note"
+                  }
+                  value={activeStreakDay?.notes ?? ""}
+                  onUpdate={(notes) =>
+                    activeStreakDay &&
+                    handleUpdateDay(
+                      activeStreakDay.date,
+                      activeStreakDay.status,
+                      notes,
+                    )
+                  }
+                  disabled={!activeStreakDay}
+                />
+              </label>
+
+              <button type="button" onClick={close}>
+                Done
+              </button>
+            </div>
+          )}
         </BottomSheet>
+      ) : null}
+
+      {confirmation ? (
+        <ConfirmDialog
+          {...confirmation}
+          onCancel={() => setConfirmation(undefined)}
+          onConfirm={() => {
+            setConfirmation(undefined);
+            confirmation.onConfirm();
+          }}
+        />
       ) : null}
     </div>
   );
