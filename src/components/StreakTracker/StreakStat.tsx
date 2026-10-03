@@ -1,28 +1,19 @@
 import "./StreakStat.css";
 
-export const StreakStat: React.FC<StreakStatProps> = ({
-  icon,
-  label,
-  value,
-  unit,
-  compact = false,
-}) => {
-  return (
-    <div className={`streak ${compact ? "compact" : ""}`}>
-      <div className="streak-header">
-        <span className="icon">{icon}</span>
-        <span>{label}</span>
-      </div>
-      <div className="streak-value">{value}</div>
-      <div className="streak-unit">{unit}</div>
+export const StreakStat = ({ icon, label, value, unit }: Props) => (
+  <div className="streak">
+    <div className="streak-header">
+      <span className="icon">{icon}</span>
+      <span>{label}</span>
     </div>
-  );
-};
+    <div className="streak-value">{value}</div>
+    <div className="streak-unit">{unit}</div>
+  </div>
+);
 
-interface StreakStatProps {
+interface Props {
   icon: string;
   label: string;
-  value: number | string;
+  value: number;
   unit: string;
-  compact?: boolean;
 }

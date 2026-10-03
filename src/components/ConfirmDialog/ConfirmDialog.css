@@ -1,0 +1,67 @@
+@keyframes ConfirmDialog-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes ConfirmDialog-pop {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.ConfirmDialog-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.75rem;
+  background: var(--backdrop-color);
+  animation: ConfirmDialog-fade 0.15s ease;
+}
+
+.ConfirmDialog {
+  display: flex;
+  flex-direction: column;
+  gap: 0.625rem;
+  width: 100%;
+  max-width: 400px;
+  padding: 1.5rem;
+  border-radius: var(--radius-md);
+  background: var(--surface-color);
+  animation: ConfirmDialog-pop 0.18s ease;
+}
+
+.ConfirmDialog-title {
+  font-size: 1.125rem;
+  font-weight: 600;
+}
+
+.ConfirmDialog-body {
+  font-size: 0.875rem;
+  line-height: 1.45;
+  color: var(--text-muted-color);
+  text-wrap: pretty;
+}
+
+.ConfirmDialog-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.ConfirmDialog-actions button {
+  height: 46px;
+  font-size: 0.9375rem;
+}

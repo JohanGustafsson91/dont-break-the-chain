@@ -124,6 +124,35 @@ textarea:focus-visible,
   outline-offset: 2px;
 }
 
+button.secondary {
+  border: 1px solid var(--border-color);
+  background: var(--surface-color);
+  color: var(--text-color);
+}
+
+button.danger {
+  background: var(--error-color);
+  color: var(--on-accent-color);
+  font-weight: 600;
+}
+
+button.ghost {
+  height: 40px;
+  padding: 0 0.625rem;
+  background: transparent;
+  color: var(--text-color);
+  font-size: 0.9375rem;
+}
+
+button.outline {
+  height: 34px;
+  padding: 0 0.75rem;
+  border: 1px solid var(--border-color);
+  background: transparent;
+  color: var(--text-color);
+  font-size: 0.8125rem;
+}
+
 button.error {
   height: 34px;
   padding: 0 0.75rem;

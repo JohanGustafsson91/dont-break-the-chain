@@ -25,6 +25,19 @@
   background: var(--error-surface-color);
 }
 
+.HabitsList-date {
+  margin-top: 1.125rem;
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  color: var(--text-subtle-color);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.HabitsList-title {
+  margin: 0.375rem 0 1.125rem;
+}
+
 .HabitsList-item_title {
   font-size: 1.125rem;
   font-weight: 600;
@@ -40,18 +53,54 @@
   gap: 0.75rem;
 }
 
+.HabitsList-item_header {
+  align-items: flex-start;
+}
+
+.HabitsList-item_text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  min-width: 0;
+}
+
 .HabitsList-item .radio-group {
-  margin: 0;
+  width: auto;
+  flex-shrink: 0;
+}
+
+.HabitsList-item .radio-label {
+  flex: none;
+  width: 44px;
+  min-height: 44px;
+}
+
+.HabitsList-item_progress {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4375rem;
+}
+
+.HabitsList-item_stats,
+.HabitsList-item_streaks {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  color: var(--text-muted-color);
+}
+
+.HabitsList-item_streaks {
+  display: flex;
+  gap: 0.875rem;
+}
+
+.HabitsList-item_streaks b {
+  color: var(--text-color);
 }
 
 .HabitsList-status-text {
   font-size: 0.875rem;
   color: var(--text-muted-color);
   text-wrap: pretty;
-}
-
-.HabitsList-status-text i {
-  font-style: normal;
 }
 
 .HabitsList-item_success .HabitsList-status-text {
@@ -86,4 +135,16 @@
   line-height: 1.45;
   color: var(--text-muted-color);
   text-wrap: pretty;
+}
+
+/* The list scrolls underneath, so fade it out behind the button. */
+.HabitsList-create {
+  flex-shrink: 0;
+  margin-top: -1.5rem;
+  padding: 1.5rem 0 1.875rem;
+  background: linear-gradient(to bottom, transparent, var(--bg-color) 35%);
+}
+
+.HabitsList-create button {
+  width: 100%;
 }

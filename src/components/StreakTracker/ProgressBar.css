@@ -1,21 +1,19 @@
-.progress-bar-container {
-  width: 100%;
-}
-
-/* The label sits above the bar, so the bar itself can't clip overflow. */
 .progress-bar {
-  position: relative;
   display: flex;
   gap: 2px;
-  height: 8px;
-  margin-top: 1.75rem;
-  border-radius: 4px;
-  background: var(--border-color);
+  height: 6px;
+  border-radius: 3px;
+  overflow: hidden;
+  background: var(--bg-color);
+}
+
+.progress-bar_thick {
+  height: 10px;
+  border-radius: 5px;
 }
 
 .progress-bar .good,
 .progress-bar .bad {
-  border-radius: 4px;
   transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
@@ -25,35 +23,4 @@
 
 .progress-bar .bad {
   background: var(--error-color);
-}
-
-.progress-label {
-  position: absolute;
-  left: 0;
-  bottom: calc(100% + 0.5rem);
-  font-family: var(--font-mono);
-  font-size: 1.125rem;
-  font-weight: 600;
-  color: var(--text-color);
-}
-
-.legend {
-  display: flex;
-  justify-content: space-between;
-  margin-top: 0.5rem;
-  font-family: var(--font-mono);
-  font-size: 0.75rem;
-  color: var(--text-subtle-color);
-}
-
-.legend .good::before {
-  content: "✓ ";
-  color: var(--success-color);
-  font-weight: 700;
-}
-
-.legend .bad::before {
-  content: "✗ ";
-  color: var(--error-color);
-  font-weight: 700;
 }

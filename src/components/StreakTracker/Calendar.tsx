@@ -62,6 +62,7 @@ export const Calendar = ({ streak, onSelectDate, onUpdateDate }: Props) => {
         <button
           className="icon-button"
           type="button"
+          aria-label="Previous month"
           onClick={() =>
             setActiveDate(
               createDate({
@@ -80,6 +81,7 @@ export const Calendar = ({ streak, onSelectDate, onUpdateDate }: Props) => {
         <button
           className="icon-button"
           type="button"
+          aria-label="Next month"
           disabled={isNextMonthDisabled(activeDate)}
           onClick={() =>
             setActiveDate(
@@ -144,6 +146,12 @@ export const Calendar = ({ streak, onSelectDate, onUpdateDate }: Props) => {
           })}
         </div>
       ))}
+
+      <div className="Calendar-legend">
+        <span>Tap to cycle status</span>
+        <span>Hold to add a note</span>
+        <span>* has a note</span>
+      </div>
     </div>
   );
 };

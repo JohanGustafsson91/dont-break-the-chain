@@ -7,12 +7,14 @@ interface Props {
   currentStreakDay: Omit<DayInStreak, "status"> & { status: Status };
   onUpdateStatus: (arg: { status: Status; date: Date; notes: string }) => void;
   groupName?: string;
+  verbose?: boolean;
 }
 
 export const StreakStatusRadioGroup = ({
   currentStreakDay,
   onUpdateStatus,
   groupName = "status-group",
+  verbose = false,
 }: Props) => {
   return [HABIT_STATUS.GOOD, HABIT_STATUS.BAD].map((status) => {
     const checked = currentStreakDay.status === status;
@@ -55,6 +57,7 @@ export const StreakStatusRadioGroup = ({
         />
         <span className="radio-custom" />
         {textByStatus[status]}
+        {verbose ? ` ${verboseTextByStatus[status]}` : ""}
       </label>
     );
   });
@@ -64,4 +67,10 @@ const textByStatus: Record<Status, string> = {
   [HABIT_STATUS.GOOD]: "✓",
   [HABIT_STATUS.BAD]: "✗",
   [HABIT_STATUS.NOT_SPECIFIED]: "⏳",
+};
+
+const verboseTextByStatus: Record<Status, string> = {
+  [HABIT_STATUS.GOOD]: "Done",
+  [HABIT_STATUS.BAD]: "Missed",
+  [HABIT_STATUS.NOT_SPECIFIED]: "",
 };

@@ -24,10 +24,6 @@
   justify-content: center;
 }
 
-.form-element {
-  margin-bottom: 1rem;
-}
-
 @keyframes dots {
   0% {
     content: ".";

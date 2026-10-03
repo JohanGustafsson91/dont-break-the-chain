@@ -106,8 +106,9 @@ describe("HabitsList - User workflows", () => {
     expect(screen.getAllByText("🔄")).toHaveLength(2); // Current streak icons
     expect(screen.getAllByText("🔥")).toHaveLength(2); // Longest streak icons
 
-    // User can see progress (66.7% = 2 good / 3 total)
-    expect(screen.getByText("66.7%")).toBeInTheDocument();
+    // User can see progress (67% = 2 good / 3 total)
+    expect(screen.getByText("Good 67 %")).toBeInTheDocument();
+    expect(screen.getByText("No days yet")).toBeInTheDocument();
 
     // User clicks on a habit to see details
     const exerciseHabit = screen.getByText("Morning Exercise");
@@ -124,10 +125,11 @@ describe("HabitsList - User workflows", () => {
 
     // User clicks create habit button
     await waitFor(() => {
-      expect(screen.getByText("Habits")).toBeInTheDocument();
+      expect(screen.getByText("Your habits")).toBeInTheDocument();
+      expect(screen.getByText("No habits yet")).toBeInTheDocument();
     });
 
-    const createButton = screen.getByRole("button", { name: "Create habit" });
+    const createButton = screen.getByRole("button", { name: "+ Create habit" });
     await userEvent.click(createButton);
 
     // User is navigated to the new habit
