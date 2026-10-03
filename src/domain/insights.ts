@@ -1,7 +1,7 @@
 // Pure functions that turn a habit's history into short, actionable sentences.
 
 import { HABIT_STATUS } from "../shared/constants";
-import { createDate } from "../utils/date";
+import { createDate, getToday } from "../utils/date";
 import type { Habit } from "./Habit";
 
 const ONE_DAY_IN_MS = 24 * 60 * 60 * 1000;
@@ -172,7 +172,7 @@ const trendInsight = (habit: Habit, today: number) => {
     : undefined;
 };
 
-export const getInsights = (habit: Habit, now: Date = new Date()): string[] => {
+export const getInsights = (habit: Habit, now: Date = getToday()): string[] => {
   if (habit.streak.length === 0) return [];
 
   const today = toDayNumber(now);

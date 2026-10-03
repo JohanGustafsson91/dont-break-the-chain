@@ -3,6 +3,7 @@ import type { DayInStreak } from "../../shared/Habit";
 import {
   createDate,
   getMonthName,
+  getToday,
   getWeekDayName,
   isBeforeOrSameDay,
   isNextMonthDisabled,
@@ -34,9 +35,21 @@ export const Calendar = ({
   const nextStatus =
     goal.type === "weekly" ? nextWeeklyStatusMap : newStatusMap;
 
-  const [activeDate, setActiveDate] = useState(new Date());
-  const [year, month] = [activeDate.getFullYear(), activeDate.getMonth()];
-  const numberOfDaysInMonth = new Date(year, month + 1, 0).getDate();
+  // First day of the visible month, as UTC midnight like every calendar day.
+  const [visibleMonth, setVisibleMonth] = useState(() => {
+    const today = getToday();
+    return createDate({
+      year: today.getUTCFullYear(),
+      month: today.getUTCMonth(),
+      day: 1,
+    });
+  });
+  const [year, month] = [
+    visibleMonth.getUTCFullYear(),
+    visibleMonth.getUTCMonth(),
+  ];
+  const numberOfDaysInMonth = createDate({ year, month: month + 1, day: 0 })
+    .getUTCDate();
 
   const daysInMonthWithStreakData = Array.from(
     { length: numberOfDaysInMonth },
@@ -61,6 +74,8 @@ export const Calendar = ({
     firstDayInMonth.name,
   );
 
+  const today = getToday();
+
   const weeksWithDays = splitIntoChunks([
     ...Array.from({ length: padNumberOfDaysToAlignWithWeekDays }, (_, i) => i),
     ...daysInMonthWithStreakData,
@@ -74,33 +89,21 @@ export const Calendar = ({
           type="button"
           aria-label="Previous month"
           onClick={() =>
-            setActiveDate(
-              createDate({
-                year: activeDate.getFullYear(),
-                month: activeDate.getMonth() - 1,
-                day: 1,
-              }),
-            )
+            setVisibleMonth(createDate({ year, month: month - 1, day: 1 }))
           }
         >
           <PrevMonthIcon />
         </button>
         <span>
-          {getMonthName(activeDate)} {activeDate.getFullYear()}
+          {getMonthName(visibleMonth)} {year}
         </span>
         <button
           className="icon-button"
           type="button"
           aria-label="Next month"
-          disabled={isNextMonthDisabled(activeDate)}
+          disabled={isNextMonthDisabled(visibleMonth)}
           onClick={() =>
-            setActiveDate(
-              createDate({
-                year: activeDate.getFullYear(),
-                month: activeDate.getMonth() + 1,
-                day: 1,
-              }),
-            )
+            setVisibleMonth(createDate({ year, month: month + 1, day: 1 }))
           }
         >
           <NextMonthIcon />
@@ -129,9 +132,9 @@ export const Calendar = ({
               return <div className="Calendar-day Calendar-day_empty" key={day} />;
             }
 
-            const isToday = isSameDay(day.date, new Date());
+            const isToday = isSameDay(day.date, today);
             const todayClassName = isToday ? "Calendar-day_today" : "";
-            const futureClassName = isBeforeOrSameDay(day.date)
+            const futureClassName = isBeforeOrSameDay(day.date, today)
               ? ""
               : "Calendar-day_future";
 
@@ -153,9 +156,9 @@ export const Calendar = ({
             return (
               <div
                 className={`Calendar-day ${classNameByStatus[day.status]} ${todayClassName} ${futureClassName} ${linkedClassName} ${hintAboutTodayClassName}`}
-                key={day.date.toLocaleDateString()}
+                key={day.date.toISOString()}
                 title={`Day ${day.number}`}
-                {...(isBeforeOrSameDay(day.date) &&
+                {...(isBeforeOrSameDay(day.date, today) &&
                   clickHelpers({
                     onLongClick: () => onSelectDate(day.date),
                     onClick: () =>

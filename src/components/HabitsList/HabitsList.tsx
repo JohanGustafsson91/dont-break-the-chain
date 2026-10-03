@@ -16,7 +16,7 @@ import {
 } from "../../services/habitService";
 import { ProgressBar } from "../StreakTracker/ProgressBar";
 import { HABIT_STATUS, STREAK_ICONS } from "../../shared/constants";
-import { createDate } from "../../utils/date";
+import { createDate, getToday } from "../../utils/date";
 import { formatGoodShare, formatWeekProgress } from "../../utils/string";
 import { StreakStatusRadioGroup } from "../StreakStatusRadioGroup/StreakStatusRadioGroup";
 import { ConfirmDialog } from "../ConfirmDialog/ConfirmDialog";
@@ -175,10 +175,10 @@ export const HabitsList = () => {
                   const goodDays = getGoodDays(habit).length;
                   const badDays = getBadDays(habit).length;
                   const { goal } = habit;
-                  const goodDaysThisWeek = countGoodDaysInWeek(habit, new Date());
+                  const today = getToday();
+                  const goodDaysThisWeek = countGoodDaysInWeek(habit, today);
                   const streak = getStreakSummary(habit);
                   const streakSuffix = streak.unit === "week" ? " wk" : "";
-                  const today = createDate(new Date());
                   const currentStreakDay = habit.streak.find(
                     (s) => createDate(s.date).getTime() === today.getTime(),
                   );

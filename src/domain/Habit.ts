@@ -1,7 +1,7 @@
 // Simple domain logic for habits - no fancy DDD, just pure functions
 
 import { HABIT_STATUS } from "../shared/constants";
-import { createDate, isNextDay, isYesterday } from "../utils/date";
+import { createDate, getToday, isNextDay, isYesterday } from "../utils/date";
 
 export type Goal = { type: "daily" } | { type: "weekly"; times: number };
 
@@ -90,7 +90,7 @@ export const calculateCurrentStreak = (
 
   const lastStreak = streaks[streaks.length - 1];
   const lastDate = lastStreak[lastStreak.length - 1];
-  const today = createDate(new Date());
+  const today = getToday();
 
   const isActive =
     createDate(lastDate).getTime() === today.getTime() || isYesterday(lastDate);
@@ -181,7 +181,7 @@ const calculateWeeklyStreaks = (
       .map(([week]) => week),
   );
 
-  const thisWeek = startOfWeek(new Date()).getTime();
+  const thisWeek = startOfWeek(getToday()).getTime();
   const countChainEndingAt = (week: number): number =>
     completedWeeks.has(week) ? 1 + countChainEndingAt(week - ONE_WEEK_IN_MS) : 0;
 

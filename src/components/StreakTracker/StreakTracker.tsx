@@ -13,7 +13,7 @@ import {
   deleteHabit,
 } from "../../services/habitService";
 import { Calendar } from "./Calendar";
-import { createDate, isSameDay } from "../../utils/date";
+import { createDate, formatDay, getToday, isSameDay } from "../../utils/date";
 import {
   formatGoodShare,
   formatWeekProgress,
@@ -41,12 +41,8 @@ interface Confirmation {
   onConfirm: () => void;
 }
 
-const formatDay = (date: Date) =>
-  date.toLocaleDateString("en-US", {
-    weekday: "long",
-    day: "numeric",
-    month: "long",
-  });
+const formatSheetDay = (date: Date) =>
+  formatDay(date, { weekday: "long", day: "numeric", month: "long" });
 
 export const StreakTracker = () => {
   const { id } = useParams();
@@ -188,13 +184,13 @@ export const StreakTracker = () => {
   const { goal } = habit;
   const goodDays = getGoodDays(habit).length;
   const badDays = getBadDays(habit).length;
-  const goodDaysThisWeek = countGoodDaysInWeek(habit, new Date());
+  const goodDaysThisWeek = countGoodDaysInWeek(habit, getToday());
   const streak = getStreakSummary(habit);
   const hint =
     goal.type === "weekly"
       ? goodDaysThisWeek < goal.times &&
         `${goal.times - goodDaysThisWeek} more to reach this week's goal.`
-      : !findDay(new Date()) && "Today isn't marked yet. Tap today to log it.";
+      : !findDay(getToday()) && "Today isn't marked yet. Tap today to log it.";
 
   return (
     <div className="page StreakTracker">
@@ -283,7 +279,7 @@ export const StreakTracker = () => {
             <div className="StreakTracker-sheet">
               <div className="StreakTracker-sheet_heading">
                 <span className="StreakTracker-sheet_habit">{habit.name}</span>
-                <h3>{formatDay(activeDate)}</h3>
+                <h3>{formatSheetDay(activeDate)}</h3>
               </div>
 
               <div className="radio-group">
