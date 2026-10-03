@@ -31,6 +31,7 @@ import { StreakStatusRadioGroup } from "../StreakStatusRadioGroup/StreakStatusRa
 import { ConfirmDialog } from "../ConfirmDialog/ConfirmDialog";
 import { GoalSelect } from "./GoalSelect";
 import { getInsights } from "../../domain/insights";
+import { YearOverview } from "./YearOverview";
 
 type Status = (typeof HABIT_STATUS)[keyof typeof HABIT_STATUS];
 
@@ -261,6 +262,8 @@ export const StreakTracker = () => {
       {/* Below the calendar on purpose: toggling it above would shift the
           grid under the user's finger and turn the next tap into a month change. */}
       {hint ? <div className="StreakTracker-hint">{hint}</div> : null}
+
+      <YearOverview streak={habit.streak} />
 
       {insights.length > 0 ? (
         <section className="StreakTracker-insights" aria-labelledby="insights-title">
