@@ -209,12 +209,6 @@ export const StreakTracker = () => {
         </div>
       </div>
 
-      {isTodayMarked ? null : (
-        <div className="StreakTracker-hint">
-          Today isn't marked yet. Tap today to log it.
-        </div>
-      )}
-
       <Calendar
         onSelectDate={setActiveDate}
         streak={habit.streak}
@@ -222,6 +216,14 @@ export const StreakTracker = () => {
           handleUpdateDay(args.date, args.status, args.notes)
         }
       />
+
+      {/* Below the calendar on purpose: toggling it above would shift the
+          grid under the user's finger and turn the next tap into a month change. */}
+      {isTodayMarked ? null : (
+        <div className="StreakTracker-hint">
+          Today isn't marked yet. Tap today to log it.
+        </div>
+      )}
 
       {activeDate ? (
         <BottomSheet onClose={() => setActiveDate(undefined)}>
