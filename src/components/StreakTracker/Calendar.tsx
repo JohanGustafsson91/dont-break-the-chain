@@ -107,21 +107,23 @@ export const Calendar = ({ streak, onSelectDate, onUpdateDate }: Props) => {
         <div key={`week-${weekNumber}`}>
           {week.map((day) => {
             if (typeof day === "number") {
-              return <div className="Calendar-day" key={day} />;
+              return <div className="Calendar-day Calendar-day_empty" key={day} />;
             }
 
-            const activeClassName = isSameDay(day.date, activeDate)
-              ? "Calendar-day_active"
-              : "";
+            const isToday = isSameDay(day.date, new Date());
+            const todayClassName = isToday ? "Calendar-day_today" : "";
+            const futureClassName = isBeforeOrSameDay(day.date)
+              ? ""
+              : "Calendar-day_future";
 
             const hintAboutTodayClassName =
-              isSameDay(day.date, new Date()) && day.status === "NOT_SPECIFIED"
+              isToday && day.status === "NOT_SPECIFIED"
                 ? "Calendar-day_pulsate"
                 : "";
 
             return (
               <div
-                className={`Calendar-day ${classNameByStatus[day.status]} ${activeClassName} ${hintAboutTodayClassName}`}
+                className={`Calendar-day ${classNameByStatus[day.status]} ${todayClassName} ${futureClassName} ${hintAboutTodayClassName}`}
                 key={day.date.toLocaleDateString()}
                 title={`Day ${day.number}`}
                 {...(isBeforeOrSameDay(day.date) &&

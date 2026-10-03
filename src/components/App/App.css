@@ -1,23 +1,22 @@
 #root {
   margin: 0 auto;
-  max-width: 1280px;
-  padding: 0 1rem;
+  max-width: 640px;
+  padding: 0 1.25rem;
   width: 100%;
   height: 100vh;
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  box-sizing: border-box;
 }
 
 .page {
-  height: calc(100vh - 100px);
   display: flex;
   flex-direction: column;
   flex: 1;
+  min-height: 0;
   overflow-y: auto;
   overflow-x: hidden;
-  box-sizing: border-box;
+  padding-bottom: 2.5rem;
 }
 
 .page-center {
@@ -42,7 +41,8 @@
 }
 
 @keyframes pulse {
-  0%, 100% {
+  0%,
+  100% {
     opacity: 1;
   }
   50% {
@@ -55,8 +55,9 @@
   align-items: center;
   justify-content: center;
   padding: 3rem;
-  font-size: 1.125rem;
-  color: var(--primary-color);
+  font-family: var(--font-mono);
+  font-size: 0.875rem;
+  color: var(--text-subtle-color);
   animation: pulse 2s ease-in-out infinite;
 }
 

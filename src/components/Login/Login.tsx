@@ -13,6 +13,11 @@ export const Login = () => {
 
   return (
     <div className="page Login-container">
+      <div className="Login-logo" aria-hidden="true">
+        <span />
+        <span />
+        <span />
+      </div>
       <h1 className="Login-title">Don't Break The Chain</h1>
       <h2 className="Login-subtitle">
         Build habits, stay consistent, and keep your streak alive!
