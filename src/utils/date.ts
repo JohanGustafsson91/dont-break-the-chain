@@ -1,8 +1,18 @@
-export const getMonthName = (date: Date) =>
-  date.toLocaleDateString("en-US", { month: "long" });
+// Calendar days are stored as UTC midnight. "Today" is the user's *local* date in
+// that same representation, and calendar days are always read and formatted in UTC.
+
+export const getToday = (now: Date = new Date()): Date =>
+  createDate({ year: now.getFullYear(), month: now.getMonth(), day: now.getDate() });
+
+export const formatDay = (
+  date: Date,
+  options: Intl.DateTimeFormatOptions,
+): string => date.toLocaleDateString("en-US", { ...options, timeZone: "UTC" });
+
+export const getMonthName = (date: Date) => formatDay(date, { month: "long" });
 
 export const getWeekDayName = (date: Date) =>
-  date.toLocaleDateString("en-US", { weekday: "long" });
+  formatDay(date, { weekday: "long" });
 
 export function createDate(
   input: Date | string | { year: number; month: number; day: number },
@@ -33,14 +43,8 @@ export function isSameDay(dateOne: Date, dateTwo: Date) {
   );
 }
 
-export function isBeforeOrSameDay(date: Date, today = new Date()): boolean {
-  const todayCopy = new Date(today);
-  const dateCopy = new Date(date);
-
-  todayCopy.setHours(0, 0, 0, 0);
-  dateCopy.setHours(0, 0, 0, 0);
-
-  return dateCopy <= todayCopy;
+export function isBeforeOrSameDay(date: Date, today = getToday()): boolean {
+  return createDate(date).getTime() <= today.getTime();
 }
 
 const ONE_DAY_IN_MS = 86400000;
@@ -57,7 +61,7 @@ export function isNextDay(prev: Date, current: Date): boolean {
   );
 }
 
-export function isYesterday(prev: Date, current = new Date()): boolean {
+export function isYesterday(prev: Date, current = getToday()): boolean {
   const prevUTC = Date.UTC(
     prev.getUTCFullYear(),
     prev.getUTCMonth(),
@@ -73,10 +77,10 @@ export function isYesterday(prev: Date, current = new Date()): boolean {
 }
 
 export function isNextMonthDisabled(currentDate: Date): boolean {
-  const now = new Date();
+  const today = getToday();
 
   return (
-    currentDate.getFullYear() === now.getFullYear() &&
-    currentDate.getMonth() === now.getMonth()
+    currentDate.getUTCFullYear() === today.getUTCFullYear() &&
+    currentDate.getUTCMonth() === today.getUTCMonth()
   );
 }

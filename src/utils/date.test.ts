@@ -6,6 +6,9 @@ import {
   isYesterday,
   isBeforeOrSameDay,
   isNextMonthDisabled,
+  getToday,
+  getMonthName,
+  getWeekDayName,
 } from "./date";
 
 describe("Date utilities for streak tracking", () => {
@@ -127,6 +130,64 @@ describe("Date utilities for streak tracking", () => {
     it("should allow navigating to next month when viewing past", () => {
       const lastMonth = new Date("2025-01-15T00:00:00.000Z");
       expect(isNextMonthDisabled(lastMonth)).toBe(false);
+    });
+  });
+
+  describe("getToday - the user's local date, stored like every calendar day", () => {
+    const withTimeZone = (timeZone: string, run: () => void) => {
+      const original = process.env.TZ;
+      process.env.TZ = timeZone;
+      try {
+        run();
+      } finally {
+        // Assigning undefined would leave the string "undefined" (UTC) behind.
+        if (original === undefined) delete process.env.TZ;
+        else process.env.TZ = original;
+      }
+    };
+
+    it("should use the local date east of UTC after local midnight", () => {
+      // 2025-02-10 11:30 UTC is already 00:30 on 11 Feb in Auckland (UTC+13).
+      withTimeZone("Pacific/Auckland", () => {
+        const now = new Date("2025-02-10T11:30:00Z");
+        expect(getToday(now).toISOString()).toBe("2025-02-11T00:00:00.000Z");
+        expect(isBeforeOrSameDay(new Date("2025-02-11T00:00:00Z"), getToday(now))).toBe(true);
+      });
+    });
+
+    it("should use the local date west of UTC in the evening", () => {
+      // 2025-02-11 03:00 UTC is still 19:00 on 10 Feb in Los Angeles (UTC-8).
+      withTimeZone("America/Los_Angeles", () => {
+        const now = new Date("2025-02-11T03:00:00Z");
+        expect(getToday(now).toISOString()).toBe("2025-02-10T00:00:00.000Z");
+        expect(isBeforeOrSameDay(new Date("2025-02-11T00:00:00Z"), getToday(now))).toBe(false);
+      });
+    });
+
+    it("should navigate and compare against the local day west of UTC", () => {
+      withTimeZone("America/Los_Angeles", () => {
+        // 1 Feb 03:00 UTC is still 31 Jan 19:00 in Los Angeles.
+        const previousTime = new Date();
+        vi.setSystemTime(new Date("2025-02-01T03:00:00Z"));
+        try {
+          expect(isNextMonthDisabled(new Date("2025-01-01T00:00:00Z"))).toBe(true);
+          expect(isNextMonthDisabled(new Date("2024-12-01T00:00:00Z"))).toBe(false);
+          expect(isYesterday(new Date("2025-01-30T00:00:00Z"))).toBe(true);
+          expect(isBeforeOrSameDay(new Date("2025-01-31T00:00:00Z"))).toBe(true);
+          expect(isBeforeOrSameDay(new Date("2025-02-01T00:00:00Z"))).toBe(false);
+        } finally {
+          vi.setSystemTime(previousTime);
+        }
+      });
+    });
+
+    it("should name calendar days and months the same in every time zone", () => {
+      const firstOfMarch = new Date("2025-03-01T00:00:00Z"); // a Saturday
+
+      withTimeZone("America/Los_Angeles", () => {
+        expect(getWeekDayName(firstOfMarch)).toBe("Saturday");
+        expect(getMonthName(firstOfMarch)).toBe("March");
+      });
     });
   });
 });
