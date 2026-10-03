@@ -491,6 +491,32 @@ describe("StreakTracker - Complete user journey", () => {
     consoleErrorSpy.mockRestore();
   });
 
+  it("should show patterns once there are four weeks of history", async () => {
+    // Good every day since 1 Jan, except 4 of the last 6 Saturdays (today is Saturday 15 Feb).
+    const missedSaturdays = ["2025-02-15", "2025-02-08", "2025-01-25", "2025-01-11"];
+    const streak = Array.from({ length: 46 }, (_, i) => {
+      const date = new Date(Date.UTC(2025, 0, 1 + i));
+      const isMiss = missedSaturdays.includes(date.toISOString().slice(0, 10));
+      return { date, status: isMiss ? "BAD" : "GOOD", notes: "" } as const;
+    });
+
+    vi.mocked(habitService.getHabitById).mockResolvedValue({
+      id: "habit-123",
+      name: "Morning run",
+      description: "",
+      goal: { type: "daily" },
+      streak,
+    });
+
+    window.history.pushState({}, "", "/habits/habit-123");
+    renderStreakTracker();
+
+    const patterns = await screen.findByRole("region", { name: "Patterns" });
+    expect(
+      within(patterns).getByText("You miss most often on Saturdays: 4 of the last 6."),
+    ).toBeInTheDocument();
+  });
+
   it("should prevent users from marking future dates", async () => {
     const mockHabit: Habit = {
       id: "habit-123",
