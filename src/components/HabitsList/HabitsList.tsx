@@ -3,10 +3,10 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import type { Habit } from "../../domain/Habit";
 import {
-  calculateCurrentStreak,
-  calculateLongestStreak,
+  countGoodDaysInWeek,
   getGoodDays,
   getBadDays,
+  getStreakSummary,
   markDay,
 } from "../../domain/Habit";
 import {
@@ -17,7 +17,7 @@ import {
 import { ProgressBar } from "../StreakTracker/ProgressBar";
 import { HABIT_STATUS, STREAK_ICONS } from "../../shared/constants";
 import { createDate } from "../../utils/date";
-import { formatGoodShare } from "../../utils/string";
+import { formatGoodShare, formatWeekProgress } from "../../utils/string";
 import { StreakStatusRadioGroup } from "../StreakStatusRadioGroup/StreakStatusRadioGroup";
 import { ConfirmDialog } from "../ConfirmDialog/ConfirmDialog";
 
@@ -174,6 +174,10 @@ export const HabitsList = () => {
                   const { id, name } = habit;
                   const goodDays = getGoodDays(habit).length;
                   const badDays = getBadDays(habit).length;
+                  const { goal } = habit;
+                  const goodDaysThisWeek = countGoodDaysInWeek(habit, new Date());
+                  const streak = getStreakSummary(habit);
+                  const streakSuffix = streak.unit === "week" ? " wk" : "";
                   const today = createDate(new Date());
                   const currentStreakDay = habit.streak.find(
                     (s) => createDate(s.date).getTime() === today.getTime(),
@@ -212,6 +216,7 @@ export const HabitsList = () => {
                               }
                             }
                             groupName={`habit-${id}`}
+                            allowBad={goal.type === "daily"}
                             onUpdateStatus={(values) =>
                               handleUpdateDay(
                                 habit,
@@ -225,17 +230,29 @@ export const HabitsList = () => {
                       </div>
 
                       <div className="HabitsList-item_progress">
-                        <ProgressBar goodDays={goodDays} badDays={badDays} />
+                        {goal.type === "weekly" ? (
+                          <ProgressBar
+                            goodDays={Math.min(goodDaysThisWeek, goal.times)}
+                            badDays={0}
+                            total={goal.times}
+                          />
+                        ) : (
+                          <ProgressBar goodDays={goodDays} badDays={badDays} />
+                        )}
                         <div className="HabitsList-item_row HabitsList-item_stats">
-                          <span>{formatGoodShare(goodDays, badDays)}</span>
+                          <span>
+                            {goal.type === "weekly"
+                              ? formatWeekProgress(goodDaysThisWeek, goal.times)
+                              : formatGoodShare(goodDays, badDays)}
+                          </span>
                           <div className="HabitsList-item_streaks">
                             <span>
                               <span>{STREAK_ICONS.CURRENT}</span> Current{" "}
-                              <b>{calculateCurrentStreak(habit).count}</b>
+                              <b>{streak.current}{streakSuffix}</b>
                             </span>
                             <span>
                               <span>{STREAK_ICONS.LONGEST}</span> Longest{" "}
-                              <b>{calculateLongestStreak(habit).count}</b>
+                              <b>{streak.longest}{streakSuffix}</b>
                             </span>
                           </div>
                         </div>

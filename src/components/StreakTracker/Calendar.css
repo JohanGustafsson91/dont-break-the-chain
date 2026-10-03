@@ -109,3 +109,10 @@
   line-height: 1.4;
   color: var(--text-subtle-color);
 }
+
+.Calendar > .Calendar-week_complete {
+  border-radius: var(--radius-sm);
+  box-shadow: 0 0 0 3px var(--success-surface-color),
+    0 0 0 4px var(--success-border-color);
+  background: var(--success-surface-color);
+}
