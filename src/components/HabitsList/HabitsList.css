@@ -88,6 +88,15 @@
   color: var(--text-muted-color);
 }
 
+.HabitsList-item_stats {
+  flex-wrap: wrap;
+  row-gap: 0.25rem;
+}
+
+.HabitsList-item_stats span {
+  white-space: nowrap;
+}
+
 .HabitsList-item_streaks {
   display: flex;
   gap: 0.875rem;

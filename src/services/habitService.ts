@@ -11,7 +11,7 @@ import {
   where,
   Timestamp,
 } from "firebase/firestore";
-import type { Habit, StreakDay } from "../domain/Habit";
+import { DAILY_GOAL, type Goal, type Habit, type StreakDay } from "../domain/Habit";
 import { auth, db } from "./firebaseService";
 import { createDate } from "../utils/date";
 import { COLLECTIONS } from "../shared/constants";
@@ -55,6 +55,7 @@ export const addHabit = async () => {
   const docRef = await addDoc(habitsRef, {
     name: `Habit ${new Date().toISOString()}`,
     description: "",
+    goal: DAILY_GOAL,
     streak: [],
     createdAt: Date.now(),
     author: auth.currentUser?.uid ?? "",
@@ -74,6 +75,7 @@ interface FirestoreStreakDay {
 interface FirestoreHabit {
   name: string;
   description: string;
+  goal?: Goal;
   streak: FirestoreStreakDay[];
 }
 
@@ -84,6 +86,7 @@ function formatHabit(doc: QueryDocumentSnapshot): Habit {
     id: doc.id,
     name: data.name,
     description: data.description,
+    goal: data.goal ?? DAILY_GOAL,
     streak: data.streak.map((s) => ({
       date: createDate(new Date(s.date.seconds * 1000)),
       status: s.status,

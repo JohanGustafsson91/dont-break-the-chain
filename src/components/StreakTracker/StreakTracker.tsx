@@ -1,10 +1,10 @@
 import { useEffect, useState } from "react";
-import type { Habit } from "../../domain/Habit";
+import type { Goal, Habit } from "../../domain/Habit";
 import {
-  calculateCurrentStreak,
-  calculateLongestStreak,
+  countGoodDaysInWeek,
   getGoodDays,
   getBadDays,
+  getStreakSummary,
   markDay,
 } from "../../domain/Habit";
 import {
@@ -14,7 +14,11 @@ import {
 } from "../../services/habitService";
 import { Calendar } from "./Calendar";
 import { createDate, isSameDay } from "../../utils/date";
-import { formatGoodShare, pluralize } from "../../utils/string";
+import {
+  formatGoodShare,
+  formatWeekProgress,
+  pluralize,
+} from "../../utils/string";
 import { useNavigate, useParams } from "react-router-dom";
 import { EditableTextField } from "./EditableTextField";
 import "./StreakTracker.css";
@@ -25,6 +29,7 @@ import { BottomSheet } from "./BottomSheet";
 import { useAppBarContext } from "../AppBar/AppBar.Context";
 import { StreakStatusRadioGroup } from "../StreakStatusRadioGroup/StreakStatusRadioGroup";
 import { ConfirmDialog } from "../ConfirmDialog/ConfirmDialog";
+import { GoalSelect } from "./GoalSelect";
 
 type Status = (typeof HABIT_STATUS)[keyof typeof HABIT_STATUS];
 
@@ -126,6 +131,22 @@ export const StreakTracker = () => {
     }
   }
 
+  async function onUpdateGoal(goal: Goal) {
+    if (!habit) return;
+    const previousGoal = habit.goal;
+
+    try {
+      setHabit((prev) => prev && { ...prev, goal });
+      await updateHabit(habit.id, { goal });
+    } catch (error) {
+      console.error("Could not update habit goal", { error });
+      // Only undo our own goal: days marked meanwhile and newer goals stay.
+      setHabit((prev) =>
+        prev && prev.goal === goal ? { ...prev, goal: previousGoal } : prev,
+      );
+    }
+  }
+
   async function saveDay(date: Date, status: Status, notes: string) {
     if (!habit) return;
     const previousHabit = habit;
@@ -160,11 +181,16 @@ export const StreakTracker = () => {
     habit.streak.find((s) => isSameDay(createDate(s.date), createDate(date)));
 
   const activeStreakDay = activeDate ? findDay(activeDate) : undefined;
-  const isTodayMarked = Boolean(findDay(new Date()));
+  const { goal } = habit;
   const goodDays = getGoodDays(habit).length;
   const badDays = getBadDays(habit).length;
-  const currentStreak = calculateCurrentStreak(habit).count;
-  const longestStreak = calculateLongestStreak(habit).count;
+  const goodDaysThisWeek = countGoodDaysInWeek(habit, new Date());
+  const streak = getStreakSummary(habit);
+  const hint =
+    goal.type === "weekly"
+      ? goodDaysThisWeek < goal.times &&
+        `${goal.times - goodDaysThisWeek} more to reach this week's goal.`
+      : !findDay(new Date()) && "Today isn't marked yet. Tap today to log it.";
 
   return (
     <div className="page StreakTracker">
@@ -181,37 +207,52 @@ export const StreakTracker = () => {
           onUpdate={onUpdateDescription}
           placeholder="Add a description"
         />
+        <GoalSelect goal={goal} onChange={onUpdateGoal} />
       </div>
 
       <div className="StreakTracker-stats">
         <StreakStat
           icon={STREAK_ICONS.CURRENT}
           label="Current"
-          value={currentStreak}
-          unit={pluralize(currentStreak, "day in a row", "days in a row")}
+          value={streak.current}
+          unit={pluralize(streak.current, `${streak.unit} in a row`, `${streak.unit}s in a row`)}
         />
         <StreakStat
           icon={STREAK_ICONS.LONGEST}
           label="Longest"
-          value={longestStreak}
-          unit={pluralize(longestStreak, "day, best chain", "days, best chain")}
+          value={streak.longest}
+          unit={pluralize(streak.longest, `${streak.unit}, best chain`, `${streak.unit}s, best chain`)}
         />
         <div className="StreakTracker-share">
           <div className="StreakTracker-share_header">
             <span className="StreakTracker-share_label">
-              {formatGoodShare(goodDays, badDays)}
+              {goal.type === "weekly"
+                ? formatWeekProgress(goodDaysThisWeek, goal.times)
+                : formatGoodShare(goodDays, badDays)}
             </span>
             <span className="StreakTracker-share_counts">
-              {goodDays} good · {badDays} bad
+              {goal.type === "weekly"
+                ? `${goodDays} good days in total`
+                : `${goodDays} good · ${badDays} bad`}
             </span>
           </div>
-          <ProgressBar goodDays={goodDays} badDays={badDays} thick />
+          {goal.type === "weekly" ? (
+            <ProgressBar
+              goodDays={Math.min(goodDaysThisWeek, goal.times)}
+              badDays={0}
+              total={goal.times}
+              thick
+            />
+          ) : (
+            <ProgressBar goodDays={goodDays} badDays={badDays} thick />
+          )}
         </div>
       </div>
 
       <Calendar
         onSelectDate={setActiveDate}
         streak={habit.streak}
+        goal={goal}
         onUpdateDate={(args) =>
           handleUpdateDay(args.date, args.status, args.notes)
         }
@@ -219,11 +260,7 @@ export const StreakTracker = () => {
 
       {/* Below the calendar on purpose: toggling it above would shift the
           grid under the user's finger and turn the next tap into a month change. */}
-      {isTodayMarked ? null : (
-        <div className="StreakTracker-hint">
-          Today isn't marked yet. Tap today to log it.
-        </div>
-      )}
+      {hint ? <div className="StreakTracker-hint">{hint}</div> : null}
 
       {activeDate ? (
         <BottomSheet onClose={() => setActiveDate(undefined)}>
@@ -237,6 +274,7 @@ export const StreakTracker = () => {
               <div className="radio-group">
                 <StreakStatusRadioGroup
                   verbose
+                  allowBad={goal.type === "daily"}
                   currentStreakDay={
                     activeStreakDay ?? {
                       status: HABIT_STATUS.NOT_SPECIFIED,
@@ -258,7 +296,9 @@ export const StreakTracker = () => {
                   placeholder={
                     activeStreakDay
                       ? "e.g. Ran 5 km"
-                      : "Mark the day ✓ or ✗ to add a note"
+                      : goal.type === "daily"
+                        ? "Mark the day ✓ or ✗ to add a note"
+                        : "Mark the day ✓ to add a note"
                   }
                   value={activeStreakDay?.notes ?? ""}
                   onUpdate={(notes) =>

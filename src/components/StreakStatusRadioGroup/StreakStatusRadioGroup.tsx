@@ -8,6 +8,7 @@ interface Props {
   onUpdateStatus: (arg: { status: Status; date: Date; notes: string }) => void;
   groupName?: string;
   verbose?: boolean;
+  allowBad?: boolean;
 }
 
 export const StreakStatusRadioGroup = ({
@@ -15,8 +16,13 @@ export const StreakStatusRadioGroup = ({
   onUpdateStatus,
   groupName = "status-group",
   verbose = false,
+  allowBad = true,
 }: Props) => {
-  return [HABIT_STATUS.GOOD, HABIT_STATUS.BAD].map((status) => {
+  const statuses = allowBad
+    ? [HABIT_STATUS.GOOD, HABIT_STATUS.BAD]
+    : [HABIT_STATUS.GOOD];
+
+  return statuses.map((status) => {
     const checked = currentStreakDay.status === status;
 
     return (

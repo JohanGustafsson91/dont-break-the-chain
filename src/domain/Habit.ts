@@ -3,10 +3,15 @@
 import { HABIT_STATUS } from "../shared/constants";
 import { createDate, isNextDay, isYesterday } from "../utils/date";
 
+export type Goal = { type: "daily" } | { type: "weekly"; times: number };
+
+export const DAILY_GOAL: Goal = { type: "daily" };
+
 export interface Habit {
   id: string;
   name: string;
   description: string;
+  goal: Goal;
   streak: StreakDay[];
 }
 
@@ -129,8 +134,76 @@ export const calculateLongestStreak = (
   };
 };
 
-export const getGoodDays = (habit: Habit): StreakDay[] =>
+export const getGoodDays = (habit: Pick<Habit, "streak">): StreakDay[] =>
   habit.streak.filter((d) => d.status === HABIT_STATUS.GOOD);
 
 export const getBadDays = (habit: Habit): StreakDay[] =>
   habit.streak.filter((d) => d.status === HABIT_STATUS.BAD);
+
+const ONE_WEEK_IN_MS = 7 * 24 * 60 * 60 * 1000;
+
+export const startOfWeek = (date: Date): Date => {
+  const day = createDate(date);
+  const daysSinceMonday = (day.getUTCDay() + 6) % 7;
+  return createDate({
+    year: day.getUTCFullYear(),
+    month: day.getUTCMonth(),
+    day: day.getUTCDate() - daysSinceMonday,
+  });
+};
+
+export const countGoodDaysInWeek = (
+  habit: Pick<Habit, "streak">,
+  date: Date,
+): number => {
+  const weekStart = startOfWeek(date).getTime();
+  return getGoodDays(habit).filter(
+    (d) => startOfWeek(d.date).getTime() === weekStart,
+  ).length;
+};
+
+/**
+ * Weekly chains count consecutive weeks that reached the goal. The current
+ * week never breaks the chain: it only extends it once the goal is reached.
+ */
+const calculateWeeklyStreaks = (
+  habit: Habit,
+  times: number,
+): { current: number; longest: number } => {
+  const goodDaysPerWeek = getGoodDays(habit).reduce((counts, d) => {
+    const week = startOfWeek(d.date).getTime();
+    return counts.set(week, (counts.get(week) ?? 0) + 1);
+  }, new Map<number, number>());
+
+  const completedWeeks = new Set(
+    [...goodDaysPerWeek]
+      .filter(([, goodDays]) => goodDays >= times)
+      .map(([week]) => week),
+  );
+
+  const thisWeek = startOfWeek(new Date()).getTime();
+  const countChainEndingAt = (week: number): number =>
+    completedWeeks.has(week) ? 1 + countChainEndingAt(week - ONE_WEEK_IN_MS) : 0;
+
+  const current =
+    (completedWeeks.has(thisWeek) ? 1 : 0) +
+    countChainEndingAt(thisWeek - ONE_WEEK_IN_MS);
+
+  const longest = Math.max(
+    0,
+    ...[...completedWeeks].map(countChainEndingAt),
+  );
+
+  return { current, longest };
+};
+
+export const getStreakSummary = (
+  habit: Habit,
+): { current: number; longest: number; unit: "day" | "week" } =>
+  habit.goal.type === "weekly"
+    ? { ...calculateWeeklyStreaks(habit, habit.goal.times), unit: "week" }
+    : {
+        current: calculateCurrentStreak(habit).count,
+        longest: calculateLongestStreak(habit).count,
+        unit: "day",
+      };

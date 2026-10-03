@@ -5,6 +5,9 @@ import {
   calculateLongestStreak,
   getGoodDays,
   getBadDays,
+  getStreakSummary,
+  countGoodDaysInWeek,
+  startOfWeek,
   type Habit,
 } from "./Habit";
 import { HABIT_STATUS } from "../shared/constants";
@@ -22,6 +25,7 @@ describe("Domain - Habit tracking complete workflows", () => {
     id: "test-habit",
     name: "Test Habit",
     description: "Test Description",
+    goal: { type: "daily" },
     streak: streakData.map((s) => ({
       date: new Date(s.date),
       status: HABIT_STATUS[s.status],
@@ -226,6 +230,72 @@ describe("Domain - Habit tracking complete workflows", () => {
       expect(badDays).toHaveLength(2);
       expect(goodDays.every(day => day.status === HABIT_STATUS.GOOD)).toBe(true);
       expect(badDays.every(day => day.status === HABIT_STATUS.BAD)).toBe(true);
+    });
+  });
+
+  describe("Weekly goals - chains counted in weeks", () => {
+    // Today is Saturday 2025-02-15, so the current week is Mon 10 – Sun 16 Feb.
+    const goodDays = (...dates: string[]) =>
+      dates.map((date) => ({ date, status: HABIT_STATUS.GOOD }));
+    const weekly = (habit: Habit, times: number): Habit => ({
+      ...habit,
+      goal: { type: "weekly", times },
+    });
+
+    it("should start weeks on Monday", () => {
+      expect(startOfWeek(new Date("2025-02-10")).toISOString()).toBe("2025-02-10T00:00:00.000Z");
+      expect(startOfWeek(new Date("2025-02-16")).toISOString()).toBe("2025-02-10T00:00:00.000Z");
+      expect(startOfWeek(new Date("2025-02-09")).toISOString()).toBe("2025-02-03T00:00:00.000Z");
+    });
+
+    it("should keep the chain while the current week is still in progress", () => {
+      const habit = weekly(
+        createHabit([
+          ...goodDays("2025-01-27", "2025-01-29", "2025-02-01"), // complete
+          ...goodDays("2025-02-03", "2025-02-05", "2025-02-07"), // complete
+          ...goodDays("2025-02-11"), // current week, 1/3
+          { date: "2025-02-12", status: HABIT_STATUS.BAD }, // neutral for weekly goals
+        ]),
+        3,
+      );
+
+      expect(countGoodDaysInWeek(habit, new Date("2025-02-15"))).toBe(1);
+      expect(getStreakSummary(habit)).toEqual({ current: 2, longest: 2, unit: "week" });
+    });
+
+    it("should extend the chain once the current week reaches the goal", () => {
+      const habit = weekly(
+        createHabit([
+          ...goodDays("2025-02-03", "2025-02-04"),
+          ...goodDays("2025-02-10", "2025-02-12"),
+        ]),
+        2,
+      );
+
+      expect(getStreakSummary(habit)).toEqual({ current: 2, longest: 2, unit: "week" });
+    });
+
+    it("should break the chain on a missed week but remember the longest", () => {
+      const habit = weekly(
+        createHabit([
+          ...goodDays("2025-01-13", "2025-01-14"), // complete
+          ...goodDays("2025-01-20", "2025-01-21"), // complete
+          ...goodDays("2025-01-27", "2025-01-28"), // complete
+          ...goodDays("2025-02-03"), // 1/2, breaks the chain
+          ...goodDays("2025-02-10", "2025-02-11"), // current week complete
+        ]),
+        2,
+      );
+
+      expect(getStreakSummary(habit)).toEqual({ current: 1, longest: 3, unit: "week" });
+    });
+
+    it("should apply a changed goal retroactively", () => {
+      const habit = createHabit(goodDays("2025-02-13", "2025-02-14", "2025-02-15"));
+
+      expect(getStreakSummary(habit)).toEqual({ current: 3, longest: 3, unit: "day" });
+      expect(getStreakSummary(weekly(habit, 5))).toEqual({ current: 0, longest: 0, unit: "week" });
+      expect(getStreakSummary(weekly(habit, 3))).toEqual({ current: 1, longest: 1, unit: "week" });
     });
   });
 });

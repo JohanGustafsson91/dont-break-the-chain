@@ -12,9 +12,11 @@ import { NextMonthIcon } from "./NextMonthIcon";
 import { PrevMonthIcon } from "./PrevMonthIcon";
 import { useState } from "react";
 import { HABIT_STATUS } from "../../shared/constants";
+import { countGoodDaysInWeek, type Goal } from "../../domain/Habit";
 
 interface Props {
   streak: DayInStreak[];
+  goal: Goal;
   onSelectDate: (date: Date) => void;
   onUpdateDate: (args: {
     date: Date;
@@ -23,7 +25,15 @@ interface Props {
   }) => void;
 }
 
-export const Calendar = ({ streak, onSelectDate, onUpdateDate }: Props) => {
+export const Calendar = ({
+  streak,
+  goal,
+  onSelectDate,
+  onUpdateDate,
+}: Props) => {
+  const nextStatus =
+    goal.type === "weekly" ? nextWeeklyStatusMap : newStatusMap;
+
   const [activeDate, setActiveDate] = useState(new Date());
   const [year, month] = [activeDate.getFullYear(), activeDate.getMonth()];
   const numberOfDaysInMonth = new Date(year, month + 1, 0).getDate();
@@ -106,7 +116,14 @@ export const Calendar = ({ streak, onSelectDate, onUpdateDate }: Props) => {
       </div>
 
       {weeksWithDays.map((week, weekNumber) => (
-        <div key={`week-${weekNumber}`}>
+        <div
+          key={`week-${weekNumber}`}
+          className={
+            isWeekGoalReached(goal, streak, week)
+              ? "Calendar-week_complete"
+              : undefined
+          }
+        >
           {week.map((day, weekDay) => {
             if (typeof day === "number") {
               return <div className="Calendar-day Calendar-day_empty" key={day} />;
@@ -121,6 +138,7 @@ export const Calendar = ({ streak, onSelectDate, onUpdateDate }: Props) => {
             // Links don't wrap to the next week row or into the next month.
             const nextDay = daysInMonthWithStreakData[day.number];
             const linkedClassName =
+              goal.type === "daily" &&
               day.status === HABIT_STATUS.GOOD &&
               nextDay?.status === HABIT_STATUS.GOOD &&
               weekDay < 6
@@ -143,7 +161,7 @@ export const Calendar = ({ streak, onSelectDate, onUpdateDate }: Props) => {
                     onClick: () =>
                       onUpdateDate({
                         date: day.date,
-                        status: newStatusMap[day.status],
+                        status: nextStatus[day.status],
                         notes: day.notes,
                       }),
                   }))}
@@ -160,6 +178,7 @@ export const Calendar = ({ streak, onSelectDate, onUpdateDate }: Props) => {
         <span>Tap to cycle status</span>
         <span>Hold to add a note</span>
         <span>* has a note</span>
+        {goal.type === "weekly" ? <span>Lit week = goal reached</span> : null}
       </div>
     </div>
   );
@@ -176,6 +195,27 @@ const newStatusMap = {
   GOOD: "BAD",
   BAD: "NOT_SPECIFIED",
 } as const;
+
+// Unmarked days are neutral for weekly goals, so there's no ✗ in the cycle.
+const nextWeeklyStatusMap = {
+  NOT_SPECIFIED: "GOOD",
+  GOOD: "NOT_SPECIFIED",
+  BAD: "NOT_SPECIFIED",
+} as const;
+
+function isWeekGoalReached(
+  goal: Goal,
+  streak: DayInStreak[],
+  week: Array<number | { date: Date }>,
+) {
+  const firstDay = week.find((day) => typeof day !== "number");
+
+  return (
+    goal.type === "weekly" &&
+    typeof firstDay === "object" &&
+    countGoodDaysInWeek({ streak }, firstDay.date) >= goal.times
+  );
+}
 
 const dayNamesInWeek = [
   "Monday",

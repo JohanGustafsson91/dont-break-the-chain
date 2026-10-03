@@ -67,6 +67,7 @@ describe("HabitsList - User workflows", () => {
         id: "habit-1",
         name: "Morning Exercise",
         description: "30 min workout",
+        goal: { type: "daily" },
         streak: [
           {
             date: new Date("2025-02-09T00:00:00.000Z"),
@@ -89,6 +90,7 @@ describe("HabitsList - User workflows", () => {
         id: "habit-2",
         name: "Reading",
         description: "Read 20 pages",
+        goal: { type: "daily" },
         streak: [],
       },
     ];
@@ -146,6 +148,7 @@ describe("HabitsList - User workflows", () => {
         id: "habit-1",
         name: "Meditation",
         description: "10 min daily",
+        goal: { type: "daily" },
         streak: [],
       },
     ];
@@ -184,6 +187,7 @@ describe("HabitsList - User workflows", () => {
         id: "habit-1",
         name: "Meditation",
         description: "10 min daily",
+        goal: { type: "daily" },
         streak: [
           { date: createDate(new Date()), status: "GOOD", notes: "Felt calm" },
         ],
@@ -219,12 +223,37 @@ describe("HabitsList - User workflows", () => {
     });
   });
 
+  it("should show weekly progress and only a ✓ button for weekly goals", async () => {
+    const mockHabits: Habit[] = [
+      {
+        id: "habit-1",
+        name: "Gym",
+        description: "",
+        goal: { type: "weekly", times: 3 },
+        streak: [{ date: createDate(new Date()), status: "GOOD", notes: "" }],
+      },
+    ];
+
+    vi.mocked(habitService.getAllHabits).mockResolvedValue(mockHabits);
+
+    renderHabitsList();
+
+    await waitFor(() => {
+      expect(screen.getByText("Gym")).toBeInTheDocument();
+    });
+
+    expect(screen.getByText("1/3 this week")).toBeInTheDocument();
+    expect(screen.getByRole("radio", { name: "✓" })).toBeInTheDocument();
+    expect(screen.queryByRole("radio", { name: "✗" })).not.toBeInTheDocument();
+  });
+
   it("should display habits with no streak data", async () => {
     const mockHabits: Habit[] = [
       {
         id: "habit-1",
         name: "New Habit",
         description: "Just started",
+        goal: { type: "daily" },
         streak: [],
       },
     ];

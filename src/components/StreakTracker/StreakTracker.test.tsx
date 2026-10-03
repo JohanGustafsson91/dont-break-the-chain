@@ -1,6 +1,6 @@
 import "@testing-library/jest-dom";
 import { describe, it, expect, vi, beforeEach, beforeAll, afterAll } from "vitest";
-import { render, screen, waitFor, within } from "@testing-library/react";
+import { act, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { StreakTracker } from "./StreakTracker";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
@@ -77,6 +77,7 @@ describe("StreakTracker - Complete user journey", () => {
       id: "habit-123",
       name: "Morning Meditation",
       description: "10 minutes daily meditation",
+      goal: { type: "daily" },
       streak: [
         {
           date: new Date("2025-02-10T00:00:00.000Z"),
@@ -234,6 +235,7 @@ describe("StreakTracker - Complete user journey", () => {
       id: "habit-123",
       name: "Test Habit",
       description: "Test",
+      goal: { type: "daily" },
       streak: [],
     };
 
@@ -287,6 +289,7 @@ describe("StreakTracker - Complete user journey", () => {
       id: "habit-123",
       name: "Test Habit",
       description: "Test",
+      goal: { type: "daily" },
       streak: [
         {
           date: new Date("2025-02-14T00:00:00.000Z"),
@@ -331,6 +334,7 @@ describe("StreakTracker - Complete user journey", () => {
       id: "habit-123",
       name: "Test Habit",
       description: "Test",
+      goal: { type: "daily" },
       streak: [
         {
           date: new Date("2025-02-14T00:00:00.000Z"),
@@ -371,11 +375,128 @@ describe("StreakTracker - Complete user journey", () => {
     });
   });
 
+  it("should track a weekly goal: week progress, lit weeks, no ✗ and changing the goal", async () => {
+    const user = userEvent.setup();
+
+    // Today is Saturday 2025-02-15. Week of 27 Jan spans two months and is complete
+    // through its January days, week of 3 Feb is complete, current week has 1/2.
+    const mockHabit: Habit = {
+      id: "habit-123",
+      name: "Gym",
+      description: "",
+      goal: { type: "weekly", times: 2 },
+      streak: [
+        { date: new Date("2025-01-28T00:00:00.000Z"), status: "GOOD", notes: "" },
+        { date: new Date("2025-01-30T00:00:00.000Z"), status: "GOOD", notes: "" },
+        { date: new Date("2025-02-03T00:00:00.000Z"), status: "GOOD", notes: "" },
+        { date: new Date("2025-02-05T00:00:00.000Z"), status: "GOOD", notes: "" },
+        { date: new Date("2025-02-11T00:00:00.000Z"), status: "GOOD", notes: "" },
+      ],
+    };
+
+    vi.mocked(habitService.getHabitById).mockResolvedValue(mockHabit);
+    vi.mocked(habitService.updateHabit).mockResolvedValue();
+
+    window.history.pushState({}, "", "/habits/habit-123");
+    renderStreakTracker();
+
+    await waitFor(() => {
+      expect(screen.getByDisplayValue("Gym")).toBeInTheDocument();
+    });
+
+    expect(screen.getByLabelText("Goal")).toHaveValue("2");
+    expect(screen.getByText("1/2 this week")).toBeInTheDocument();
+    expect(screen.getByText("1 more to reach this week's goal.")).toBeInTheDocument();
+    expect(screen.getByText("weeks in a row")).toBeInTheDocument();
+    expect(screen.getByTitle("Day 1").parentElement).toHaveClass("Calendar-week_complete");
+    expect(screen.getByTitle("Day 3").parentElement).toHaveClass("Calendar-week_complete");
+    expect(screen.getByTitle("Day 10").parentElement).not.toHaveClass("Calendar-week_complete");
+
+    // Completing the current week lights it up and extends the chain
+    await user.click(screen.getByTitle("Day 12"));
+
+    await waitFor(() => {
+      expect(screen.getByText("2/2 this week")).toBeInTheDocument();
+    });
+    expect(screen.queryByText(/more to reach/)).not.toBeInTheDocument();
+    expect(screen.getByTitle("Day 10").parentElement).toHaveClass("Calendar-week_complete");
+    const currentStat = screen.getByText("Current").closest(".streak") as HTMLElement;
+    expect(within(currentStat).getByText("3")).toBeInTheDocument();
+    expect(within(currentStat).getByText("weeks in a row")).toBeInTheDocument();
+
+    // Tapping a good day again unmarks it instead of marking it bad
+    await user.click(screen.getByTitle("Day 12"));
+
+    await waitFor(() => {
+      expect(screen.getByText("1/2 this week")).toBeInTheDocument();
+    });
+    expect(habitService.updateHabit).toHaveBeenLastCalledWith("habit-123", {
+      streak: expect.not.arrayContaining([expect.objectContaining({ status: "BAD" })]),
+    });
+
+    // The goal applies retroactively when changed
+    await user.selectOptions(screen.getByLabelText("Goal"), "daily");
+
+    await waitFor(() => {
+      expect(habitService.updateHabit).toHaveBeenLastCalledWith("habit-123", {
+        goal: { type: "daily" },
+      });
+    });
+    expect(screen.getByText("Today isn't marked yet. Tap today to log it.")).toBeInTheDocument();
+    expect(screen.queryByText(/this week/)).not.toBeInTheDocument();
+  });
+
+  it("should roll back only the goal when saving it fails, keeping days marked meanwhile", async () => {
+    const user = userEvent.setup();
+    const consoleErrorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+
+    const mockHabit: Habit = {
+      id: "habit-123",
+      name: "Gym",
+      description: "",
+      goal: { type: "weekly", times: 3 },
+      streak: [],
+    };
+
+    // The goal save hangs until we fail it; day saves succeed right away.
+    let failGoalSave: (error: Error) => void = () => {};
+    vi.mocked(habitService.getHabitById).mockResolvedValue(mockHabit);
+    vi.mocked(habitService.updateHabit).mockImplementation((_id, data) =>
+      "goal" in data
+        ? new Promise((_, reject) => {
+            failGoalSave = reject;
+          })
+        : Promise.resolve(),
+    );
+
+    window.history.pushState({}, "", "/habits/habit-123");
+    renderStreakTracker();
+
+    await waitFor(() => {
+      expect(screen.getByDisplayValue("Gym")).toBeInTheDocument();
+    });
+
+    await user.selectOptions(screen.getByLabelText("Goal"), "daily");
+    await user.click(screen.getByTitle("Day 14"));
+    await waitFor(() => {
+      expect(screen.getByTitle("Day 14")).toHaveClass("Calendar-day_success");
+    });
+
+    await act(async () => failGoalSave(new Error("Permission denied")));
+
+    expect(screen.getByLabelText("Goal")).toHaveValue("3");
+    expect(screen.getByTitle("Day 14")).toHaveClass("Calendar-day_success");
+    expect(screen.getByText("1/3 this week")).toBeInTheDocument();
+
+    consoleErrorSpy.mockRestore();
+  });
+
   it("should prevent users from marking future dates", async () => {
     const mockHabit: Habit = {
       id: "habit-123",
       name: "Test Habit",
       description: "Test",
+      goal: { type: "daily" },
       streak: [],
     };
 
@@ -411,6 +532,7 @@ describe("StreakTracker - Complete user journey", () => {
       id: "habit-123",
       name: "Test Habit",
       description: "Test",
+      goal: { type: "daily" },
       streak: [
         {
           date: new Date("2025-02-14T00:00:00.000Z"),

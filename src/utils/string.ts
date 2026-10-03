@@ -10,3 +10,6 @@ export const formatGoodShare = (goodDays: number, badDays: number) => {
     ? "No days yet"
     : `Good ${Math.round((goodDays / total) * 100)} %`;
 };
+
+export const formatWeekProgress = (goodDaysThisWeek: number, times: number) =>
+  `${goodDaysThisWeek}/${times} this week`;

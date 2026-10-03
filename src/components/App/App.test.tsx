@@ -108,6 +108,7 @@ const habitData = () => ({
   id: "H2Jui9vlLL4fVLZViudr",
   name: "Healthy",
   description: "Eat and be healthy",
+  goal: { type: "daily" },
   streak: [
     {
       notes: "",

@@ -1,7 +1,11 @@
 import "./ProgressBar.css";
 
-export const ProgressBar = ({ goodDays, badDays, thick = false }: Props) => {
-  const total = goodDays + badDays;
+export const ProgressBar = ({
+  goodDays,
+  badDays,
+  total = goodDays + badDays,
+  thick = false,
+}: Props) => {
   const toWidth = (days: number) =>
     total === 0 ? "0%" : `${(days / total) * 100}%`;
 
@@ -16,5 +20,6 @@ export const ProgressBar = ({ goodDays, badDays, thick = false }: Props) => {
 interface Props {
   goodDays: number;
   badDays: number;
+  total?: number;
   thick?: boolean;
 }
