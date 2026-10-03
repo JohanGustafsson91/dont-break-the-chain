@@ -19,6 +19,9 @@ import { HABIT_STATUS, STREAK_ICONS } from "../../shared/constants";
 import { createDate } from "../../utils/date";
 import { formatGoodShare } from "../../utils/string";
 import { StreakStatusRadioGroup } from "../StreakStatusRadioGroup/StreakStatusRadioGroup";
+import { ConfirmDialog } from "../ConfirmDialog/ConfirmDialog";
+
+type Status = (typeof HABIT_STATUS)[keyof typeof HABIT_STATUS];
 
 const motivationalMessages = {
   [HABIT_STATUS.GOOD]: [
@@ -78,6 +81,7 @@ const todayLabel = () =>
 
 export const HabitsList = () => {
   const [habits, setHabits] = useState<State>({ data: [], status: "pending" });
+  const [pendingRemoval, setPendingRemoval] = useState<PendingRemoval>();
   const navigate = useNavigate();
 
   async function onCreateHabit() {
@@ -105,10 +109,26 @@ export const HabitsList = () => {
     return navigate(`/habits/${id}`);
   }
 
-  async function handleUpdateDay(
+  function handleUpdateDay(
     habit: Habit,
     date: Date,
-    status: typeof HABIT_STATUS[keyof typeof HABIT_STATUS],
+    status: Status,
+    notes: string,
+  ) {
+    const notesWillBeLost = notes && status === HABIT_STATUS.NOT_SPECIFIED;
+
+    if (notesWillBeLost) {
+      setPendingRemoval({ notes, remove: () => saveDay(habit, date, status, notes) });
+      return;
+    }
+
+    saveDay(habit, date, status, notes);
+  }
+
+  async function saveDay(
+    habit: Habit,
+    date: Date,
+    status: Status,
     notes: string,
   ) {
     const previousHabit = habit;
@@ -235,9 +255,27 @@ export const HabitsList = () => {
           + Create habit
         </button>
       </div>
+
+      {pendingRemoval ? (
+        <ConfirmDialog
+          title="Remove status?"
+          body={`The note for this day will be deleted too: “${pendingRemoval.notes}”`}
+          confirmLabel="Remove"
+          onCancel={() => setPendingRemoval(undefined)}
+          onConfirm={() => {
+            setPendingRemoval(undefined);
+            pendingRemoval.remove();
+          }}
+        />
+      ) : null}
     </>
   );
 };
+
+interface PendingRemoval {
+  notes: string;
+  remove: () => void;
+}
 
 interface State {
   data: Habit[];
