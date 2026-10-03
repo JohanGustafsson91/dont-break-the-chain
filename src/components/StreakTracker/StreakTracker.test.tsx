@@ -144,6 +144,12 @@ describe("StreakTracker - Complete user journey", () => {
     // User sees the calendar for February 2025
     expect(screen.getByText("February 2025")).toBeInTheDocument();
 
+    // Consecutive good days are linked into a chain, broken by the bad day
+    expect(screen.getByTitle("Day 10")).toHaveClass("Calendar-day_linked");
+    expect(screen.getByTitle("Day 11")).not.toHaveClass("Calendar-day_linked");
+    expect(screen.getByTitle("Day 13")).toHaveClass("Calendar-day_linked");
+    expect(screen.getByTitle("Day 14")).not.toHaveClass("Calendar-day_linked");
+
     // PART 2: User edits habit name
     const nameInput = screen.getByDisplayValue("Morning Meditation");
     await user.clear(nameInput);

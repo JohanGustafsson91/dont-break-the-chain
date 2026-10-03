@@ -107,7 +107,7 @@ export const Calendar = ({ streak, onSelectDate, onUpdateDate }: Props) => {
 
       {weeksWithDays.map((week, weekNumber) => (
         <div key={`week-${weekNumber}`}>
-          {week.map((day) => {
+          {week.map((day, weekDay) => {
             if (typeof day === "number") {
               return <div className="Calendar-day Calendar-day_empty" key={day} />;
             }
@@ -118,6 +118,15 @@ export const Calendar = ({ streak, onSelectDate, onUpdateDate }: Props) => {
               ? ""
               : "Calendar-day_future";
 
+            // Links don't wrap to the next week row or into the next month.
+            const nextDay = daysInMonthWithStreakData[day.number];
+            const linkedClassName =
+              day.status === HABIT_STATUS.GOOD &&
+              nextDay?.status === HABIT_STATUS.GOOD &&
+              weekDay < 6
+                ? "Calendar-day_linked"
+                : "";
+
             const hintAboutTodayClassName =
               isToday && day.status === "NOT_SPECIFIED"
                 ? "Calendar-day_pulsate"
@@ -125,7 +134,7 @@ export const Calendar = ({ streak, onSelectDate, onUpdateDate }: Props) => {
 
             return (
               <div
-                className={`Calendar-day ${classNameByStatus[day.status]} ${todayClassName} ${futureClassName} ${hintAboutTodayClassName}`}
+                className={`Calendar-day ${classNameByStatus[day.status]} ${todayClassName} ${futureClassName} ${linkedClassName} ${hintAboutTodayClassName}`}
                 key={day.date.toLocaleDateString()}
                 title={`Day ${day.number}`}
                 {...(isBeforeOrSameDay(day.date) &&

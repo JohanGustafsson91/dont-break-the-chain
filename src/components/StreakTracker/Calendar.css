@@ -71,6 +71,18 @@
   cursor: default;
 }
 
+.Calendar-day_linked::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  right: -7px;
+  width: 8px;
+  height: 4px;
+  margin-top: -2px;
+  border-radius: 2px;
+  background: var(--success-color);
+}
+
 .Calendar-day_today {
   box-shadow: 0 0 0 2px var(--bg-color), 0 0 0 4px var(--text-color);
 }
