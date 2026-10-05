@@ -1,5 +1,5 @@
 import "@testing-library/jest-dom";
-import { describe, it, expect, vi, beforeEach, beforeAll, afterAll } from "vitest";
+import { describe, it, expect, vi, beforeEach, beforeAll, afterAll, onTestFinished } from "vitest";
 import { act, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { StreakTracker } from "./StreakTracker";
@@ -520,6 +520,42 @@ describe("StreakTracker - Complete user journey", () => {
     const patterns = await screen.findByRole("region", { name: "Patterns" });
     expect(
       within(patterns).getByText("You miss most often on Saturdays: 4 of the last 6."),
+    ).toBeInTheDocument();
+  });
+
+  it("should say so when a habit doesn't exist or belongs to someone else", async () => {
+    const user = userEvent.setup();
+    const consoleErrorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+    onTestFinished(() => consoleErrorSpy.mockRestore());
+    // The security rules answer permission-denied for other users' and deleted habits.
+    vi.mocked(habitService.getHabitById).mockRejectedValue(
+      Object.assign(new Error("Missing or insufficient permissions."), {
+        code: "permission-denied",
+      }),
+    );
+
+    window.history.pushState({}, "", "/habits/someone-elses");
+    renderStreakTracker();
+
+    expect(
+      await screen.findByText("This habit doesn't exist, or it isn't yours."),
+    ).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Back to your habits" }));
+    expect(mockNavigate).toHaveBeenCalledWith("/");
+  });
+
+  it("should not call a habit missing when loading it failed for another reason", async () => {
+    const consoleErrorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+    onTestFinished(() => consoleErrorSpy.mockRestore());
+    vi.mocked(habitService.getHabitById).mockRejectedValue(
+      Object.assign(new Error("Offline"), { code: "unavailable" }),
+    );
+
+    window.history.pushState({}, "", "/habits/habit-123");
+    renderStreakTracker();
+
+    expect(
+      await screen.findByText("Couldn't load this habit. Check your connection and try again."),
     ).toBeInTheDocument();
   });
 

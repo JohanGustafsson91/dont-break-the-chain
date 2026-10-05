@@ -1,9 +1,72 @@
 rules_version = '2';
 
+// Every habit belongs to one user (`author` = Firebase Auth uid). Only that user may
+// read, change or delete it. Validation is per changed field, so habits written by
+// older app versions stay editable even if they carry fields this file doesn't know.
+//
+// Anything not matched below is denied, including the `fcmTokens` collection from an
+// earlier, unmerged notifications experiment.
 service cloud.firestore {
   match /databases/{database}/documents {
-    match /{document=**} {
-      allow read, write: if false;
+    match /habits/{habitId} {
+      function isSignedIn() {
+        return request.auth != null;
+      }
+
+      function ownsExisting() {
+        return isSignedIn() && resource.data.author == request.auth.uid;
+      }
+
+      function isValidName(name) {
+        return name is string && name.size() > 0 && name.size() <= 200;
+      }
+
+      function isValidDescription(description) {
+        return description is string && description.size() <= 2000;
+      }
+
+      function isValidGoal(goal) {
+        return goal is map && (
+          (goal.keys().hasOnly(['type']) && goal.type == 'daily') ||
+          (goal.keys().hasOnly(['type', 'times']) && goal.type == 'weekly'
+            && goal.times is int && goal.times >= 1 && goal.times <= 6)
+        );
+      }
+
+      // Rules can't loop over list entries, so only the number of days is capped
+      // (about 10 years of daily entries). The 1 MiB document limit caps the rest.
+      function isValidStreak(streak) {
+        return streak is list && streak.size() <= 4000;
+      }
+
+      function changedFieldsAreValid() {
+        let changed = request.resource.data.diff(resource.data).affectedKeys();
+        let data = request.resource.data;
+        return changed.hasOnly(['name', 'description', 'goal', 'streak'])
+          && (!('name' in changed) || isValidName(data.name))
+          && (!('description' in changed) || isValidDescription(data.description))
+          && (!('goal' in changed) || isValidGoal(data.goal))
+          && (!('streak' in changed) || isValidStreak(data.streak));
+      }
+
+      function isValidNewHabit() {
+        let data = request.resource.data;
+        return data.keys().hasOnly(['name', 'description', 'goal', 'streak', 'createdAt', 'author'])
+          && data.keys().hasAll(['name', 'description', 'goal', 'streak', 'author'])
+          && data.author == request.auth.uid
+          && isValidName(data.name)
+          && isValidDescription(data.description)
+          && isValidGoal(data.goal)
+          && isValidStreak(data.streak)
+          && (!('createdAt' in data) || data.createdAt is int);
+      }
+
+      // `get` and `list` both check the stored author. A list query is only allowed
+      // when it filters on the caller's own author, as getAllHabits does.
+      allow read: if ownsExisting();
+      allow create: if isSignedIn() && isValidNewHabit();
+      allow update: if ownsExisting() && changedFieldsAreValid();
+      allow delete: if ownsExisting();
     }
   }
 }

@@ -49,6 +49,7 @@ export const StreakTracker = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const [habit, setHabit] = useState<Habit>();
+  const [loadError, setLoadError] = useState<"notFound" | "failed">();
   const [activeDate, setActiveDate] = useState<Date | undefined>();
   const [confirmation, setConfirmation] = useState<Confirmation>();
   const { renderAppBarItems } = useAppBarContext();
@@ -56,8 +57,16 @@ export const StreakTracker = () => {
   useEffect(
     function fetchAndSetHabit() {
       const fetchHabit = async (id: string) => {
-        const data = await getHabitById(id);
-        setHabit(data);
+        try {
+          const data = await getHabitById(id);
+          setHabit(data);
+          setLoadError(data ? undefined : "notFound");
+        } catch (error) {
+          console.error("Could not fetch habit", { error });
+          // The rules answer permission-denied for other users' and deleted habits.
+          const isDenied = (error as { code?: string } | undefined)?.code === "permission-denied";
+          setLoadError(isDenied ? "notFound" : "failed");
+        }
       };
 
       if (id) fetchHabit(id);
@@ -107,6 +116,21 @@ export const StreakTracker = () => {
 
   // Only recompute when the habit changes, not when the sheet or a dialog opens.
   const insights = useMemo(() => (habit ? getInsights(habit) : []), [habit]);
+
+  if (loadError) {
+    return (
+      <div className="page page-center StreakTracker-notFound">
+        <p>
+          {loadError === "notFound"
+            ? "This habit doesn't exist, or it isn't yours."
+            : "Couldn't load this habit. Check your connection and try again."}
+        </p>
+        <button type="button" onClick={() => navigate("/")}>
+          Back to your habits
+        </button>
+      </div>
+    );
+  }
 
   if (!habit) {
     return null;
@@ -201,12 +225,14 @@ export const StreakTracker = () => {
           type="text"
           onUpdate={onUpdateName}
           allowEmpty={false}
+          maxLength={200}
         />
         <EditableTextField
           value={habit.description}
           type="textarea"
           onUpdate={onUpdateDescription}
           placeholder="Add a description"
+          maxLength={2000}
         />
         <GoalSelect goal={goal} onChange={onUpdateGoal} />
       </div>

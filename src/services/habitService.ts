@@ -39,12 +39,17 @@ export const deleteHabit = async (habitId: string) => {
   return await deleteDoc(activityRef);
 };
 
+// Habits are owned by the signed-in user; an empty author would create orphans
+// that the security rules make unreachable.
+const currentUserId = () => {
+  const uid = auth.currentUser?.uid;
+  if (!uid) throw new Error("Not signed in");
+  return uid;
+};
+
 export const getAllHabits = async (): Promise<Habit[]> => {
   const habitsRef = collection(db, COLLECTIONS.HABITS);
-  const q = query(
-    habitsRef,
-    where("author", "==", auth.currentUser?.uid ?? ""),
-  );
+  const q = query(habitsRef, where("author", "==", currentUserId()));
   const snapshot = await getDocs(q);
 
   return snapshot.docs.map(formatHabit);
@@ -58,7 +63,7 @@ export const addHabit = async () => {
     goal: DAILY_GOAL,
     streak: [],
     createdAt: Date.now(),
-    author: auth.currentUser?.uid ?? "",
+    author: currentUserId(),
   });
 
   return docRef.id;

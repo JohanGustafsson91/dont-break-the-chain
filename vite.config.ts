@@ -1,4 +1,4 @@
-import { defineConfig } from "vitest/config";
+import { configDefaults, defineConfig } from "vitest/config";
 import react from "@vitejs/plugin-react";
 import { VitePWA } from "vite-plugin-pwa";
 
@@ -39,6 +39,8 @@ export default defineConfig({
     globals: true,
     environment: "jsdom",
     setupFiles: "./test-setup.ts",
+    // Rules tests need the Firestore emulator; they run via `pnpm test:rules`.
+    exclude: [...configDefaults.exclude, "tests/**"],
     css: false,
     coverage: {
       provider: "v8",
