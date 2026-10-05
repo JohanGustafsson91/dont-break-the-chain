@@ -26,11 +26,31 @@ jobs:
       test-script: "test"
       build-script: "build"
 
+  # Firestore security rules, tested against the emulator (needs Java)
+  rules:
+    name: Firestore rules
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
+        with:
+          node-version: "20"
+          cache: "pnpm"
+      - uses: actions/setup-java@v6
+        with:
+          distribution: "temurin"
+          java-version: "21"
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm test:rules
+
   # Call the reusable auto-merge workflow for Dependabot PRs
   auto-merge:
     name: Auto-merge Dependabot PRs
-    needs: [validate]
+    needs: [validate, rules]
     uses: JohanGustafsson91/toolkit/.github/workflows/auto-merge-dependabot.yml@main
     with:
       merge-method: squash
-      exclude: none # Auto-merge all updates (use with caution!)
+      # Major updates (incl. GitHub Actions, pinned by major tag) need a human review:
+      # every merge to main is deployed with credentials that can reach user data.
+      exclude: major

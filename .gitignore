@@ -26,6 +26,8 @@ dev-dist
 
 .firebase/*
 dont-break-the-chain-service-account.json
+# Google Cloud service account keys, e.g. dont-break-the-chain-cb8a0-<key id>.json
+dont-break-the-chain-*.json
 
 # Test coverage
 coverage/

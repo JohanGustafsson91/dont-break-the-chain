@@ -8,6 +8,7 @@ export const EditableTextField = ({
   placeholder = "",
   allowEmpty = true,
   disabled = false,
+  maxLength,
 }: Props) => {
   const [text, setText] = useState(value);
 
@@ -23,6 +24,7 @@ export const EditableTextField = ({
     },
     placeholder,
     disabled,
+    maxLength,
   };
 
   return type === "text" ? (
@@ -39,4 +41,5 @@ interface Props {
   placeholder?: string;
   onUpdate: (text: string) => void;
   disabled?: boolean;
+  maxLength?: number;
 }

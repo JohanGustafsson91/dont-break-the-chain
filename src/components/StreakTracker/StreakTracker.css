@@ -139,3 +139,9 @@
   line-height: 1.45;
   text-wrap: pretty;
 }
+
+.StreakTracker-notFound {
+  gap: 1rem;
+  text-align: center;
+  color: var(--text-muted-color);
+}
