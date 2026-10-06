@@ -5,6 +5,8 @@ import { ProtectedRoute } from "../ProtectedRoute/ProtectedRoute";
 import { Login } from "../Login/Login";
 import { HabitsList } from "../HabitsList/HabitsList";
 import { AppBarProvider } from "../AppBar/AppBar.Provider";
+import { PrivacyPolicy } from "../Legal/PrivacyPolicy";
+import { Terms } from "../Legal/Terms";
 
 export const App = () => {
   return (
@@ -27,6 +29,8 @@ export const App = () => {
               </ProtectedRoute>
             }
           />
+          <Route path="/privacy" element={<PrivacyPolicy />} />
+          <Route path="/terms" element={<Terms />} />
           <Route
             path="/login"
             element={

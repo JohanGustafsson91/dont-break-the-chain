@@ -1,8 +1,12 @@
+import { useState } from "react";
+import { Link } from "react-router-dom";
 import { login } from "../../services/authService";
 import { AUTH_PROVIDERS } from "../../shared/constants";
 import "./Login.css";
 
 export const Login = () => {
+  const [hasAcceptedTerms, setHasAcceptedTerms] = useState(false);
+
   const handleLogin = async () => {
     try {
       await login({ provider: AUTH_PROVIDERS.GITHUB });
@@ -22,7 +26,23 @@ export const Login = () => {
       <h2 className="Login-subtitle">
         Build habits, stay consistent, and keep your streak alive!
       </h2>
-      <button className="Login-button" type="button" onClick={handleLogin}>
+      <label className="Login-consent">
+        <input
+          type="checkbox"
+          checked={hasAcceptedTerms}
+          onChange={(e) => setHasAcceptedTerms(e.target.checked)}
+        />
+        <span>
+          I accept the <Link to="/terms">terms of use</Link> and have read the{" "}
+          <Link to="/privacy">privacy policy</Link>.
+        </span>
+      </label>
+      <button
+        className="Login-button"
+        type="button"
+        onClick={handleLogin}
+        disabled={!hasAcceptedTerms}
+      >
         Login with GitHub
       </button>
     </div>

@@ -142,10 +142,10 @@ This must be live before Google sign-in, because Google's consent screen needs a
 
 **Code**
 - **Self-host the fonts** (DM Sans, Victor Mono) instead of loading them from Google Fonts.
-- Add static pages `/privacy` and `/terms`, linked from the login page and the app bar.
+- Add static pages `/privacy` and `/terms`, linked from the login page and from a small footer on the home screen.
 - **Accepting the terms at sign-in:**
-  - An **explicit checkbox** next to the sign-in buttons ("I accept the terms and privacy policy"). This is stronger than a notice saying that signing in means accepting.
-  - It also records explicit consent for health-related data, if the legal review recommends that (art. 9).
+  - An **explicit checkbox** next to the sign-in buttons: "I accept the terms of use and have read the privacy policy". The privacy policy is information, not something to accept, because the legal basis is the contract, not consent. A checkbox is stronger than a notice saying that signing in means accepting.
+  - The checkbox is only a gate in the browser: nothing is stored. ❓ If the legal review finds that explicit consent for health-related data (art. 9(2)(a)) is needed, that needs a separate, specific statement, plus a stored record of when it was given and for which policy version.
 
 **Done when**
 - The pages are live and linked.
@@ -258,7 +258,8 @@ What the texts should cover, in plain language. A short review by a lawyer, or a
 - **Recipients and processors:**
   - Google: Firebase Auth, Firestore and Hosting, and later reCAPTCHA
   - GitHub or Google: the sign-in provider the user chooses
-- **Transfers:** Firebase Auth processes data in the US. Transfers rely on the EU-US Data Privacy Framework and Standard Contractual Clauses. Check and state the Firestore location.
+- **Transfers:** Firebase Auth processes data in the US. Transfers rely on the EU-US Data Privacy Framework and Standard Contractual Clauses. Check and state the Firestore location (it is `eur3`).
+  - ❓ Firebase Hosting serves the app from a global CDN, which sees visitors' IP addresses. Does that need to be mentioned as a transfer?
 - **Retention:** until the user deletes their account.
 - **Rights:** access and export, correction, deletion, and the right to complain to IMY.
 - **No tracking:** no analytics, advertising or data selling. Sign-in uses only strictly necessary local storage.

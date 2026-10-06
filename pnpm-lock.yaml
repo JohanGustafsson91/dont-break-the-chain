@@ -8,6 +8,12 @@ importers:
 
   .:
     dependencies:
+      '@fontsource-variable/dm-sans':
+        specifier: ^5.3.0
+        version: 5.3.0
+      '@fontsource/victor-mono':
+        specifier: ^5.3.0
+        version: 5.3.0
       firebase:
         specifier: ^12.19.0
         version: 12.19.0
@@ -1188,6 +1194,12 @@ packages:
 
   '@firebase/webchannel-wrapper@1.0.7':
     resolution: {integrity: sha512-phBFwieDLvkZGYN9CE9ZFNEIoBVksprzsnCzQejCmCHtgwCXReeuRpoEGN9C4EbhONztv8NRV1tau6Rb9pONwQ==}
+
+  '@fontsource-variable/dm-sans@5.3.0':
+    resolution: {integrity: sha512-BpUG5bqePiDFMBM4ZtLSlPdAIOM990uB1dlXzIf4aw21yQR7BmykedLXXXMqGWsR18aMLOsbWccwJNh3ztTQaA==}
+
+  '@fontsource/victor-mono@5.3.0':
+    resolution: {integrity: sha512-4U33jWYiEKLDHYuQGONZWJRCg9HD5XCLtPIzJfIxxstFgn9S1YYcaOoPTPc4cPMyjH5woTRFk8NMfax5AmfsMw==}
 
   '@google-cloud/cloud-sql-connector@1.12.0':
     resolution: {integrity: sha512-cUrI+6StY8F/dQB5Lujrl9TFYibDZGGWvPp1aHhvLn4btOlbflxdHoZ6NDWeWySCNtnOYhoiZNQfK4qPC5moBw==}
@@ -6675,6 +6687,10 @@ snapshots:
       tslib: 2.8.1
 
   '@firebase/webchannel-wrapper@1.0.7': {}
+
+  '@fontsource-variable/dm-sans@5.3.0': {}
+
+  '@fontsource/victor-mono@5.3.0': {}
 
   '@google-cloud/cloud-sql-connector@1.12.0':
     dependencies:
