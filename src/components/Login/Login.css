@@ -88,6 +88,16 @@
   line-height: 1.45;
 }
 
+.Login-notice {
+  max-width: 400px;
+  margin: 0;
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--success-border-color);
+  border-radius: var(--radius-md);
+  background: var(--success-surface-color);
+  font-size: 0.875rem;
+}
+
 @media (min-width: 960px) {
   .Login-container {
     width: 100%;

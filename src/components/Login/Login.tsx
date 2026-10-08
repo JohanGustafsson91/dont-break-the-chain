@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import {
   login,
   providerName,
@@ -12,6 +12,9 @@ import "./Login.css";
 export const Login = () => {
   const [hasAcceptedTerms, setHasAcceptedTerms] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string>();
+  const accountDeleted = Boolean(
+    (useLocation().state as { accountDeleted?: boolean } | null)?.accountDeleted,
+  );
 
   const handleLogin = async (provider: AuthProvider) => {
     setErrorMessage(undefined);
@@ -32,6 +35,11 @@ export const Login = () => {
         <span />
         <span />
       </div>
+      {accountDeleted ? (
+        <p className="Login-notice" role="status">
+          Your account and all your data have been deleted.
+        </p>
+      ) : null}
       <h1 className="Login-title">Don't Break The Chain</h1>
       <h2 className="Login-subtitle">
         Build habits, stay consistent, and keep your streak alive!

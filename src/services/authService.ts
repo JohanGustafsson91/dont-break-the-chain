@@ -3,8 +3,10 @@ import { auth } from "./firebaseService";
 import {
   GithubAuthProvider,
   GoogleAuthProvider,
+  reauthenticateWithPopup,
   signInWithPopup,
   signOut,
+  type User,
 } from "firebase/auth";
 import { AUTH_STATUS, AUTH_PROVIDERS } from "../shared/constants";
 
@@ -18,6 +20,21 @@ googleProvider.setCustomParameters({ prompt: "select_account" });
 const providers: Record<AuthProvider, GithubAuthProvider | GoogleAuthProvider> = {
   [AUTH_PROVIDERS.GITHUB]: new GithubAuthProvider(),
   [AUTH_PROVIDERS.GOOGLE]: googleProvider,
+};
+
+const providerByFirebaseId: Record<string, AuthProvider> = {
+  "github.com": AUTH_PROVIDERS.GITHUB,
+  "google.com": AUTH_PROVIDERS.GOOGLE,
+};
+
+/** Firebase asks for a fresh sign-in before sensitive actions like deleting the account. */
+export const reauthenticate = (user: User) => {
+  const provider = user.providerData
+    .map((p) => providerByFirebaseId[p.providerId])
+    .find((p) => p !== undefined);
+  if (!provider) throw new Error("Unsupported sign-in provider");
+
+  return reauthenticateWithPopup(user, providers[provider]);
 };
 
 export const providerName: Record<AuthProvider, string> = {

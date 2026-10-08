@@ -1,0 +1,112 @@
+.AccountMenu {
+  position: relative;
+}
+
+.AccountMenu-trigger {
+  height: auto;
+  padding: 0;
+  border-radius: 50%;
+  background: transparent;
+}
+
+.AccountMenu-initial {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  color: var(--text-color);
+}
+
+.AccountMenu-panel {
+  position: absolute;
+  top: calc(100% + 0.5rem);
+  right: 0;
+  z-index: 15;
+  display: flex;
+  flex-direction: column;
+  min-width: 220px;
+  padding: 0.375rem;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  background: var(--surface-color);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.35);
+}
+
+.AccountMenu-who {
+  margin: 0;
+  padding: 0.5rem 0.625rem 0.375rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: 0.75rem;
+  color: var(--text-subtle-color);
+}
+
+.AccountMenu-item {
+  display: block;
+  width: 100%;
+  height: auto;
+  padding: 0.625rem;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text-color);
+  font-size: 0.9375rem;
+  font-weight: 400;
+  text-align: left;
+  text-decoration: none;
+}
+
+.AccountMenu-item:hover,
+.AccountMenu-item:focus-visible {
+  background: var(--border-color);
+  text-decoration: none;
+  opacity: 1;
+}
+
+.AccountMenu-item:not(.AccountMenu-item_danger):hover,
+.AccountMenu-item:not(.AccountMenu-item_danger):focus-visible {
+  color: var(--text-color);
+}
+
+.AccountMenu-item_danger {
+  color: var(--error-color);
+}
+
+.AccountMenu-panel hr {
+  width: 100%;
+  margin: 0.375rem 0;
+  border: 0;
+  border-top: 1px solid var(--border-color);
+}
+
+/* Top of the screen, so it never covers the sticky "+ Create habit" button. */
+.AccountMenu-status {
+  position: fixed;
+  left: 50%;
+  top: 4rem;
+  z-index: 25;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  width: max-content;
+  max-width: calc(100vw - 2.5rem);
+  margin: 0;
+  padding: 0.75rem 0.75rem 0.75rem 1rem;
+  transform: translateX(-50%);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  background: var(--surface-color);
+  font-size: 0.875rem;
+  line-height: 1.4;
+}
+
+.AccountMenu-status:empty {
+  display: none;
+}
+
+.AccountMenu-status button {
+  height: 28px;
+  padding: 0 0.5rem;
+  background: transparent;
+  color: var(--text-muted-color);
+  font-size: 1.125rem;
+}

@@ -91,6 +91,18 @@ describe("Login - User authentication flow", () => {
     expect(screen.queryByRole("alert")).not.toBeInTheDocument();
   });
 
+  it("should confirm that the account was deleted", () => {
+    render(
+      <MemoryRouter initialEntries={[{ pathname: "/login", state: { accountDeleted: true } }]}>
+        <Login />
+      </MemoryRouter>,
+    );
+
+    expect(screen.getByRole("status")).toHaveTextContent(
+      "Your account and all your data have been deleted.",
+    );
+  });
+
   it("should tell the user when signing in with GitHub fails", async () => {
     const consoleErrorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
     onTestFinished(() => consoleErrorSpy.mockRestore());

@@ -83,7 +83,7 @@ export const PrivacyPolicy = () => (
 
     <h2>How long it is kept</h2>
     <p>
-      Until your account is deleted, which for now you request by email. Google keeps
+      Until you delete your account, or ask for it to be deleted. Google keeps
       technical logs (such as IP addresses) for a limited time for security and
       operations.
     </p>
@@ -91,8 +91,13 @@ export const PrivacyPolicy = () => (
     <h2>Your rights</h2>
     <p>
       You can ask for a copy of your data, have it corrected or deleted, restrict or
-      object to its processing, and receive it in a portable format. Until these
-      actions are available in the app, email{" "}
+      object to its processing, and receive it in a portable format. You can export
+      your data and delete your account yourself from the account menu (your picture,
+      top right). Deleting removes your habits, days and notes for good, and then your
+      account. Your sign-in provider keeps its own record that you used the app; you
+      can remove the app's access in your Google or GitHub account settings. Google's
+      technical logs expire on their own. If you can't sign in any more, or for
+      anything else, email{" "}
       <a href={`mailto:${LEGAL.contactEmail}`}>{LEGAL.contactEmail}</a> and it will be
       handled within one month. You can also complain to the Swedish Authority for
       Privacy Protection (IMY), <a href="https://www.imy.se">imy.se</a>.

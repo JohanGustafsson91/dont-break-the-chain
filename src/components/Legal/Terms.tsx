@@ -38,8 +38,8 @@ export const Terms = () => (
     <p>
       The service is provided "as is" and "as available", without warranties of any
       kind. There is no guarantee that it will always be available, keep working the
-      same way, or keep your data forever. Ask for a copy of anything that matters to
-      you.
+      same way, or keep your data forever. Export a copy of anything that matters to
+      you from the account menu.
     </p>
 
     <h2>Not advice</h2>
@@ -61,13 +61,13 @@ export const Terms = () => (
     <p>
       These terms may change, for example because of new features or legal
       requirements. Significant changes are announced in advance, in the app or by
-      email. If you don't agree, you can stop using the service and have your account
-      and data deleted at any time. Until that is available in the app, email{" "}
+      email. If you don't agree, you can stop using the service and delete your
+      account and data at any time from the account menu, or by emailing{" "}
       <a href={`mailto:${LEGAL.contactEmail}`}>{LEGAL.contactEmail}</a>.
     </p>
     <p>
-      If the service shuts down, users get at least 30 days' notice to ask for a copy
-      of their data, unless that is impossible for reasons outside the operator's
+      If the service shuts down, users get at least 30 days' notice to export their
+      data, unless that is impossible for reasons outside the operator's
       control.
     </p>
 

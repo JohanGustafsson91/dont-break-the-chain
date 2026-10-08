@@ -1,9 +1,9 @@
 import "./AppBar.css";
-import { logout } from "../../services/authService";
 import type { User } from "../../services/firebaseService";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useAppBarContext } from "./AppBar.Context";
 import { useEffect } from "react";
+import { AccountMenu } from "./AccountMenu";
 
 export const AppBar = ({ user }: Props) => {
   const location = useLocation();
@@ -37,15 +37,7 @@ export const AppBar = ({ user }: Props) => {
       <div className="AppBar-right">
         {childrenComponents}
 
-        {user.photoURL && (
-          <img alt="profile" src={user.photoURL} className="AppBar_avatar" />
-        )}
-
-        {isHome && (
-          <button type="button" className="outline" onClick={logout}>
-            Log out
-          </button>
-        )}
+        <AccountMenu user={user} />
       </div>
     </div>
   );
