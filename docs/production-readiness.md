@@ -154,8 +154,11 @@ This must be live before Google sign-in, because Google's consent screen needs a
 ### PR 3: Google sign-in
 
 **Owner steps, per project (dev and production)**
+
+> ⚠️ Do these in **production before merging.** Every merge deploys, and the PR ships a "Continue with Google" button that fails with a generic error until the provider is enabled.
+
 - [ ] Enable the Google provider.
-- [ ] Configure the OAuth consent screen: app name, support email, the privacy policy URL from PR 2 and authorized domains. Basic profile and email scopes need no Google verification.
+- [ ] Configure the OAuth consent screen: app name, support email, the privacy policy URL from PR 2 and authorized domains. Basic profile and email scopes need no Google verification. Don't upload a logo, because that triggers Google's brand verification.
 - [ ] Keep **"One account per email address"** (Authentication → Settings → User account linking). This is the default.
 - [ ] If `authDomain` changes to the hosting domain or a custom domain (see below):
   - Set the GitHub OAuth app's callback to `https://<domain>/__/auth/handler`. A GitHub OAuth app allows only one callback URL.
@@ -173,13 +176,15 @@ This must be live before Google sign-in, because Google's consent screen needs a
   - Redirect sign-in needs `authDomain` on the same site as the app, because browsers block third-party storage.
   - Decide after testing the matrix below.
 
-**Known Firebase behaviour: decide before merging**
+**Known Firebase behaviour: decided, option (a)**
 
 Google is a *trusted* provider for `@gmail.com` addresses, and GitHub emails are treated as unverified. So with one account per email:
 - **Google first, then GitHub with the same email:** the error appears and the message is shown, as intended.
 - **GitHub first, then Google with the same Gmail address:** Firebase most likely signs the user in to the **same account (same UID, habits intact) and unlinks GitHub.** GitHub sign-in stops working for that user. No data is lost, but the user is not told.
 
-On Spark this cannot be blocked: preventing it needs blocking auth functions, which require Blaze. The options are:
+On Spark this cannot be blocked: preventing it needs blocking auth functions, which require Blaze.
+
+**Decided (2026-10-08): option (a).** The owner accepts that Google takes over in this case, because the data stays intact. The options were:
 - **(a, recommended)** Accept it and document it. The user simply continues with Google, and their data is unaffected.
 - **(b)** Use "multiple accounts per provider". This never merges and never shows an error, but the user then gets two separate, empty-vs-full accounts, which is worse.
 - **(c)** Move to Blaze and use a `beforeSignIn` blocking function to reject the sign-in.
@@ -306,6 +311,6 @@ What the texts should cover, in plain language. A short review by a lawyer, or a
 ## Open questions
 
 1. What do the live production rules look like today? This is the first owner step of PR 1.
-2. Gmail and GitHub with the same address (PR 3): is option (a), "continue with Google, data intact", acceptable?
+2. ~~Gmail and GitHub with the same address (PR 3): is option (a) acceptable?~~ Decided on 2026-10-08: yes. It is disclosed in the privacy policy.
 3. Which name and contact email should be published as the controller?
 4. Is there a custom domain? The answer affects `authDomain` and the OAuth callbacks.

@@ -19,8 +19,10 @@ export const PrivacyPolicy = () => (
     <ul>
       <li>
         <strong>Your account:</strong> the name, email address and profile picture
-        link that your sign-in provider (GitHub) shares when you sign in, and an
-        account id.
+        link that your sign-in provider (Google or GitHub) shares when you sign in,
+        and an account id. If you first signed in with GitHub and later sign in with
+        Google using the same email address, your account continues with Google and
+        GitHub sign-in stops working for it. Your habits are kept.
       </li>
       <li>
         <strong>Your habits:</strong> their names, descriptions and goals, which days
@@ -52,8 +54,8 @@ export const PrivacyPolicy = () => (
       article 6(1)(f)), and you have the right to object to it.
     </p>
     <p>
-      Your data is never sold, used for advertising or shared with anyone for their own
-      purposes. There is no automated decision-making or profiling.
+      Your data is never sold or used for advertising, and the app never shares it
+      with anyone for their own purposes. There is no automated decision-making or profiling.
     </p>
 
     <h2>Who else is involved</h2>
@@ -64,9 +66,11 @@ export const PrivacyPolicy = () => (
         Google's European multi-region (eur3).
       </li>
       <li>
-        <strong>GitHub</strong> is the sign-in service you choose, under its own
-        privacy terms. When you sign in, GitHub learns that you use this app. Your
-        profile picture is loaded from GitHub's servers.
+        <strong>Google or GitHub</strong> is the sign-in service you choose. In that
+        role it acts on its own behalf, under its own privacy terms, separately from
+        Google's role as Firebase's processor above. When you sign in, it shares your
+        name, email address and profile picture link with the app, and learns that you
+        use this app. Your profile picture is loaded from its servers.
       </li>
     </ul>
 

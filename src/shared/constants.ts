@@ -1,5 +1,6 @@
 export const AUTH_PROVIDERS = {
   GITHUB: "github" as const,
+  GOOGLE: "google" as const,
 } as const;
 
 export const AUTH_STATUS = {

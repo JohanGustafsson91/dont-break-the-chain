@@ -18,7 +18,7 @@ export const Terms = () => (
     <h2>Who can use it</h2>
     <p>
       You must be at least 13 years old. You need an account with a supported sign-in
-      provider, and you are responsible for keeping that account secure.
+      provider (currently Google or GitHub), and you are responsible for keeping that account secure.
     </p>
 
     <h2>Your content</h2>
