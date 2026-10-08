@@ -67,3 +67,11 @@
   margin: 0.1rem 0 0;
   accent-color: var(--primary-color);
 }
+
+@media (min-width: 960px) {
+  .Login-container {
+    width: 100%;
+    max-width: 480px;
+    margin: 0 auto;
+  }
+}

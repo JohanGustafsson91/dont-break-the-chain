@@ -219,75 +219,79 @@ export const StreakTracker = () => {
 
   return (
     <div className="page StreakTracker">
-      <div className="StreakTracker-info">
-        <EditableTextField
-          value={habit.name}
-          type="text"
-          onUpdate={onUpdateName}
-          allowEmpty={false}
-          maxLength={200}
-        />
-        <EditableTextField
-          value={habit.description}
-          type="textarea"
-          onUpdate={onUpdateDescription}
-          placeholder="Add a description"
-          maxLength={2000}
-        />
-        <GoalSelect goal={goal} onChange={onUpdateGoal} />
-      </div>
+      <div className="StreakTracker-summary">
+        <div className="StreakTracker-info">
+          <EditableTextField
+            value={habit.name}
+            type="text"
+            onUpdate={onUpdateName}
+            allowEmpty={false}
+            maxLength={200}
+          />
+          <EditableTextField
+            value={habit.description}
+            type="textarea"
+            onUpdate={onUpdateDescription}
+            placeholder="Add a description"
+            maxLength={2000}
+          />
+          <GoalSelect goal={goal} onChange={onUpdateGoal} />
+        </div>
 
-      <div className="StreakTracker-stats">
-        <StreakStat
-          icon={STREAK_ICONS.CURRENT}
-          label="Current"
-          value={streak.current}
-          unit={pluralize(streak.current, `${streak.unit} in a row`, `${streak.unit}s in a row`)}
-        />
-        <StreakStat
-          icon={STREAK_ICONS.LONGEST}
-          label="Longest"
-          value={streak.longest}
-          unit={pluralize(streak.longest, `${streak.unit}, best chain`, `${streak.unit}s, best chain`)}
-        />
-        <div className="StreakTracker-share">
-          <div className="StreakTracker-share_header">
-            <span className="StreakTracker-share_label">
-              {goal.type === "weekly"
-                ? formatWeekProgress(goodDaysThisWeek, goal.times)
-                : formatGoodShare(goodDays, badDays)}
-            </span>
-            <span className="StreakTracker-share_counts">
-              {goal.type === "weekly"
-                ? `${goodDays} good days in total`
-                : `${goodDays} good · ${badDays} bad`}
-            </span>
+        <div className="StreakTracker-stats">
+          <StreakStat
+            icon={STREAK_ICONS.CURRENT}
+            label="Current"
+            value={streak.current}
+            unit={pluralize(streak.current, `${streak.unit} in a row`, `${streak.unit}s in a row`)}
+          />
+          <StreakStat
+            icon={STREAK_ICONS.LONGEST}
+            label="Longest"
+            value={streak.longest}
+            unit={pluralize(streak.longest, `${streak.unit}, best chain`, `${streak.unit}s, best chain`)}
+          />
+          <div className="StreakTracker-share">
+            <div className="StreakTracker-share_header">
+              <span className="StreakTracker-share_label">
+                {goal.type === "weekly"
+                  ? formatWeekProgress(goodDaysThisWeek, goal.times)
+                  : formatGoodShare(goodDays, badDays)}
+              </span>
+              <span className="StreakTracker-share_counts">
+                {goal.type === "weekly"
+                  ? `${goodDays} good days in total`
+                  : `${goodDays} good · ${badDays} bad`}
+              </span>
+            </div>
+            {goal.type === "weekly" ? (
+              <ProgressBar
+                goodDays={Math.min(goodDaysThisWeek, goal.times)}
+                badDays={0}
+                total={goal.times}
+                thick
+              />
+            ) : (
+              <ProgressBar goodDays={goodDays} badDays={badDays} thick />
+            )}
           </div>
-          {goal.type === "weekly" ? (
-            <ProgressBar
-              goodDays={Math.min(goodDaysThisWeek, goal.times)}
-              badDays={0}
-              total={goal.times}
-              thick
-            />
-          ) : (
-            <ProgressBar goodDays={goodDays} badDays={badDays} thick />
-          )}
         </div>
       </div>
 
-      <Calendar
-        onSelectDate={setActiveDate}
-        streak={habit.streak}
-        goal={goal}
-        onUpdateDate={(args) =>
-          handleUpdateDay(args.date, args.status, args.notes)
-        }
-      />
+      <div className="StreakTracker-calendar">
+        <Calendar
+          onSelectDate={setActiveDate}
+          streak={habit.streak}
+          goal={goal}
+          onUpdateDate={(args) =>
+            handleUpdateDay(args.date, args.status, args.notes)
+          }
+        />
 
-      {/* Below the calendar on purpose: toggling it above would shift the
-          grid under the user's finger and turn the next tap into a month change. */}
-      {hint ? <div className="StreakTracker-hint">{hint}</div> : null}
+        {/* Below the calendar on purpose: toggling it above would shift the
+            grid under the user's finger and turn the next tap into a month change. */}
+        {hint ? <div className="StreakTracker-hint">{hint}</div> : null}
+      </div>
 
       <YearOverview streak={habit.streak} />
 

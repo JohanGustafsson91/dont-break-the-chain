@@ -75,3 +75,17 @@
   outline: 1.5px solid var(--text-color);
   outline-offset: 1px;
 }
+
+/* Desktop: bigger cells so the year fits the full-width card without scrolling,
+   even when the page's scrollbar takes space (Windows, Linux). */
+@media (min-width: 960px) {
+  .YearOverview-scroll {
+    --cell: 12px;
+  }
+}
+
+@media (min-width: 1200px) {
+  .YearOverview-scroll {
+    --cell: 15px;
+  }
+}

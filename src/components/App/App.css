@@ -61,3 +61,11 @@
   content: "...";
   animation: dots 1s steps(1) infinite;
 }
+
+/* Desktop: wider frame. Pages opt in to multi-column layouts at the same width. */
+@media (min-width: 960px) {
+  #root {
+    max-width: 1120px;
+    padding: 0 2rem;
+  }
+}
