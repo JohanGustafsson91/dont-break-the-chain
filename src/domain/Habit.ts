@@ -13,6 +13,7 @@ export interface Habit {
   description: string;
   goal: Goal;
   streak: StreakDay[];
+  createdAt?: Date;
 }
 
 export interface StreakDay {

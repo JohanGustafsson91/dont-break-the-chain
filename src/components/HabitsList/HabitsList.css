@@ -158,19 +158,6 @@
   width: 100%;
 }
 
-.HabitsList-legal {
-  display: flex;
-  justify-content: center;
-  gap: 1rem;
-  margin-top: 0.75rem;
-  font-size: 0.75rem;
-}
-
-.HabitsList-legal a {
-  padding: 0.25rem;
-  color: var(--text-subtle-color);
-}
-
 @media (min-width: 960px) {
   .HabitsList {
     display: grid;
@@ -192,11 +179,10 @@
     margin-bottom: 0;
   }
 
-  /* A toolbar instead of a full-width button. Button first, as in the DOM, so the
-     visual order matches the tab order. */
+  /* A compact button at the end of the toolbar instead of a full-width bar. */
   .HabitsList-create {
     display: flex;
-    justify-content: space-between;
+    justify-content: flex-end;
     align-items: center;
     margin-top: 0;
     padding: 1rem 0 1.5rem;
@@ -207,9 +193,5 @@
   .HabitsList-create button {
     width: auto;
     padding: 0 1.75rem;
-  }
-
-  .HabitsList-legal {
-    margin-top: 0;
   }
 }

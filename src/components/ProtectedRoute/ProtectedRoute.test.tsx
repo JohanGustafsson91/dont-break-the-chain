@@ -162,8 +162,8 @@ describe("ProtectedRoute - Routing and authentication", () => {
       );
 
       expect(screen.getByText("Protected Content")).toBeInTheDocument();
-      // AppBar renders with logout button
-      expect(screen.getByRole("button")).toBeInTheDocument();
+      // AppBar renders with the account menu
+      expect(screen.getByRole("button", { name: "Account menu" })).toBeInTheDocument();
     });
   });
 

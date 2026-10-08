@@ -9,6 +9,7 @@ import {
   QueryDocumentSnapshot,
   updateDoc,
   where,
+  writeBatch,
   Timestamp,
 } from "firebase/firestore";
 import { DAILY_GOAL, type Goal, type Habit, type StreakDay } from "../domain/Habit";
@@ -55,6 +56,22 @@ export const getAllHabits = async (): Promise<Habit[]> => {
   return snapshot.docs.map(formatHabit);
 };
 
+// Batches have historically been capped at 500 writes; chunking keeps us within it.
+const BATCH_LIMIT = 500;
+
+export const deleteAllHabits = async () => {
+  const habitsRef = collection(db, COLLECTIONS.HABITS);
+  const snapshot = await getDocs(
+    query(habitsRef, where("author", "==", currentUserId())),
+  );
+
+  for (let i = 0; i < snapshot.docs.length; i += BATCH_LIMIT) {
+    const batch = writeBatch(db);
+    snapshot.docs.slice(i, i + BATCH_LIMIT).forEach((d) => batch.delete(d.ref));
+    await batch.commit();
+  }
+};
+
 export const addHabit = async () => {
   const habitsRef = collection(db, COLLECTIONS.HABITS);
   const docRef = await addDoc(habitsRef, {
@@ -82,6 +99,7 @@ interface FirestoreHabit {
   description: string;
   goal?: Goal;
   streak: FirestoreStreakDay[];
+  createdAt?: number;
 }
 
 function formatHabit(doc: QueryDocumentSnapshot): Habit {
@@ -92,6 +110,7 @@ function formatHabit(doc: QueryDocumentSnapshot): Habit {
     name: data.name,
     description: data.description,
     goal: data.goal ?? DAILY_GOAL,
+    createdAt: data.createdAt ? new Date(data.createdAt) : undefined,
     streak: data.streak.map((s) => ({
       date: createDate(new Date(s.date.seconds * 1000)),
       status: s.status,

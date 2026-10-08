@@ -91,6 +91,19 @@ describe("Login - User authentication flow", () => {
     expect(screen.queryByRole("alert")).not.toBeInTheDocument();
   });
 
+  it("should confirm a deleted account once", () => {
+    sessionStorage.setItem("accountDeleted", "1");
+    const { unmount } = renderLogin();
+
+    expect(screen.getByRole("status")).toHaveTextContent(
+      "Your account and all your data have been deleted.",
+    );
+    unmount();
+
+    renderLogin();
+    expect(screen.queryByRole("status")).not.toBeInTheDocument();
+  });
+
   it("should tell the user when signing in with GitHub fails", async () => {
     const consoleErrorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
     onTestFinished(() => consoleErrorSpy.mockRestore());
