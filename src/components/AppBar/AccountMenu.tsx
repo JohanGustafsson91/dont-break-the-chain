@@ -1,6 +1,6 @@
 import "./AccountMenu.css";
 import { useEffect, useRef, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import type { User } from "../../services/firebaseService";
 import { logout } from "../../services/authService";
 import {
@@ -9,13 +9,13 @@ import {
   downloadMyData,
 } from "../../services/accountService";
 import { ConfirmDialog } from "../ConfirmDialog/ConfirmDialog";
+import { markAccountDeleted } from "../../shared/accountDeletedNotice";
 
 export const AccountMenu = ({ user }: Props) => {
   const [isOpen, setIsOpen] = useState(false);
   const [isConfirmingDelete, setIsConfirmingDelete] = useState(false);
   const [status, setStatus] = useState<string>();
   const [isDeleting, setIsDeleting] = useState(false);
-  const navigate = useNavigate();
   const rootRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
 
@@ -66,7 +66,8 @@ export const AccountMenu = ({ user }: Props) => {
     setIsDeleting(false);
 
     if (result.ok) {
-      navigate("/login", { replace: true, state: { accountDeleted: true } });
+      // Signing out sends the app to the login page, which shows the notice.
+      markAccountDeleted();
       return;
     }
     console.error("Could not delete account", { result });

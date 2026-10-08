@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import {
   login,
   providerName,
@@ -7,13 +7,22 @@ import {
   type AuthProvider,
 } from "../../services/authService";
 import { AUTH_PROVIDERS } from "../../shared/constants";
+import {
+  clearAccountDeleted,
+  wasAccountDeleted,
+} from "../../shared/accountDeletedNotice";
 import "./Login.css";
 
 export const Login = () => {
   const [hasAcceptedTerms, setHasAcceptedTerms] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string>();
-  const accountDeleted = Boolean(
-    (useLocation().state as { accountDeleted?: boolean } | null)?.accountDeleted,
+  const [accountDeleted] = useState(wasAccountDeleted);
+
+  useEffect(
+    function showDeletionNoticeOnce() {
+      if (accountDeleted) clearAccountDeleted();
+    },
+    [accountDeleted],
   );
 
   const handleLogin = async (provider: AuthProvider) => {
