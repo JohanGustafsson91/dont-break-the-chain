@@ -34,3 +34,12 @@
   font-size: 0.8125rem;
   color: var(--text-subtle-color);
 }
+
+/* The page scrolls across the full width; only the text column is capped. */
+.LegalPage-content {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 720px;
+  margin: 0 auto;
+}

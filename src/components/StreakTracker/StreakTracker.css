@@ -145,3 +145,45 @@
   text-align: center;
   color: var(--text-muted-color);
 }
+
+.StreakTracker-summary,
+.StreakTracker-calendar {
+  display: flex;
+  flex-direction: column;
+  gap: 1.375rem;
+}
+
+/* Desktop: summary left, calendar (with its hint) right, history full width below.
+   The wrappers keep the DOM order, so on mobile nothing is ever inserted above the
+   calendar. No `fr` rows: the page is the scroll container, so its height is fixed
+   and an `fr` row would let content overflow into the rows below. */
+@media (min-width: 960px) {
+  .StreakTracker {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    grid-template-areas:
+      "summary calendar"
+      "year year"
+      "insights insights";
+    column-gap: 2.5rem;
+    align-content: start;
+  }
+
+  .StreakTracker-summary {
+    grid-area: summary;
+    align-self: start;
+  }
+
+  .StreakTracker-calendar {
+    grid-area: calendar;
+    align-self: start;
+  }
+
+  .StreakTracker > .YearOverview {
+    grid-area: year;
+  }
+
+  .StreakTracker-insights {
+    grid-area: insights;
+  }
+}

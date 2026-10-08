@@ -170,3 +170,46 @@
   padding: 0.25rem;
   color: var(--text-subtle-color);
 }
+
+@media (min-width: 960px) {
+  .HabitsList {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+    gap: 1rem;
+    align-content: start;
+  }
+
+  .HabitsList > :not(.HabitsList-item) {
+    grid-column: 1 / -1;
+  }
+
+  /* The grid gap also separates date and title; pull the title back up. */
+  .HabitsList-title {
+    margin: -0.625rem 0 0.125rem;
+  }
+
+  .HabitsList-item {
+    margin-bottom: 0;
+  }
+
+  /* A toolbar instead of a full-width button. Button first, as in the DOM, so the
+     visual order matches the tab order. */
+  .HabitsList-create {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 0;
+    padding: 1rem 0 1.5rem;
+    border-top: 1px solid var(--border-color);
+    background: none;
+  }
+
+  .HabitsList-create button {
+    width: auto;
+    padding: 0 1.75rem;
+  }
+
+  .HabitsList-legal {
+    margin-top: 0;
+  }
+}
