@@ -1,6 +1,6 @@
 import "./HabitsList.css";
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import type { Habit } from "../../domain/Habit";
 import {
   countGoodDaysInWeek,
@@ -271,6 +271,10 @@ export const HabitsList = () => {
         <button type="button" onClick={onCreateHabit}>
           + Create habit
         </button>
+        <nav className="HabitsList-legal" aria-label="Legal">
+          <Link to="/privacy">Privacy</Link>
+          <Link to="/terms">Terms</Link>
+        </nav>
       </div>
 
       {pendingRemoval ? (

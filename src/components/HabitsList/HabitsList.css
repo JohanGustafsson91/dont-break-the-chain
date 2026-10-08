@@ -157,3 +157,16 @@
 .HabitsList-create button {
   width: 100%;
 }
+
+.HabitsList-legal {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  margin-top: 0.75rem;
+  font-size: 0.75rem;
+}
+
+.HabitsList-legal a {
+  padding: 0.25rem;
+  color: var(--text-subtle-color);
+}

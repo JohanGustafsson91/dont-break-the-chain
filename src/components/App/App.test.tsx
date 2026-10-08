@@ -35,6 +35,7 @@ describe("App - End-to-end user journeys", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.setSystemTime(new Date("2025-02-10T00:00:00Z"));
+    window.history.pushState({}, "", "/");
   });
 
   it("should allow authenticated user to view habits list, navigate to detail, and return back", async () => {
@@ -89,6 +90,36 @@ describe("App - End-to-end user journeys", () => {
 
     // User can navigate back (navigation tested in isolation)
     // In a real app, they would click back arrow
+  });
+
+  it("should show the privacy policy and terms without signing in", () => {
+    vi.mocked(useAuth).mockReturnValue({ status: "RESOLVED", user: undefined });
+
+    window.history.pushState({}, "", "/privacy");
+    const { unmount } = render(<App />);
+    expect(screen.getByRole("heading", { name: "Privacy policy" })).toBeInTheDocument();
+    unmount();
+
+    window.history.pushState({}, "", "/terms");
+    render(<App />);
+    expect(screen.getByRole("heading", { name: "Terms of use" })).toBeInTheDocument();
+  });
+
+  it("should not trap a signed-out visitor in a back-button loop after reading the terms", async () => {
+    const user = userEvent.setup({ delay: null });
+    vi.mocked(useAuth).mockReturnValue({ status: "RESOLVED", user: undefined });
+
+    window.history.pushState({}, "", "/login");
+    const historyLength = window.history.length;
+    render(<App />);
+
+    await user.click(screen.getByRole("link", { name: "terms of use" }));
+    await user.click(screen.getByRole("link", { name: "‹ Back to the app" }));
+
+    // "/" redirects to "/login" by replacing its history entry, so Back returns to the terms.
+    expect(await screen.findByRole("button", { name: "Login with GitHub" })).toBeInTheDocument();
+    expect(window.location.pathname).toBe("/login");
+    expect(window.history.length).toBe(historyLength + 2);
   });
 
   it("should show loading state while authentication is pending", () => {

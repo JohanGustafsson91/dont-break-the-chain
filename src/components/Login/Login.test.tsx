@@ -2,6 +2,7 @@ import "@testing-library/jest-dom";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { MemoryRouter } from "react-router-dom";
 import { Login } from "./Login";
 import * as firebaseAuth from "firebase/auth";
 import * as firebaseFirestore from "firebase/firestore";
@@ -32,8 +33,15 @@ describe("Login - User authentication flow", () => {
     setupDefaultMocks();
   });
 
-  it("should allow user to login with GitHub", async () => {
-    render(<Login />);
+  const renderLogin = () =>
+    render(
+      <MemoryRouter>
+        <Login />
+      </MemoryRouter>,
+    );
+
+  it("should require accepting the terms before logging in with GitHub", async () => {
+    renderLogin();
 
     expect(screen.getByText("Don't Break The Chain")).toBeInTheDocument();
     expect(
@@ -45,6 +53,12 @@ describe("Login - User authentication flow", () => {
     const loginButton = screen.getByRole("button", {
       name: "Login with GitHub",
     });
+    expect(loginButton).toBeDisabled();
+    expect(screen.getByRole("link", { name: "terms of use" })).toHaveAttribute("href", "/terms");
+    expect(screen.getByRole("link", { name: "privacy policy" })).toHaveAttribute("href", "/privacy");
+
+    await userEvent.click(screen.getByRole("checkbox", { name: /I accept the terms of use/ }));
+    expect(loginButton).toBeEnabled();
     await userEvent.click(loginButton);
 
     expect(signInWithPopupSpy).toHaveBeenCalled();
@@ -54,8 +68,9 @@ describe("Login - User authentication flow", () => {
     const authError = new Error("Authentication failed");
     signInWithPopupSpy.mockRejectedValue(authError);
 
-    render(<Login />);
+    renderLogin();
 
+    await userEvent.click(screen.getByRole("checkbox", { name: /I accept the terms of use/ }));
     const loginButton = screen.getByRole("button", {
       name: "Login with GitHub",
     });

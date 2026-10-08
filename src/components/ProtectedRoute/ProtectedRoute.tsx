@@ -20,13 +20,13 @@ export const ProtectedRoute = ({
 
     const isUnauthenticatedOnProtectedPage = !user && !isLoginPage;
     if (isUnauthenticatedOnProtectedPage) {
-      navigate(redirectPath);
+      navigate(redirectPath, { replace: true });
       return;
     }
 
     const isAuthenticatedOnLoginPage = user && isLoginPage;
     if (isAuthenticatedOnLoginPage) {
-      navigate("/");
+      navigate("/", { replace: true });
     }
   }, [user, status, isLoginPage, redirectPath, navigate]);
 

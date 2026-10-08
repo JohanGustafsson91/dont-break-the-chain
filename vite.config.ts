@@ -8,6 +8,10 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: "autoUpdate",
+      workbox: {
+        // Include the self-hosted fonts and icons, so the installed app looks right offline.
+        globPatterns: ["**/*.{js,css,html,woff2,png,svg,ico}"],
+      },
       devOptions: {
         enabled: true,
         type: "module",
