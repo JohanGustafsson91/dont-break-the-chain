@@ -1,17 +1,27 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { login } from "../../services/authService";
+import {
+  login,
+  providerName,
+  signInErrorMessage,
+  type AuthProvider,
+} from "../../services/authService";
 import { AUTH_PROVIDERS } from "../../shared/constants";
 import "./Login.css";
 
 export const Login = () => {
   const [hasAcceptedTerms, setHasAcceptedTerms] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string>();
 
-  const handleLogin = async () => {
+  const handleLogin = async (provider: AuthProvider) => {
+    setErrorMessage(undefined);
     try {
-      await login({ provider: AUTH_PROVIDERS.GITHUB });
+      await login({ provider });
     } catch (error) {
-      console.error("GitHub Login Failed:", { error });
+      const message = signInErrorMessage(error, provider);
+      // Closing the sign-in window is a normal choice, not an error.
+      if (message) console.error(`${providerName[provider]} login failed:`, { error });
+      setErrorMessage(message);
     }
   };
 
@@ -26,7 +36,7 @@ export const Login = () => {
       <h2 className="Login-subtitle">
         Build habits, stay consistent, and keep your streak alive!
       </h2>
-      <label className="Login-consent">
+      <label className="Login-consent" id="login-consent">
         <input
           type="checkbox"
           checked={hasAcceptedTerms}
@@ -37,14 +47,31 @@ export const Login = () => {
           <Link to="/privacy">privacy policy</Link>.
         </span>
       </label>
-      <button
-        className="Login-button"
-        type="button"
-        onClick={handleLogin}
-        disabled={!hasAcceptedTerms}
-      >
-        Login with GitHub
-      </button>
+      <div className="Login-buttons">
+        <button
+          className="Login-button"
+          type="button"
+          onClick={() => handleLogin(AUTH_PROVIDERS.GOOGLE)}
+          disabled={!hasAcceptedTerms}
+          aria-describedby="login-consent"
+        >
+          Continue with Google
+        </button>
+        <button
+          className="Login-button secondary"
+          type="button"
+          onClick={() => handleLogin(AUTH_PROVIDERS.GITHUB)}
+          disabled={!hasAcceptedTerms}
+          aria-describedby="login-consent"
+        >
+          Continue with GitHub
+        </button>
+      </div>
+      {errorMessage ? (
+        <p className="Login-error" role="alert">
+          {errorMessage}
+        </p>
+      ) : null}
     </div>
   );
 };

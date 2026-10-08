@@ -3,7 +3,7 @@ import { renderHook } from "@testing-library/react";
 import * as firebaseAuth from "firebase/auth";
 import * as firebaseFirestore from "firebase/firestore";
 import * as reactFirebaseHooks from "react-firebase-hooks/auth";
-import { useAuth, login, logout } from "./authService";
+import { useAuth, login, logout, signInErrorMessage } from "./authService";
 import { AUTH_STATUS, AUTH_PROVIDERS } from "../shared/constants";
 import type { User, Auth } from "firebase/auth";
 import type { Firestore } from "firebase/firestore";
@@ -139,6 +139,30 @@ describe("authService - Authentication workflows", () => {
         expect.anything(),
       );
       expect(result).toEqual(mockSignInResult);
+    });
+
+    it("should login with Google using the Google provider", async () => {
+      await login({ provider: AUTH_PROVIDERS.GOOGLE });
+
+      const [, provider] = signInWithPopupSpy.mock.calls[0];
+      expect(provider).toBeInstanceOf(firebaseAuth.GoogleAuthProvider);
+    });
+
+    it("should explain sign-in failures, and stay quiet when the user closes the window", () => {
+      const failure = (code: string) => Object.assign(new Error(code), { code });
+
+      expect(
+        signInErrorMessage(failure("auth/account-exists-with-different-credential"), AUTH_PROVIDERS.GOOGLE),
+      ).toBe("An account with this email already exists. Sign in with GitHub instead.");
+      expect(
+        signInErrorMessage(failure("auth/account-exists-with-different-credential"), AUTH_PROVIDERS.GITHUB),
+      ).toBe("An account with this email already exists. Sign in with Google instead.");
+      expect(signInErrorMessage(failure("auth/popup-closed-by-user"), AUTH_PROVIDERS.GOOGLE)).toBeUndefined();
+      expect(signInErrorMessage(failure("auth/popup-blocked"), AUTH_PROVIDERS.GOOGLE)).toMatch(/blocked/);
+      expect(signInErrorMessage(failure("auth/network-request-failed"), AUTH_PROVIDERS.GOOGLE)).toMatch(/connection/);
+      expect(signInErrorMessage(new Error("unknown"), AUTH_PROVIDERS.GOOGLE)).toBe(
+        "Signing in didn't work. Please try again.",
+      );
     });
 
     it("should throw error for invalid provider", () => {

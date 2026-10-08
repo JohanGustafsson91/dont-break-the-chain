@@ -117,7 +117,7 @@ describe("App - End-to-end user journeys", () => {
     await user.click(screen.getByRole("link", { name: "‹ Back to the app" }));
 
     // "/" redirects to "/login" by replacing its history entry, so Back returns to the terms.
-    expect(await screen.findByRole("button", { name: "Login with GitHub" })).toBeInTheDocument();
+    expect(await screen.findByRole("button", { name: "Continue with GitHub" })).toBeInTheDocument();
     expect(window.location.pathname).toBe("/login");
     expect(window.history.length).toBe(historyLength + 2);
   });
