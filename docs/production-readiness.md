@@ -249,6 +249,7 @@ What the texts should cover, in plain language. A short review by a lawyer, or a
 
 **Privacy policy (required by GDPR art. 13)**
 - **Controller:** the owner's name and a contact email.
+  - ❓ Is an email address enough as contact details, or is a postal address needed? The e-commerce act's address requirement applies to paid services, so it is probably not needed here.
 - **What is stored:**
   - the name, email and avatar from the sign-in provider
   - habits, daily statuses and notes
@@ -266,6 +267,7 @@ What the texts should cover, in plain language. A short review by a lawyer, or a
 
 **Terms of use (where the liability limits live)**
 - **Minimum age:** 13, which matches GitHub's and Google's age limits and the Swedish age of digital consent.
+  - ❓ That age comes from GDPR art. 8, which is about consent, while the legal basis here is a contract. Under föräldrabalken ch. 9, minors generally cannot enter binding contracts. Is the basis sound for users aged 13–17?
 - **"As is":** the service is free and provided "as is" and "as available", without warranties of availability, continuity or data retention. Users should export what matters to them.
 - **No advice:** it is not medical, health or professional advice.
 - **Liability:** excluded **to the extent permitted by applicable law**.

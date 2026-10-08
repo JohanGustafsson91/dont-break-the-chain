@@ -24,8 +24,8 @@ export const Terms = () => (
     <h2>Your content</h2>
     <p>
       What you write is yours. You allow the app to store and show it to you, only to
-      provide the service. Don't store other people's personal data or anything
-      unlawful.
+      provide the service. Don't store sensitive information about other people, or
+      anything unlawful.
     </p>
 
     <h2>Fair use</h2>
@@ -53,17 +53,22 @@ export const Terms = () => (
       To the extent permitted by applicable law, {LEGAL.controllerName} is not liable
       for indirect damage, loss of data, loss of profit or similar loss arising from
       your use of the service. Nothing in these terms limits liability that cannot be
-      limited by law, such as for intent or gross negligence, or your rights as a
-      consumer.
+      limited by law, such as for intent or gross negligence, your rights as a
+      consumer, or your rights under data protection law (GDPR article 82).
     </p>
 
     <h2>Changes and ending</h2>
     <p>
-      The service and these terms may change, or the service may shut down, at any
-      time. Significant changes are announced in the app or by email. You can stop
-      using the service and have your account and data deleted at any time. Until that
-      is available in the app, email{" "}
+      These terms may change, for example because of new features or legal
+      requirements. Significant changes are announced in advance, in the app or by
+      email. If you don't agree, you can stop using the service and have your account
+      and data deleted at any time. Until that is available in the app, email{" "}
       <a href={`mailto:${LEGAL.contactEmail}`}>{LEGAL.contactEmail}</a>.
+    </p>
+    <p>
+      If the service shuts down, users get at least 30 days' notice to ask for a copy
+      of their data, unless that is impossible for reasons outside the operator's
+      control.
     </p>
 
     <h2>Law</h2>

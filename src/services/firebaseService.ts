@@ -15,5 +15,8 @@ const firebaseConfig = {
 
 export const app = initializeApp(firebaseConfig);
 
-export const auth = getAuth();
+// Keep getAuth's default popup resolver. On Safari/iOS it preloads Google's sign-in
+// scripts on purpose: WebKit only allows a popup shortly after the click, so loading
+// them lazily at sign-in risks "popup blocked" on the first attempt.
+export const auth = getAuth(app);
 export const db = getFirestore();

@@ -32,16 +32,28 @@ export const PrivacyPolicy = () => (
       medication" or "no alcohol". You decide what to write, and you can change or
       delete it at any time. It is never shown to other users. The operator can
       technically access the database, but does not look at your content except to fix
-      a problem you report or when required by law. Avoid writing anything you would
-      not want stored.
+      a problem you report, to investigate misuse of the service, or when required by
+      law. Avoid writing anything you
+      would not want stored.
     </p>
 
     <h2>Why it is stored</h2>
     <p>
-      Only to provide the app to you: to sign you in and to show and save your habits.
+      To provide the app to you: to sign you in and to show and save your habits.
       The legal basis is that it is necessary to provide the service you asked for
-      (GDPR article 6(1)(b)). Your data is never sold, used for advertising or shared
-      with anyone for their own purposes.
+      (GDPR article 6(1)(b)). Your account data is needed to use the app: without it
+      you cannot sign in. Everything you write in habits and notes is optional.
+    </p>
+    <p>
+      When you visit the site, technical data such as your IP address is processed to
+      deliver the pages and keep the service secure, including for visitors who never
+      sign in. Data may also be looked at to prevent and investigate misuse. The legal
+      basis for both is the legitimate interest in running a secure service (GDPR
+      article 6(1)(f)), and you have the right to object to it.
+    </p>
+    <p>
+      Your data is never sold, used for advertising or shared with anyone for their own
+      purposes. There is no automated decision-making or profiling.
     </p>
 
     <h2>Who else is involved</h2>
@@ -53,7 +65,8 @@ export const PrivacyPolicy = () => (
       </li>
       <li>
         <strong>GitHub</strong> is the sign-in service you choose, under its own
-        privacy terms. Your profile picture is loaded from GitHub's servers.
+        privacy terms. When you sign in, GitHub learns that you use this app. Your
+        profile picture is loaded from GitHub's servers.
       </li>
     </ul>
 
@@ -85,7 +98,7 @@ export const PrivacyPolicy = () => (
     <p>
       There are no analytics, no advertising and no tracking cookies. Signing in keeps
       a token in your browser's storage. That is strictly necessary for the app to
-      work, so no consent banner is needed.
+      work, so it does not require consent.
     </p>
 
     <h2>Security</h2>
@@ -100,7 +113,7 @@ export const PrivacyPolicy = () => (
     <h2>Changes</h2>
     <p>
       If this policy changes, the date above is updated, and significant changes are
-      announced in the app or by email.
+      announced in advance, in the app or by email.
     </p>
   </LegalPage>
 );

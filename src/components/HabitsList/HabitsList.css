@@ -167,5 +167,6 @@
 }
 
 .HabitsList-legal a {
+  padding: 0.25rem;
   color: var(--text-subtle-color);
 }
