@@ -38,14 +38,19 @@ self.addEventListener("push", (event) => {
   }
   const { notification = {}, fcmOptions = {} } = payload;
 
+  // `renotify` is supported in Chromium but missing from TypeScript's DOM types.
+  const options: NotificationOptions & { renotify?: boolean } = {
+    body: notification.body,
+    icon: "/web-app-manifest-192x192.png",
+    // One reminder at a time: a newer one replaces an unread older one, and still
+    // alerts (without renotify, a replacement arrives silently).
+    tag: "daily-reminder",
+    renotify: true,
+    data: { link: fcmOptions.link ?? notification.click_action ?? "/" },
+  };
+
   event.waitUntil(
-    self.registration.showNotification(notification.title ?? "Don't Break The Chain", {
-      body: notification.body,
-      icon: "/web-app-manifest-192x192.png",
-      // One reminder at a time: a newer one replaces an unread older one.
-      tag: "daily-reminder",
-      data: { link: fcmOptions.link ?? notification.click_action ?? "/" },
-    }),
+    self.registration.showNotification(notification.title ?? "Don't Break The Chain", options),
   );
 });
 
