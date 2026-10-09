@@ -114,6 +114,9 @@ describe("HabitsList - User workflows", () => {
     expect(screen.getByText("Good 67 %")).toBeInTheDocument();
     expect(screen.getByText("No days yet")).toBeInTheDocument();
 
+    // A new habit can be created from the end of the list.
+    expect(screen.getByRole("button", { name: "+ New habit" })).toBeInTheDocument();
+
     // User clicks on a habit to see details
     const exerciseHabit = screen.getByText("Morning Exercise");
     await userEvent.click(exerciseHabit);
@@ -297,5 +300,6 @@ describe("HabitsList - User workflows", () => {
     await waitFor(() => {
       expect(screen.getByRole("alert")).toHaveTextContent("Couldn't load your habits.");
     });
+    expect(screen.queryByRole("button", { name: /habit/ })).not.toBeInTheDocument();
   });
 });

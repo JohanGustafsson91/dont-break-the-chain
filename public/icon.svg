@@ -1,36 +1,13 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-  <!-- Background circle -->
-  <circle cx="256" cy="256" r="256" fill="#4CAF50"/>
-  
-  <!-- Chain made of simple circles (links) in white -->
-  <circle cx="180" cy="150" r="35" fill="white"/>
-  <circle cx="256" cy="150" r="35" fill="white"/>
-  <circle cx="332" cy="150" r="35" fill="white"/>
-  
-  <circle cx="180" cy="256" r="35" fill="white"/>
-  <circle cx="256" cy="256" r="35" fill="white"/>
-  <circle cx="332" cy="256" r="35" fill="white"/>
-  
-  <circle cx="180" cy="362" r="35" fill="white"/>
-  <circle cx="256" cy="362" r="35" fill="white"/>
-  <circle cx="332" cy="362" r="35" fill="white"/>
-  
-  <!-- Connecting bars -->
-  <rect x="180" y="135" width="76" height="30" fill="white"/>
-  <rect x="256" y="135" width="76" height="30" fill="white"/>
-  
-  <rect x="165" y="150" width="30" height="106" fill="white"/>
-  <rect x="317" y="150" width="30" height="106" fill="white"/>
-  
-  <rect x="180" y="241" width="76" height="30" fill="white"/>
-  <rect x="256" y="241" width="76" height="30" fill="white"/>
-  
-  <rect x="165" y="256" width="30" height="106" fill="white"/>
-  <rect x="317" y="256" width="30" height="106" fill="white"/>
-  
-  <rect x="180" y="347" width="76" height="30" fill="white"/>
-  <rect x="256" y="347" width="76" height="30" fill="white"/>
-  
-  <!-- Big checkmark in gold -->
-  <polygon points="220,310 170,260 190,240 220,270 330,160 350,180" fill="#FFD700"/>
+  <rect width="512" height="512" fill="#011627"/>
+  <g fill="none" stroke-width="24" stroke-linecap="butt">
+    <circle cx="156" cy="256" r="72" stroke="#D6DEEB"/>
+    <circle cx="356" cy="256" r="72" stroke="#D6DEEB"/>
+    <circle cx="256" cy="256" r="72" stroke="#82AAFF"/>
+    <path d="M 280.6 188.3 A 72 72 0 0 1 323.7 231.4" stroke="#011627" stroke-width="40"/>
+    <path d="M 223.7 280.6 A 72 72 0 0 1 180.6 323.7" stroke="#011627" stroke-width="40"/>
+    <circle cx="356" cy="256" r="72" stroke="#D6DEEB"/>
+    <path d="M 223.7 280.6 A 72 72 0 0 1 180.6 323.7" stroke="#D6DEEB"/>
+    <path d="M 280.6 188.3 A 72 72 0 0 1 323.7 231.4" stroke="#82AAFF"/>
+  </g>
 </svg>

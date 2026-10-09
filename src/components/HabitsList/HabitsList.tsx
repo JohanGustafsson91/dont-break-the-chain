@@ -273,12 +273,18 @@ export const HabitsList = () => {
             ),
           }[habits.status]
         }
-      </div>
 
-      <div className="HabitsList-create">
-        <button type="button" onClick={onCreateHabit}>
-          + Create habit
-        </button>
+        {habits.status === "resolved" ? (
+          habits.data.length === 0 ? (
+            <button type="button" className="HabitsList-create_first" onClick={onCreateHabit}>
+              + Create habit
+            </button>
+          ) : (
+            <button type="button" className="HabitsList-create" onClick={onCreateHabit}>
+              + New habit
+            </button>
+          )
+        ) : null}
       </div>
 
       {pendingRemoval ? (
