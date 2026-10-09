@@ -14,8 +14,9 @@ lint:
 preview:
 	$(NPM) run preview
 
-deploy: lint test build
-	firebase deploy
+# Deploys to the dev project; production is deployed by CI on merge to main.
+deploy: lint
+	$(NPM) run deploy
 
 test:
 	$(NPM) run test

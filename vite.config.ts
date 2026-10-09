@@ -17,9 +17,10 @@ export default defineConfig({
         type: "module",
       },
       manifest: {
-        name: "Don't break the chain",
-        short_name: "Don't break the chain",
-        description: "Don't break the chain",
+        name: "Don't Break The Chain",
+        // The label under the icon on a home screen, which fits about 12 characters.
+        short_name: "DBTC",
+        description: "Track your habits and build streaks.",
         theme_color: "#011627",
         background_color: "#011627",
         display: "standalone",

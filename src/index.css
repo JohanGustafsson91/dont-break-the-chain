@@ -93,6 +93,14 @@ a:hover {
   text-decoration: underline;
 }
 
+/* Links inside text need more than colour to stand out. */
+p a,
+li a,
+label a {
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
 input,
 textarea,
 button {

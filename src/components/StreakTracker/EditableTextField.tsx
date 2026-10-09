@@ -1,4 +1,4 @@
-import { ChangeEvent, useState } from "react";
+import { ChangeEvent, useEffect, useRef, useState } from "react";
 import "./EditableTextField.css";
 
 export const EditableTextField = ({
@@ -9,14 +9,26 @@ export const EditableTextField = ({
   allowEmpty = true,
   disabled = false,
   maxLength,
+  selectOnMount = false,
 }: Props) => {
   const [text, setText] = useState(value);
+  const ref = useRef<HTMLInputElement & HTMLTextAreaElement>(null);
+
+  useEffect(
+    function selectTextOnMount() {
+      if (!selectOnMount) return;
+      ref.current?.focus();
+      ref.current?.select();
+    },
+    [selectOnMount],
+  );
 
   const props = {
     onChange: (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
       setText(e.target.value),
     onBlur: (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
       const updatedValue = e.target.value;
+      if (updatedValue === value) return;
 
       return !allowEmpty && !updatedValue
         ? setText(value)
@@ -25,6 +37,7 @@ export const EditableTextField = ({
     placeholder,
     disabled,
     maxLength,
+    ref,
   };
 
   return type === "text" ? (
@@ -42,4 +55,6 @@ interface Props {
   onUpdate: (text: string) => void;
   disabled?: boolean;
   maxLength?: number;
+  /** Focus the field and select its text, so typing replaces it. */
+  selectOnMount?: boolean;
 }
