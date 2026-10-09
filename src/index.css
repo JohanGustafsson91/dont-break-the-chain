@@ -54,6 +54,8 @@ body {
   display: flex;
   min-width: 320px;
   height: 100vh;
+  /* The visible height, so mobile browser toolbars don't hide the bottom of the app. */
+  height: 100dvh;
   background-color: var(--bg-color);
   color: var(--text-color);
   overflow: hidden;
