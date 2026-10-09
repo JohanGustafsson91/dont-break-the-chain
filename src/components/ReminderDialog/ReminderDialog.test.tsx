@@ -69,6 +69,8 @@ describe("ReminderDialog - daily reminder on this device", () => {
 
     const time = await screen.findByLabelText("Remind me at");
     expect(time).toHaveValue("21");
+    // There must always be a way out, also on a phone without an Escape key.
+    expect(screen.getByRole("button", { name: "Close" })).toBeEnabled();
     const save = screen.getByRole("button", { name: "Save" });
     expect(save).toBeDisabled(); // nothing changed yet
     await userEvent.selectOptions(time, "8");
@@ -76,8 +78,12 @@ describe("ReminderDialog - daily reminder on this device", () => {
     expect(reminderService.updateReminderHour).toHaveBeenCalledWith(8);
     unmount();
 
-    renderDialog();
-    await userEvent.click(await screen.findByRole("button", { name: "Turn off here" }));
+    const { onClose } = renderDialog();
+    await userEvent.click(await screen.findByRole("button", { name: "Close" }));
+    expect(onClose).toHaveBeenCalled();
+    expect(reminderService.turnOffRemindersOnThisDevice).not.toHaveBeenCalled();
+
+    await userEvent.click(screen.getByRole("button", { name: "Turn off reminders on this device" }));
     expect(reminderService.turnOffRemindersOnThisDevice).toHaveBeenCalled();
     expect(await screen.findByRole("status")).toHaveTextContent("Reminders are off on this device.");
   });
