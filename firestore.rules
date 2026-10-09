@@ -70,22 +70,27 @@ service cloud.firestore {
     }
 
     // Daily reminder settings, one document per user (id = uid): the hour and time
-    // zone to remind at, one push token per device, and the last day a habit was
-    // marked. Only the user may touch it; the reminder sender uses server credentials.
+    // zone to remind at, one push token per device, the last day a habit was marked,
+    // and the last day a reminder was sent. Only the user may touch it; the reminder
+    // sender (scripts/send-reminders.mjs) uses server credentials.
     match /reminders/{uid} {
       function isOwner() {
         return request.auth != null && request.auth.uid == uid;
       }
 
       function isValidReminder(data) {
-        return data.keys().hasOnly(['hour', 'timeZone', 'tokens', 'lastMarkedDate'])
+        return data.keys().hasOnly(['hour', 'timeZone', 'tokens', 'lastMarkedDate', 'lastRemindedDate'])
           && data.keys().hasAll(['hour', 'timeZone', 'tokens'])
           && data.hour is int && data.hour >= 0 && data.hour <= 23
           && data.timeZone is string && data.timeZone.size() > 0 && data.timeZone.size() <= 64
           && data.tokens is list && data.tokens.size() <= 10
-          && (!('lastMarkedDate' in data)
-            || (data.lastMarkedDate is string
-              && data.lastMarkedDate.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$')));
+          && isDateOrMissing(data, 'lastMarkedDate')
+          && isDateOrMissing(data, 'lastRemindedDate');
+      }
+
+      function isDateOrMissing(data, key) {
+        return !(key in data)
+          || (data[key] is string && data[key].matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$'));
       }
 
       allow read, delete: if isOwner();

@@ -32,6 +32,8 @@ export interface ReminderSettings {
   timeZone: string;
   tokens: string[];
   lastMarkedDate?: string;
+  /** Written by the sender, so a reminder goes out at most once a day. */
+  lastRemindedDate?: string;
 }
 
 const reminderDoc = () => {
