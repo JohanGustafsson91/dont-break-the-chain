@@ -105,14 +105,16 @@ describe("ReminderDialog - daily reminder on this device", () => {
   });
 
   it("should show which time zone applies when another device saved a different one", async () => {
+    // Any zone that differs from the machine's own.
+    const otherZone = settings.timeZone === "Pacific/Auckland" ? "America/New_York" : "Pacific/Auckland";
     vi.mocked(reminderService.getReminderSettings).mockResolvedValue({
       ...settings,
-      timeZone: "Pacific/Auckland",
+      timeZone: otherZone,
     });
     vi.mocked(reminderService.isOnForThisDevice).mockReturnValue(true);
     renderDialog();
 
-    expect(await screen.findByText(/Reminders now follow Pacific\/Auckland/)).toBeInTheDocument();
+    expect(await screen.findByText(`Reminders now follow ${otherZone}`, { exact: false })).toBeInTheDocument();
     // Same hour, but saving moves the reminders to this device's time zone.
     await userEvent.click(screen.getByRole("button", { name: "Save" }));
     expect(reminderService.updateReminderHour).toHaveBeenCalledWith(21);

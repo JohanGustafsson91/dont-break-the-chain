@@ -11,7 +11,7 @@ import { ToastProvider } from "../Toast/Toast.Provider";
 import { AppBar } from "../AppBar/AppBar";
 import type { User } from "firebase/auth";
 import type { Habit } from "../../domain/Habit";
-import { createDate } from "../../utils/date";
+import { getToday } from "../../utils/date";
 
 const mockNavigate = vi.fn();
 
@@ -205,7 +205,7 @@ describe("HabitsList - User workflows", () => {
         description: "10 min daily",
         goal: { type: "daily" },
         streak: [
-          { date: createDate(new Date()), status: "GOOD", notes: "Felt calm" },
+          { date: getToday(), status: "GOOD", notes: "Felt calm" },
         ],
       },
     ];
@@ -246,7 +246,7 @@ describe("HabitsList - User workflows", () => {
         name: "Gym",
         description: "",
         goal: { type: "weekly", times: 3 },
-        streak: [{ date: createDate(new Date()), status: "GOOD", notes: "" }],
+        streak: [{ date: getToday(), status: "GOOD", notes: "" }],
       },
     ];
 
