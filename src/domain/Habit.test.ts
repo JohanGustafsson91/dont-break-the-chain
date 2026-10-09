@@ -14,7 +14,9 @@ import { HABIT_STATUS } from "../shared/constants";
 
 describe("Domain - Habit tracking complete workflows", () => {
   beforeAll(() => {
-    vi.setSystemTime(new Date("2025-02-15T00:00:00Z"));
+    // Local noon: "today" is the local date, so this is 2025-02-15 in every time zone
+    // (UTC midnight would still be the day before west of UTC).
+    vi.setSystemTime(new Date(2025, 1, 15, 12));
   });
 
   afterAll(() => {
