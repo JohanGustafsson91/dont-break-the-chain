@@ -54,8 +54,10 @@ export const PrivacyPolicy = () => (
       article 6(1)(f)), and you have the right to object to it.
     </p>
     <p>
-      Your data is never sold or used for advertising, and the app never shares it
-      with anyone for their own purposes. There is no automated decision-making or profiling.
+      Your data is never sold or used for advertising. Apart from reCAPTCHA (see
+      below), the app never shares it with anyone for their own purposes. There is no
+      profiling, and no automated decisions about you, other than reCAPTCHA's
+      automatic check that a request comes from the real app.
     </p>
 
     <h2>Who else is involved</h2>
@@ -72,13 +74,24 @@ export const PrivacyPolicy = () => (
         name, email address and profile picture link with the app, and learns that you
         use this app. Your profile picture is loaded from its servers.
       </li>
+      <li>
+        <strong>Google reCAPTCHA</strong>, through Firebase App Check, checks that
+        requests to the database come from this app and not from automated scripts.
+        To do that it collects information about your device and browser, such as your
+        IP address, and may set a cookie. This happens on every visit, also before you
+        sign in. Google processes this data under its own{" "}
+        <a href="https://policies.google.com/privacy">privacy policy</a> and{" "}
+        <a href="https://policies.google.com/terms">terms</a>, and may use it to
+        improve reCAPTCHA. The legal basis is the legitimate interest in protecting the
+        service from abuse (GDPR article 6(1)(f)).
+      </li>
     </ul>
 
     <h2>Transfers outside the EU</h2>
     <p>
-      Firebase Authentication may process account data in the United States. Such
-      transfers rely on the EU-US Data Privacy Framework and the European Commission's
-      Standard Contractual Clauses.
+      Firebase Authentication may process account data, and reCAPTCHA device and
+      browser data, in the United States. Such transfers rely on the EU-US Data
+      Privacy Framework and the European Commission's Standard Contractual Clauses.
     </p>
 
     <h2>How long it is kept</h2>
@@ -105,11 +118,12 @@ export const PrivacyPolicy = () => (
 
     <h2>Cookies and tracking</h2>
     <p>
-      There are no analytics, no advertising and no tracking cookies. Signing in keeps
-      a token in your browser's storage, which the app needs to work. The login page
-      also remembers, on this device only, that you accepted the current terms, so
-      you don't have to tick the box every time; it contains nothing that identifies
-      you. Neither requires consent.
+      There are no analytics and no advertising. Signing in keeps a token in your
+      browser's storage, which the app needs to work. The login page also remembers,
+      on this device only, that you accepted the current terms, so you don't have to
+      tick the box every time; it contains nothing that identifies you. reCAPTCHA (see
+      above) may set a cookie, used only to protect the service against abuse. These
+      are needed for the service to work securely, so they don't require consent.
     </p>
 
     <h2>Security</h2>
