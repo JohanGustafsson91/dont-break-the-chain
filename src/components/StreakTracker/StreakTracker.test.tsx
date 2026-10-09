@@ -656,7 +656,8 @@ describe("StreakTracker - Complete user journey", () => {
     renderStreakTracker();
 
     const name = await screen.findByDisplayValue("New habit");
-    expect(name).toHaveFocus();
+    // The field is focused in an effect, which can run just after it first renders.
+    await waitFor(() => expect(name).toHaveFocus());
     expect((name as HTMLInputElement).selectionStart).toBe(0);
     expect((name as HTMLInputElement).selectionEnd).toBe("New habit".length);
 
