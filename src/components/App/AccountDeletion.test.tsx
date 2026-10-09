@@ -68,5 +68,7 @@ describe("App - deleting the account", () => {
 
     expect(await screen.findByRole("button", { name: "Continue with GitHub" })).toBeInTheDocument();
     expect(screen.getByText("Your account and all your data have been deleted.")).toBeInTheDocument();
+    // No leftover "Confirm it's you…" progress message on the login page.
+    expect(screen.queryByText(/Confirm it's you/)).not.toBeInTheDocument();
   });
 });

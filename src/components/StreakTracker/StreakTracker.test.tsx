@@ -6,6 +6,7 @@ import { StreakTracker } from "./StreakTracker";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import * as habitService from "../../services/habitService";
 import { AppBarProvider } from "../AppBar/AppBar.Provider";
+import { ToastProvider } from "../Toast/Toast.Provider";
 import { AppBar } from "../AppBar/AppBar";
 import type { Habit } from "../../domain/Habit";
 import type { User } from "firebase/auth";
@@ -59,12 +60,12 @@ describe("StreakTracker - Complete user journey", () => {
   const renderStreakTracker = () => {
     return render(
       <BrowserRouter>
-        <AppBarProvider>
+        <ToastProvider><AppBarProvider>
           <AppBar user={mockUser} />
           <Routes>
             <Route path="/habits/:id" element={<StreakTracker />} />
           </Routes>
-        </AppBarProvider>
+        </AppBarProvider></ToastProvider>
       </BrowserRouter>
     );
   };
@@ -263,6 +264,7 @@ describe("StreakTracker - Complete user journey", () => {
         "Could not update habit name",
         { error: updateError }
       );
+      expect(screen.getByRole("status")).toHaveTextContent("Couldn't save the name.");
     });
 
     // Simulate delete failure
@@ -279,6 +281,7 @@ describe("StreakTracker - Complete user journey", () => {
         "Could not delete habit...",
         { error: deleteError }
       );
+      expect(screen.getByRole("status")).toHaveTextContent("Couldn't delete the habit.");
     });
   });
 

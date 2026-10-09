@@ -1,11 +1,12 @@
 import "@testing-library/jest-dom";
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, onTestFinished } from "vitest";
 import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { HabitsList } from "./HabitsList";
 import { BrowserRouter } from "react-router-dom";
 import * as habitService from "../../services/habitService";
 import { AppBarProvider } from "../AppBar/AppBar.Provider";
+import { ToastProvider } from "../Toast/Toast.Provider";
 import { AppBar } from "../AppBar/AppBar";
 import type { User } from "firebase/auth";
 import type { Habit } from "../../domain/Habit";
@@ -52,10 +53,10 @@ describe("HabitsList - User workflows", () => {
 
     return render(
       <BrowserRouter>
-        <AppBarProvider>
+        <ToastProvider><AppBarProvider>
           <AppBar user={mockUser} />
           <HabitsList />
-        </AppBarProvider>
+        </AppBarProvider></ToastProvider>
       </BrowserRouter>,
     );
   };
@@ -272,6 +273,19 @@ describe("HabitsList - User workflows", () => {
     expect(screen.getAllByText("🔥")).toHaveLength(1);
   });
 
+  it("should tell the user when creating a habit fails", async () => {
+    const consoleErrorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+    onTestFinished(() => consoleErrorSpy.mockRestore());
+    vi.mocked(habitService.getAllHabits).mockResolvedValue([]);
+    vi.mocked(habitService.addHabit).mockRejectedValue(new Error("offline"));
+
+    renderHabitsList();
+    await userEvent.click(await screen.findByRole("button", { name: "+ Create habit" }));
+
+    expect(await screen.findByRole("status")).toHaveTextContent("Couldn't create the habit.");
+    expect(mockNavigate).not.toHaveBeenCalled();
+  });
+
   it("should handle errors gracefully when fetching habits fails", async () => {
     vi.mocked(habitService.getAllHabits).mockRejectedValue(
       new Error("Network error"),
@@ -281,7 +295,7 @@ describe("HabitsList - User workflows", () => {
 
     // User sees error message
     await waitFor(() => {
-      expect(screen.getByText("Could not fetch habits...")).toBeInTheDocument();
+      expect(screen.getByRole("alert")).toHaveTextContent("Couldn't load your habits.");
     });
   });
 });

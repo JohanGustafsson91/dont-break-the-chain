@@ -68,6 +68,14 @@
   accent-color: var(--primary-color);
 }
 
+.Login-accepted {
+  max-width: 400px;
+  margin: 0;
+  font-size: 0.875rem;
+  line-height: 1.45;
+  color: var(--text-muted-color);
+}
+
 .Login-buttons {
   display: flex;
   flex-direction: column;

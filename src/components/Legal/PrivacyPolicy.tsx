@@ -106,8 +106,10 @@ export const PrivacyPolicy = () => (
     <h2>Cookies and tracking</h2>
     <p>
       There are no analytics, no advertising and no tracking cookies. Signing in keeps
-      a token in your browser's storage. That is strictly necessary for the app to
-      work, so it does not require consent.
+      a token in your browser's storage, which the app needs to work. The login page
+      also remembers, on this device only, that you accepted the current terms, so
+      you don't have to tick the box every time; it contains nothing that identifies
+      you. Neither requires consent.
     </p>
 
     <h2>Security</h2>

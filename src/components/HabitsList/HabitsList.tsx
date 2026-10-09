@@ -20,6 +20,7 @@ import { createDate, getToday } from "../../utils/date";
 import { formatGoodShare, formatWeekProgress } from "../../utils/string";
 import { StreakStatusRadioGroup } from "../StreakStatusRadioGroup/StreakStatusRadioGroup";
 import { ConfirmDialog } from "../ConfirmDialog/ConfirmDialog";
+import { useToast } from "../Toast/Toast.Context";
 
 type Status = (typeof HABIT_STATUS)[keyof typeof HABIT_STATUS];
 
@@ -83,6 +84,7 @@ export const HabitsList = () => {
   const [habits, setHabits] = useState<State>({ data: [], status: "pending" });
   const [pendingRemoval, setPendingRemoval] = useState<PendingRemoval>();
   const navigate = useNavigate();
+  const { showToast } = useToast();
 
   async function onCreateHabit() {
     try {
@@ -90,6 +92,7 @@ export const HabitsList = () => {
       navigate(`/habits/${habitId}`);
     } catch (error) {
       console.error("Could not create habit", { error });
+      showToast("Couldn't create the habit. Please try again.");
     }
   }
 
@@ -143,6 +146,7 @@ export const HabitsList = () => {
       await updateHabit(habit.id, { streak: updatedHabit.streak });
     } catch (error) {
       console.error("Could not update habit", { error });
+      showToast("Couldn't save that day. Please try again.");
       // Rollback
       setHabits((prev) => ({
         ...prev,
@@ -262,7 +266,11 @@ export const HabitsList = () => {
                 })
               ),
             pending: <p className="loading">Fetching habits</p>,
-            rejected: <p>Could not fetch habits...</p>,
+            rejected: (
+              <p className="HabitsList-error" role="alert">
+                Couldn't load your habits. Check your connection and reload the page.
+              </p>
+            ),
           }[habits.status]
         }
       </div>

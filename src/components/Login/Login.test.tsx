@@ -30,6 +30,7 @@ describe("Login - User authentication flow", () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    localStorage.clear();
     setupDefaultMocks();
   });
 
@@ -89,6 +90,25 @@ describe("Login - User authentication flow", () => {
     );
     await userEvent.click(googleButton);
     expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+  });
+
+  it("should remember accepted terms on this device until the terms change", async () => {
+    const { unmount } = renderLogin();
+    await userEvent.click(screen.getByRole("checkbox", { name: /I accept the terms of use/ }));
+    await userEvent.click(screen.getByRole("button", { name: "Continue with GitHub" }));
+    unmount();
+
+    // Next visit: no pre-ticked box (honest on shared devices), just a note.
+    const second = renderLogin();
+    expect(screen.queryByRole("checkbox")).not.toBeInTheDocument();
+    expect(screen.getByText(/on this device/)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Continue with Google" })).toBeEnabled();
+    second.unmount();
+
+    // New terms (a different effective date): accept again.
+    localStorage.setItem("acceptedTermsVersion", "1 January 2020");
+    renderLogin();
+    expect(screen.getByRole("checkbox", { name: /I accept the terms of use/ })).not.toBeChecked();
   });
 
   it("should confirm a deleted account once", () => {
