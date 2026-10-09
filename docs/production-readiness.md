@@ -108,7 +108,7 @@ This PR protects existing users' data, not just future ones, so it goes first.
   2. Create a **new GitHub OAuth app** (GitHub → Settings → Developer settings → OAuth Apps) with the callback `https://dont-break-the-chain-dev-a6si.firebaseapp.com/__/auth/handler`.
   3. Sign-in method → GitHub → paste its client id and secret.
   4. Do not copy production data into dev.
-- [ ] Once dev works, **remove `localhost` from production's authorized domains.**
+- [x] Once dev works, **remove `localhost` from production's authorized domains.** Checked on 2026-10-09: production allows only its `firebaseapp.com` and `web.app` domains.
 
 **Code**
 - **Rules**, ownership first and validation kept compatible with older data:
@@ -256,13 +256,24 @@ Confirm the behaviour in dev, with a GitHub account whose email is a Gmail addre
 - [ ] Check usage in the Firebase console regularly. Set budget alerts if the project moves to Blaze.
 
 **Code**
-- Add security headers in `firebase.json`: `X-Content-Type-Options: nosniff`, `Referrer-Policy: strict-origin-when-cross-origin` and `Content-Security-Policy: frame-ancestors 'none'`.
-- Remove the stray `functions/` and `apphosting.yaml`, or move them to a branch, so they cannot be deployed by accident.
+- Security headers in `firebase.json`: `X-Content-Type-Options: nosniff`, `Referrer-Policy: strict-origin-when-cross-origin` and `Content-Security-Policy: frame-ancestors 'none'`. Checked on dev: Hosting's reserved `/__/auth/` paths don't get them, so the sign-in iframe on `firebaseapp.com` still works.
+- Stray files:
+  - The untracked `functions/` folder was moved out of the repository.
+  - `apphosting.yaml` and the duplicate `public/site.webmanifest` were removed.
+- Deploy safety:
+  - A predeploy check refuses to deploy a build made for the other Firebase project.
+  - `make deploy` goes through `pnpm run deploy`.
+  - CI authenticates only after the build (see PR 1).
 - Polish:
-  - New habits get the name "New habit", with focus on the name field.
-  - One manifest, with the right name and colours.
-- Lighthouse on the main flows: **Accessibility ≥ 90** and **Best Practices ≥ 90**, with no failing audits in the PWA category.
-- `README.md`: what the app is, how to set up dev and the emulator, how deployment works (`firebase deploy` targets dev, `deploy:prod` targets production), and the known limitations.
+  - New habits are named "New habit", and the name is selected when the habit opens. On iPhone the keyboard doesn't open by itself, because iOS only allows that directly after a tap.
+  - There is one manifest, named "Don't Break The Chain", with "DBTC" as the label under the home screen icon (also on iOS).
+  - Links inside text are underlined, and a `robots.txt` was added.
+- Lighthouse on the dev login page (2026-10-09):
+  - Mobile: Performance 91, Accessibility 95, Best Practices 100, SEO 91.
+  - Desktop: Performance 100, Accessibility 95, Best Practices 100, SEO 91.
+  - Lighthouse 12 no longer has a PWA category.
+  - What's left is mostly Google's and Firebase's own scripts, plus unused JavaScript that would need code splitting.
+- `README.md`: what the app is, how to set up dev and run the emulator tests, how deployment works, and the known limitations.
 
 ### PR 7 and 8: Daily reminders (decided 2026-10-09)
 
@@ -330,7 +341,7 @@ What the texts should cover, in plain language. A short review by a lawyer, or a
 
 - [ ] The live production rules match `firestore.rules`, and the rules tests pass in CI.
 - [ ] CI deploys with a least-privilege account, and Dependabot no longer auto-merges majors or Actions updates. Branch protection is on.
-- [ ] Dev and production are separate projects, and `localhost` is removed from production's authorized domains.
+- [x] Dev and production are separate projects, and `localhost` is removed from production's authorized domains.
 - [ ] The privacy policy and terms are live, and acceptance is an explicit checkbox. The fonts are self-hosted.
 - [ ] Every cell of the sign-in test matrix passes. The same-email behaviour matches the documentation.
 - [ ] Export and account deletion work, including re-authentication and retry.

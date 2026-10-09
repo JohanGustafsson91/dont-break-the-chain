@@ -75,7 +75,7 @@ export const deleteAllHabits = async () => {
 export const addHabit = async () => {
   const habitsRef = collection(db, COLLECTIONS.HABITS);
   const docRef = await addDoc(habitsRef, {
-    name: `Habit ${new Date().toISOString()}`,
+    name: "New habit",
     description: "",
     goal: DAILY_GOAL,
     streak: [],

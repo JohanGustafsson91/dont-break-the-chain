@@ -1,50 +1,87 @@
-# React + TypeScript + Vite
+# Don't Break The Chain
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A small, free habit tracker. Mark each day as done (✓) or missed (✗), and keep the
+chain of good days going. Live at https://dont-break-the-chain-cb8a0.web.app.
 
-Currently, two official plugins are available:
+- Daily habits, or weekly goals such as "3 times a week"
+- A calendar with notes per day, current and longest streaks, and a year overview
+- Short insights from your history, such as which weekday you miss most often
+- Sign in with Google or GitHub; export your data or delete your account from the account menu
+- Installable as an app (PWA)
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## Stack
 
-## Expanding the ESLint configuration
+React 19, TypeScript and Vite, with `vite-plugin-pwa`. Firebase Authentication,
+Cloud Firestore and Firebase Hosting, on the free Spark plan. Tests use Vitest and
+Testing Library; the Firestore security rules are tested against the emulator.
 
-If you are developing a production application, we recommend updating the configuration to enable type aware lint rules:
+## Getting started
 
-- Configure the top-level `parserOptions` property like this:
+You need Node 20+, pnpm 9, and Java 21 for the Firestore emulator. To run the app
+against Firebase you also need access to the dev Firebase project; ask the owner.
 
-```js
-export default tseslint.config({
-  languageOptions: {
-    // other options...
-    parserOptions: {
-      project: ["./tsconfig.node.json", "./tsconfig.app.json"],
-      tsconfigRootDir: import.meta.dirname,
-    },
-  },
-});
+```sh
+pnpm install
+pnpm exec firebase login
 ```
 
-- Replace `tseslint.configs.recommended` to `tseslint.configs.recommendedTypeChecked` or `tseslint.configs.strictTypeChecked`
-- Optionally add `...tseslint.configs.stylisticTypeChecked`.
-- Install [eslint-plugin-react](https://github.com/jsx-eslint/eslint-plugin-react) and update the config:
+Create `.env.development.local` with the web config of the **dev** Firebase project
+(Project settings → Your apps):
 
-```js
-// eslint.config.js
-import react from "eslint-plugin-react";
-
-export default tseslint.config({
-  // Set the react version
-  settings: { react: { version: "18.3" } },
-  plugins: {
-    // Add the react plugin
-    react,
-  },
-  rules: {
-    // other rules...
-    // Enable its recommended rules
-    ...react.configs.recommended.rules,
-    ...react.configs["jsx-runtime"].rules,
-  },
-});
+```sh
+VITE_API_KEY=…
+VITE_AUTH_DOMAIN=…
+VITE_PROJECT_ID=…
+VITE_STORAGE_BUCKET=…
+VITE_MESSAGING_SENDER_ID=…
+VITE_APP_ID=…
+VITE_MEASUREMENT_ID=…
 ```
+
+`VITE_APPCHECK_SITE_KEY` and `VITE_APPCHECK_DEBUG_TOKEN` are optional, and unused
+while App Check is off.
+
+Then run `pnpm dev`. Sign-in works on `localhost`, which is an authorized domain in
+the dev project only. Setting up the sign-in providers for a new project is described
+in `docs/production-readiness.md` (PR 3).
+
+## Scripts
+
+| Command | What it does |
+| --- | --- |
+| `pnpm dev` | Dev server against the dev project |
+| `pnpm test` | Unit and component tests |
+| `pnpm test:rules` | Security rules tests in the Firestore emulator (offline, no login or config needed) |
+| `pnpm lint` | ESLint |
+| `pnpm run deploy` | Tests, builds for dev and deploys hosting and rules to the **dev** project |
+
+Use `pnpm run deploy`, not `pnpm deploy`, which is a built-in pnpm command.
+
+## Environments and deployment
+
+| | Project | Deployed by |
+| --- | --- | --- |
+| Dev | `dont-break-the-chain-dev-a6si` | `pnpm run deploy`, by hand |
+| Production | `dont-break-the-chain-cb8a0` | GitHub Actions, on every merge to `main` |
+
+- `firebase deploy` without `-P` targets dev, unless you have run `firebase use` to pick another project.
+- Production deploys use a least-privilege service account and the `production`
+  environment's secrets.
+- A predeploy check (`scripts/check-build-target.mjs`) refuses to deploy a build that
+  was made for the other project.
+- Pull requests need the "Firestore rules" and "Validate PR / Lint, Test & Build" checks to pass.
+
+## Known limitations
+
+- **Last write wins.** Each habit is one document, so editing the same habit on two
+  devices at the same moment can overwrite one of the edits.
+- **Shared free quotas.** On Spark, all users share about 50k reads and 20k writes a
+  day. If they run out, the app stops working until the daily reset; it never costs money.
+  App Check is prepared but turned off (see the plan).
+- **No backups.** Users can export their data from the account menu.
+- **English only.**
+
+## More
+
+`docs/production-readiness.md` has the launch plan, the decisions behind it, the
+legal content and the open questions.

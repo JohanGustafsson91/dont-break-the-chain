@@ -636,4 +636,40 @@ describe("StreakTracker - Complete user journey", () => {
     const day13 = screen.getByTitle("Day 13");
     expect(day13).toHaveClass("Calendar-day_error");
   });
+  it("should select the name of a habit that was just created, so typing replaces it", async () => {
+    vi.mocked(habitService.getHabitById).mockResolvedValue({
+      id: "new-1",
+      name: "New habit",
+      description: "",
+      goal: { type: "daily" },
+      streak: [],
+    });
+    // React Router keeps navigation state under "usr" in the history entry.
+    window.history.pushState({ usr: { isNewHabit: true }, key: "new", idx: 0 }, "", "/habits/new-1");
+    renderStreakTracker();
+
+    const name = await screen.findByDisplayValue("New habit");
+    expect(name).toHaveFocus();
+    expect((name as HTMLInputElement).selectionStart).toBe(0);
+    expect((name as HTMLInputElement).selectionEnd).toBe("New habit".length);
+
+    await userEvent.keyboard("Evening stretch");
+    expect(name).toHaveValue("Evening stretch");
+    // The flag is cleared from history, so a reload doesn't select the name again.
+    expect(mockNavigate).toHaveBeenCalledWith("/habits/new-1", { replace: true, state: null });
+  });
+
+  it("should not grab focus when opening an existing habit", async () => {
+    vi.mocked(habitService.getHabitById).mockResolvedValue({
+      id: "old-1",
+      name: "Gym",
+      description: "",
+      goal: { type: "daily" },
+      streak: [],
+    });
+    window.history.pushState({}, "", "/habits/old-1");
+    renderStreakTracker();
+
+    expect(await screen.findByDisplayValue("Gym")).not.toHaveFocus();
+  });
 });

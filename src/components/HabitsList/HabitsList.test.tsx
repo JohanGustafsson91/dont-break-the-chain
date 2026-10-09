@@ -142,7 +142,9 @@ describe("HabitsList - User workflows", () => {
     // User is navigated to the new habit
     await waitFor(() => {
       expect(habitService.addHabit).toHaveBeenCalled();
-      expect(mockNavigate).toHaveBeenCalledWith("/habits/new-habit-123");
+      expect(mockNavigate).toHaveBeenCalledWith("/habits/new-habit-123", {
+        state: { isNewHabit: true },
+      });
     });
   });
 

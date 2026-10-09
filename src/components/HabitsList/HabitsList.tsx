@@ -89,7 +89,7 @@ export const HabitsList = () => {
   async function onCreateHabit() {
     try {
       const habitId = await addHabit();
-      navigate(`/habits/${habitId}`);
+      navigate(`/habits/${habitId}`, { state: { isNewHabit: true } });
     } catch (error) {
       console.error("Could not create habit", { error });
       showToast("Couldn't create the habit. Please try again.");

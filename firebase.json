@@ -4,6 +4,7 @@
   },
   "hosting": {
     "public": "dist",
+    "predeploy": ["node \"$PROJECT_DIR/scripts/check-build-target.mjs\""],
     "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
     "rewrites": [
       {
@@ -12,6 +13,14 @@
       }
     ],
     "headers": [
+      {
+        "source": "**",
+        "headers": [
+          { "key": "X-Content-Type-Options", "value": "nosniff" },
+          { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" },
+          { "key": "Content-Security-Policy", "value": "frame-ancestors 'none'" }
+        ]
+      },
       {
         "source": "/sw.js",
         "headers": [{ "key": "Cache-Control", "value": "no-cache" }]

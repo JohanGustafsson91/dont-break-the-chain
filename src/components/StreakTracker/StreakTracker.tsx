@@ -19,7 +19,7 @@ import {
   formatWeekProgress,
   pluralize,
 } from "../../utils/string";
-import { useNavigate, useParams } from "react-router-dom";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { EditableTextField } from "./EditableTextField";
 import "./StreakTracker.css";
 import { StreakStat } from "./StreakStat";
@@ -49,6 +49,19 @@ const formatSheetDay = (date: Date) =>
 export const StreakTracker = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
+  // Read once: the flag lives in the history entry, and is cleared below so a
+  // reload or Back doesn't select the name again.
+  const [isNewHabit] = useState(location.state?.isNewHabit === true);
+
+  useEffect(
+    function forgetNewHabitFlag() {
+      if (location.state?.isNewHabit) {
+        navigate(location.pathname, { replace: true, state: null });
+      }
+    },
+    [location, navigate],
+  );
   const [habit, setHabit] = useState<Habit>();
   const [loadError, setLoadError] = useState<"notFound" | "failed">();
   const [activeDate, setActiveDate] = useState<Date | undefined>();
@@ -234,6 +247,7 @@ export const StreakTracker = () => {
             onUpdate={onUpdateName}
             allowEmpty={false}
             maxLength={200}
+            selectOnMount={isNewHabit}
           />
           <EditableTextField
             value={habit.description}
