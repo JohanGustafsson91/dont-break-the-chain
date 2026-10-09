@@ -5,6 +5,7 @@ import userEvent from "@testing-library/user-event";
 import { HabitsList } from "./HabitsList";
 import { BrowserRouter } from "react-router-dom";
 import * as habitService from "../../services/habitService";
+import * as reminderService from "../../services/reminderService";
 import { AppBarProvider } from "../AppBar/AppBar.Provider";
 import { ToastProvider } from "../Toast/Toast.Provider";
 import { AppBar } from "../AppBar/AppBar";
@@ -37,6 +38,13 @@ vi.mock("../../utils/logger", () => ({
 vi.mock("../../services/firebaseService", () => ({
   auth: {},
   db: {},
+}));
+
+vi.mock("../../services/reminderService", () => ({
+  recordDayMarked: vi.fn(),
+  remindersAvailable: false,
+  forgetThisDevice: vi.fn(),
+  syncReminderToken: vi.fn(),
 }));
 
 describe("HabitsList - User workflows", () => {
@@ -185,6 +193,8 @@ describe("HabitsList - User workflows", () => {
         }),
       );
     });
+    // Reminders skip days that already have a mark.
+    expect(reminderService.recordDayMarked).toHaveBeenCalledWith(expect.any(Date), "GOOD");
   });
 
   it("should ask before unmarking today when it has a note", async () => {

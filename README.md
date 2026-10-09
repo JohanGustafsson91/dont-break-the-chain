@@ -38,6 +38,7 @@ VITE_APP_ID=…
 VITE_MEASUREMENT_ID=…
 ```
 
+`VITE_FCM_VAPID_KEY` (the project's Web Push public key) turns on daily reminders.
 `VITE_APPCHECK_SITE_KEY` and `VITE_APPCHECK_DEBUG_TOKEN` are optional, and unused
 while App Check is off.
 

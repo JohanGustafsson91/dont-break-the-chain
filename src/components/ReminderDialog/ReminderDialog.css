@@ -1,0 +1,34 @@
+.ReminderDialog-time {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-top: 0.25rem;
+  font-size: 0.9375rem;
+}
+
+.ReminderDialog-time select {
+  height: 40px;
+  padding: 0 0.75rem;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  background: var(--surface-muted-color);
+  color: var(--text-color);
+  /* 16px or more, or iOS Safari zooms in when the field gets focus. */
+  font: inherit;
+  font-size: 1rem;
+}
+
+.ReminderDialog-note {
+  font-size: 0.8125rem;
+  line-height: 1.4;
+  color: var(--text-subtle-color);
+}
+
+.ConfirmDialog[tabindex="-1"]:focus {
+  outline: none;
+}
+
+.ReminderDialog-single {
+  grid-template-columns: 1fr;
+}

@@ -12,14 +12,22 @@ import { ConfirmDialog } from "../ConfirmDialog/ConfirmDialog";
 import { markAccountDeleted } from "../../shared/accountDeletedNotice";
 import { forgetTermsAccepted } from "../../shared/termsAcceptance";
 import { useToast } from "../Toast/Toast.Context";
+import { ReminderDialog } from "../ReminderDialog/ReminderDialog";
+import { remindersAvailable, syncReminderToken } from "../../services/reminderService";
 
 export const AccountMenu = ({ user }: Props) => {
   const [isOpen, setIsOpen] = useState(false);
   const [isConfirmingDelete, setIsConfirmingDelete] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isReminderOpen, setIsReminderOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const { showToast, hideToast } = useToast();
+
+  // The menu is on every signed-in page, so this runs once when the app opens.
+  useEffect(function keepReminderTokenFresh() {
+    void syncReminderToken();
+  }, []);
 
   useEffect(
     function closeOnOutsideClickOrEscape() {
@@ -111,6 +119,18 @@ export const AccountMenu = ({ user }: Props) => {
       {isOpen ? (
         <div className="AccountMenu-panel" id="account-menu">
           {user.email ? <p className="AccountMenu-who">{user.email}</p> : null}
+          {remindersAvailable ? (
+            <button
+              type="button"
+              className="AccountMenu-item"
+              onClick={() => {
+                setIsOpen(false);
+                setIsReminderOpen(true);
+              }}
+            >
+              Daily reminder
+            </button>
+          ) : null}
           <button type="button" className="AccountMenu-item" onClick={onExport}>
             Export my data
           </button>
@@ -136,6 +156,15 @@ export const AccountMenu = ({ user }: Props) => {
             Log out
           </button>
         </div>
+      ) : null}
+
+      {isReminderOpen ? (
+        <ReminderDialog
+          onClose={() => {
+            setIsReminderOpen(false);
+            triggerRef.current?.focus();
+          }}
+        />
       ) : null}
 
       {isConfirmingDelete ? (

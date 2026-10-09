@@ -24,6 +24,13 @@ vi.mock("../../services/authService", async (importOriginal) => ({
 
 vi.mock("../../services/firebaseService", () => ({ auth: {}, db: {} }));
 
+vi.mock("../../services/reminderService", async (importOriginal) => ({
+  ...(await importOriginal<object>()),
+  remindersAvailable: true,
+  getReminderSupport: vi.fn().mockResolvedValue("needs-install"),
+  getReminderSettings: vi.fn().mockResolvedValue(undefined),
+}));
+
 const user = {
   uid: "user-1",
   email: "ada@example.com",
@@ -82,6 +89,20 @@ describe("AccountMenu - export, delete, legal links and log out", () => {
     await userEvent.click(trigger);
     await userEvent.click(screen.getByRole("button", { name: "Log out" }));
     expect(authService.logout).toHaveBeenCalled();
+  });
+
+  it("should open the daily reminder settings from the menu", async () => {
+    renderMenu();
+    const trigger = screen.getByRole("button", { name: "Account menu" });
+
+    await userEvent.click(trigger);
+    await userEvent.click(screen.getByRole("button", { name: "Daily reminder" }));
+
+    const dialog = screen.getByRole("dialog", { name: "Daily reminder" });
+    expect(await within(dialog).findByText(/Add to Home Screen/)).toBeInTheDocument();
+    await userEvent.click(within(dialog).getByRole("button", { name: "Close" }));
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    expect(trigger).toHaveFocus();
   });
 
   it("should only delete after confirming, and explain a failed deletion", async () => {

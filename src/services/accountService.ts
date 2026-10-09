@@ -3,6 +3,7 @@ import type { Habit } from "../domain/Habit";
 import { auth } from "./firebaseService";
 import { reauthenticate } from "./authService";
 import { deleteAllHabits, getAllHabits } from "./habitService";
+import { deleteReminders, getReminderSettings, type ReminderSettings } from "./reminderService";
 
 const toDateKey = (date: Date) => date.toISOString().slice(0, 10);
 
@@ -10,6 +11,7 @@ const toDateKey = (date: Date) => date.toISOString().slice(0, 10);
 export const buildExport = (
   user: Pick<User, "uid" | "displayName" | "email" | "photoURL" | "providerData" | "metadata">,
   habits: Habit[],
+  reminders: ReminderSettings | undefined,
   exportedAt: Date,
 ) => ({
   exportedAt: exportedAt.toISOString(),
@@ -34,6 +36,12 @@ export const buildExport = (
       notes: day.notes,
     })),
   })),
+  reminders: reminders && {
+    hour: reminders.hour,
+    timeZone: reminders.timeZone,
+    lastMarkedDate: reminders.lastMarkedDate,
+    devices: reminders.tokens.length,
+  },
 });
 
 export const downloadMyData = async () => {
@@ -41,7 +49,8 @@ export const downloadMyData = async () => {
   if (!user) throw new Error("Not signed in");
 
   const now = new Date();
-  const data = buildExport(user, await getAllHabits(), now);
+  const [habits, reminders] = await Promise.all([getAllHabits(), getReminderSettings()]);
+  const data = buildExport(user, habits, reminders, now);
   const url = URL.createObjectURL(
     new Blob([JSON.stringify(data, undefined, 2)], { type: "application/json" }),
   );
@@ -73,6 +82,7 @@ export const deleteAccountAndData = async (): Promise<DeletionResult> => {
 
   try {
     await deleteAllHabits();
+    await deleteReminders();
   } catch (error) {
     return { ok: false, step: "habits", error };
   }

@@ -8,7 +8,11 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: "autoUpdate",
-      workbox: {
+      // Our own service worker (src/sw.ts), so it can show reminder notifications.
+      strategies: "injectManifest",
+      srcDir: "src",
+      filename: "sw.ts",
+      injectManifest: {
         // Include the self-hosted fonts and icons, so the installed app looks right offline.
         globPatterns: ["**/*.{js,css,html,woff2,png,svg,ico}"],
       },

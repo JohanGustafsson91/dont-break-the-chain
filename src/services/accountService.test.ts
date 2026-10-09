@@ -56,6 +56,7 @@ describe("accountService - export and account deletion", () => {
           createdAt: new Date("2025-02-03T09:05:00Z"),
         },
       ],
+      { hour: 20, timeZone: "Europe/Stockholm", tokens: ["a", "b"], lastMarkedDate: "2025-02-14" },
       new Date("2025-02-15T10:00:00Z"),
     );
 
@@ -80,6 +81,8 @@ describe("accountService - export and account deletion", () => {
           days: [{ date: "2025-02-14", status: "GOOD", notes: "5 km" }],
         },
       ],
+      // Push tokens are device secrets, so only how many devices get reminders.
+      reminders: { hour: 20, timeZone: "Europe/Stockholm", lastMarkedDate: "2025-02-14", devices: 2 },
     });
   });
 
@@ -88,9 +91,11 @@ describe("accountService - export and account deletion", () => {
 
     const reauth = vi.mocked(firebaseAuth.reauthenticateWithPopup).mock.invocationCallOrder[0];
     const commit = batch.commit.mock.invocationCallOrder[0];
+    const removeReminders = vi.mocked(firestore.deleteDoc).mock.invocationCallOrder[0];
     const removeUser = vi.mocked(firebaseAuth.deleteUser).mock.invocationCallOrder[0];
     expect(reauth).toBeLessThan(commit);
-    expect(commit).toBeLessThan(removeUser);
+    expect(commit).toBeLessThan(removeReminders);
+    expect(removeReminders).toBeLessThan(removeUser);
     expect(batch.delete.mock.calls.map(([ref]) => ref)).toEqual(["habit-a", "habit-b"]);
     // Re-authentication uses the provider the user signed in with.
     expect(vi.mocked(firebaseAuth.reauthenticateWithPopup).mock.calls[0][1]).toBeInstanceOf(

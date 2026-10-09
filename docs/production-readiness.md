@@ -280,6 +280,13 @@ Confirm the behaviour in dev, with a GitHub account whose email is a Gmail addre
 Push reminders that work on Spark, without Cloud Functions: a scheduled GitHub Actions workflow sends them through Firebase Cloud Messaging (FCM), which is free.
 
 **PR 7: The app side**
+
+Owner steps:
+- [ ] In each Firebase project, go to Project settings → Cloud Messaging → Web Push certificates and **Generate key pair**. The FCM APIs are already enabled in both projects (checked 2026-10-09).
+- [x] Put the dev public key in `.env.development.local` as `VITE_FCM_VAPID_KEY` (done 2026-10-09). The key is public by design. Without it, the "Daily reminder" menu item stays hidden.
+- [ ] Add a `VITE_FCM_VAPID_KEY` secret with the production key to the GitHub `production` environment, but **only once PR 8 is live**. Otherwise users can turn reminders on and nothing arrives.
+
+Code:
 - Reminder settings in the account menu: on/off and the hour of the day. The browser's IANA time zone is saved with it, so "20:00" means 20:00 where the user is.
 - One `reminders/{uid}` document per user: the hour, the time zone, one FCM token per device, and `lastMarkedDate`, which the app updates when today is marked so that users who are done get no reminder.
 - Switch VitePWA to `injectManifest`, so the service worker can show push notifications.
@@ -288,6 +295,8 @@ Push reminders that work on Spark, without Cloud Functions: a scheduled GitHub A
 
 **PR 8: The sender**
 - A workflow that runs every hour. It finds users whose chosen hour has just started in their time zone and who haven't marked today, and sends one notification per device. Tokens that FCM reports as invalid are removed.
+- It must tolerate bad documents: the rules can't check each entry of `tokens`, and a time zone that isn't a valid IANA name makes `Intl` throw. Handle each user in its own try/catch, so one bad document never stops the run for everyone.
+- Notification text never includes habit names or notes; they can be health data, and they would pass through the browsers' push services.
 - It authenticates with **Workload Identity Federation**, without a stored key. Firestore IAM roles cover the whole database and server credentials bypass the security rules, so the service account (`roles/datastore.user` plus FCM send) can technically read every habit. The script only touches `reminders`, and Workload Identity limits who can use the account to this repository's workflow on `main`.
 
 **Limitations**

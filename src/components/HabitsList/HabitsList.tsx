@@ -21,6 +21,7 @@ import { formatGoodShare, formatWeekProgress } from "../../utils/string";
 import { StreakStatusRadioGroup } from "../StreakStatusRadioGroup/StreakStatusRadioGroup";
 import { ConfirmDialog } from "../ConfirmDialog/ConfirmDialog";
 import { useToast } from "../Toast/Toast.Context";
+import { recordDayMarked } from "../../services/reminderService";
 
 type Status = (typeof HABIT_STATUS)[keyof typeof HABIT_STATUS];
 
@@ -144,6 +145,7 @@ export const HabitsList = () => {
         data: prev.data.map((h) => (h.id === habit.id ? updatedHabit : h)),
       }));
       await updateHabit(habit.id, { streak: updatedHabit.streak });
+      void recordDayMarked(date, status);
     } catch (error) {
       console.error("Could not update habit", { error });
       showToast("Couldn't save that day. Please try again.");
