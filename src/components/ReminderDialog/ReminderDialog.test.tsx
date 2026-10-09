@@ -18,7 +18,12 @@ vi.mock("../../services/reminderService", async (importOriginal) => ({
 
 vi.mock("../../services/firebaseService", () => ({ app: {}, auth: {}, db: {} }));
 
-const settings = { hour: 21, timeZone: "Europe/Stockholm", tokens: ["this-device"] };
+// Saved from this device's time zone, so the tests behave the same on any machine.
+const settings = {
+  hour: 21,
+  timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+  tokens: ["this-device"],
+};
 
 const renderDialog = () => {
   const onClose = vi.fn();
