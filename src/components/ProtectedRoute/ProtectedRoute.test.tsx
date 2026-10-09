@@ -4,6 +4,7 @@ import { render, screen } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { ProtectedRoute } from "./ProtectedRoute";
 import { AppBarProvider } from "../AppBar/AppBar.Provider";
+import { ToastProvider } from "../Toast/Toast.Provider";
 import * as reactFirebaseHooks from "react-firebase-hooks/auth";
 import type { User } from "firebase/auth";
 import React from "react";
@@ -118,7 +119,7 @@ describe("ProtectedRoute - Routing and authentication", () => {
       ] as ReturnType<typeof reactFirebaseHooks.useAuthState>);
 
       render(
-        <AppBarProvider>
+        <ToastProvider><AppBarProvider>
           <MemoryRouter initialEntries={["/protected"]}>
             <Routes>
               <Route
@@ -131,7 +132,7 @@ describe("ProtectedRoute - Routing and authentication", () => {
               />
             </Routes>
           </MemoryRouter>
-        </AppBarProvider>,
+        </AppBarProvider></ToastProvider>,
       );
 
       expect(screen.getByText("Protected Content")).toBeInTheDocument();
@@ -145,7 +146,7 @@ describe("ProtectedRoute - Routing and authentication", () => {
       ] as ReturnType<typeof reactFirebaseHooks.useAuthState>);
 
       render(
-        <AppBarProvider>
+        <ToastProvider><AppBarProvider>
           <MemoryRouter initialEntries={["/protected"]}>
             <Routes>
               <Route
@@ -158,7 +159,7 @@ describe("ProtectedRoute - Routing and authentication", () => {
               />
             </Routes>
           </MemoryRouter>
-        </AppBarProvider>,
+        </AppBarProvider></ToastProvider>,
       );
 
       expect(screen.getByText("Protected Content")).toBeInTheDocument();
@@ -308,7 +309,7 @@ describe("ProtectedRoute - Routing and authentication", () => {
       ] as ReturnType<typeof reactFirebaseHooks.useAuthState>);
 
       const { rerender } = render(
-        <AppBarProvider>
+        <ToastProvider><AppBarProvider>
           <MemoryRouter initialEntries={["/protected"]}>
             <Routes>
               <Route
@@ -321,7 +322,7 @@ describe("ProtectedRoute - Routing and authentication", () => {
               />
             </Routes>
           </MemoryRouter>
-        </AppBarProvider>,
+        </AppBarProvider></ToastProvider>,
       );
 
       expect(screen.getByText("Loading")).toBeInTheDocument();
@@ -333,7 +334,7 @@ describe("ProtectedRoute - Routing and authentication", () => {
       ] as ReturnType<typeof reactFirebaseHooks.useAuthState>);
 
       rerender(
-        <AppBarProvider>
+        <ToastProvider><AppBarProvider>
           <MemoryRouter initialEntries={["/protected"]}>
             <Routes>
               <Route
@@ -346,7 +347,7 @@ describe("ProtectedRoute - Routing and authentication", () => {
               />
             </Routes>
           </MemoryRouter>
-        </AppBarProvider>,
+        </AppBarProvider></ToastProvider>,
       );
 
       expect(screen.queryByText("Loading")).not.toBeInTheDocument();

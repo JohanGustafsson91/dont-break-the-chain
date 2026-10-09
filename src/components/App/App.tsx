@@ -7,40 +7,46 @@ import { HabitsList } from "../HabitsList/HabitsList";
 import { AppBarProvider } from "../AppBar/AppBar.Provider";
 import { PrivacyPolicy } from "../Legal/PrivacyPolicy";
 import { Terms } from "../Legal/Terms";
+import { ErrorBoundary } from "../ErrorBoundary/ErrorBoundary";
+import { ToastProvider } from "../Toast/Toast.Provider";
 
 export const App = () => {
   return (
-    <AppBarProvider>
-      <Router>
-        <Routes>
-          <Route
-            path="/"
-            element={
-              <ProtectedRoute>
-                <HabitsList />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/habits/:id"
-            element={
-              <ProtectedRoute>
-                <StreakTracker />
-              </ProtectedRoute>
-            }
-          />
-          <Route path="/privacy" element={<PrivacyPolicy />} />
-          <Route path="/terms" element={<Terms />} />
-          <Route
-            path="/login"
-            element={
-              <ProtectedRoute isLoginPage>
-                <Login />
-              </ProtectedRoute>
-            }
-          />
-        </Routes>
-      </Router>
-    </AppBarProvider>
+    <ErrorBoundary>
+      <ToastProvider>
+        <AppBarProvider>
+          <Router>
+            <Routes>
+              <Route
+                path="/"
+                element={
+                  <ProtectedRoute>
+                    <HabitsList />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/habits/:id"
+                element={
+                  <ProtectedRoute>
+                    <StreakTracker />
+                  </ProtectedRoute>
+                }
+              />
+              <Route path="/privacy" element={<PrivacyPolicy />} />
+              <Route path="/terms" element={<Terms />} />
+              <Route
+                path="/login"
+                element={
+                  <ProtectedRoute isLoginPage>
+                    <Login />
+                  </ProtectedRoute>
+                }
+              />
+            </Routes>
+          </Router>
+        </AppBarProvider>
+      </ToastProvider>
+    </ErrorBoundary>
   );
 };

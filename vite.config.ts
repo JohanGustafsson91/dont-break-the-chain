@@ -34,6 +34,13 @@ export default defineConfig({
             sizes: "512x512",
             type: "image/png",
           },
+          {
+            src: "/web-app-manifest-512x512.png",
+            sizes: "512x512",
+            type: "image/png",
+            // The chain sits well inside the safe zone, so launchers can crop it to any shape.
+            purpose: "maskable",
+          },
         ],
       },
     }),

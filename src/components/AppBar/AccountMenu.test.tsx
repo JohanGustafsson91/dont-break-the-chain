@@ -7,6 +7,7 @@ import type { User } from "firebase/auth";
 import * as accountService from "../../services/accountService";
 import * as authService from "../../services/authService";
 import { AccountMenu } from "./AccountMenu";
+import { ToastProvider } from "../Toast/Toast.Provider";
 
 // Deliberate exception to "mock only at the edges": deletion order and failures are
 // tested against mocked Firebase in accountService.test; here only the wiring matters.
@@ -32,9 +33,11 @@ const user = {
 
 const renderMenu = () =>
   render(
-    <MemoryRouter>
-      <AccountMenu user={user} />
-    </MemoryRouter>,
+    <ToastProvider>
+      <MemoryRouter>
+        <AccountMenu user={user} />
+      </MemoryRouter>
+    </ToastProvider>,
   );
 
 describe("AccountMenu - export, delete, legal links and log out", () => {
@@ -55,17 +58,17 @@ describe("AccountMenu - export, delete, legal links and log out", () => {
     expect(screen.getByRole("link", { name: "Privacy policy" })).toHaveAttribute("href", "/privacy");
     expect(screen.getByRole("link", { name: "Terms of use" })).toHaveAttribute("href", "/terms");
 
-    // A failed export is explained, and a successful retry clears the message.
+    // A failed export is explained, and a successful retry replaces the message.
     vi.mocked(accountService.downloadMyData).mockRejectedValueOnce(new Error("offline"));
     await userEvent.click(screen.getByRole("button", { name: "Export my data" }));
     expect(screen.queryByRole("button", { name: "Export my data" })).not.toBeInTheDocument();
     expect(trigger).toHaveFocus();
-    expect(await screen.findByRole("status")).toHaveTextContent("Exporting your data failed");
+    expect(await screen.findByRole("status")).toHaveTextContent("Couldn't export your data");
 
     await userEvent.click(trigger);
     await userEvent.click(screen.getByRole("button", { name: "Export my data" }));
     expect(accountService.downloadMyData).toHaveBeenCalledTimes(2);
-    expect(screen.getByRole("status")).toBeEmptyDOMElement();
+    expect(await screen.findByRole("status")).toHaveTextContent("Your data has been downloaded.");
 
     await userEvent.click(trigger);
     await userEvent.click(document.body);

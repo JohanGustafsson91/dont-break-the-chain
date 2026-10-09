@@ -10,14 +10,16 @@ import {
 } from "../../services/accountService";
 import { ConfirmDialog } from "../ConfirmDialog/ConfirmDialog";
 import { markAccountDeleted } from "../../shared/accountDeletedNotice";
+import { forgetTermsAccepted } from "../../shared/termsAcceptance";
+import { useToast } from "../Toast/Toast.Context";
 
 export const AccountMenu = ({ user }: Props) => {
   const [isOpen, setIsOpen] = useState(false);
   const [isConfirmingDelete, setIsConfirmingDelete] = useState(false);
-  const [status, setStatus] = useState<string>();
   const [isDeleting, setIsDeleting] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
+  const { showToast, hideToast } = useToast();
 
   useEffect(
     function closeOnOutsideClickOrEscape() {
@@ -49,29 +51,32 @@ export const AccountMenu = ({ user }: Props) => {
 
   async function onExport() {
     close();
-    setStatus(undefined);
     try {
       await downloadMyData();
+      showToast("Your data has been downloaded.");
     } catch (error) {
       console.error("Could not export data", { error });
-      setStatus("Exporting your data failed. Please try again.");
+      showToast("Couldn't export your data. Please try again.");
     }
   }
 
   async function onDelete() {
     setIsConfirmingDelete(false);
     setIsDeleting(true);
-    setStatus("Confirm it's you in the sign-in window to delete your account…");
+    showToast("Confirm it's you in the sign-in window to delete your account…");
     const result = await deleteAccountAndData();
     setIsDeleting(false);
 
     if (result.ok) {
-      // Signing out sends the app to the login page, which shows the notice.
+      // Signing out sends the app to the login page, which shows the notice. The
+      // toast lives above the router, so the progress message must go explicitly.
+      hideToast();
+      forgetTermsAccepted();
       markAccountDeleted();
       return;
     }
     console.error("Could not delete account", { result });
-    setStatus(deletionFailureMessage(result));
+    showToast(deletionFailureMessage(result));
   }
 
   const initial = (user.displayName || user.email || "?").charAt(0).toUpperCase();
@@ -115,7 +120,6 @@ export const AccountMenu = ({ user }: Props) => {
             disabled={isDeleting}
             onClick={() => {
               setIsOpen(false);
-              setStatus(undefined);
               setIsConfirmingDelete(true);
             }}
           >
@@ -133,19 +137,6 @@ export const AccountMenu = ({ user }: Props) => {
           </button>
         </div>
       ) : null}
-
-      {/* Always in the DOM: screen readers often skip a live region that appears
-          together with its text. */}
-      <div className="AccountMenu-status" role="status">
-        {status ? (
-          <>
-            <span>{status}</span>
-            <button type="button" aria-label="Dismiss" onClick={() => setStatus(undefined)}>
-              ×
-            </button>
-          </>
-        ) : null}
-      </div>
 
       {isConfirmingDelete ? (
         <ConfirmDialog

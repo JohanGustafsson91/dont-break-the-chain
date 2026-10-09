@@ -29,6 +29,7 @@ import { BottomSheet } from "./BottomSheet";
 import { useAppBarContext } from "../AppBar/AppBar.Context";
 import { StreakStatusRadioGroup } from "../StreakStatusRadioGroup/StreakStatusRadioGroup";
 import { ConfirmDialog } from "../ConfirmDialog/ConfirmDialog";
+import { useToast } from "../Toast/Toast.Context";
 import { GoalSelect } from "./GoalSelect";
 import { getInsights } from "../../domain/insights";
 import { YearOverview } from "./YearOverview";
@@ -53,6 +54,7 @@ export const StreakTracker = () => {
   const [activeDate, setActiveDate] = useState<Date | undefined>();
   const [confirmation, setConfirmation] = useState<Confirmation>();
   const { renderAppBarItems } = useAppBarContext();
+  const { showToast } = useToast();
 
   useEffect(
     function fetchAndSetHabit() {
@@ -91,6 +93,7 @@ export const StreakTracker = () => {
           navigate("/");
         } catch (error) {
           console.error("Could not delete habit...", { error });
+          showToast("Couldn't delete the habit. Please try again.");
         }
       }
 
@@ -111,7 +114,7 @@ export const StreakTracker = () => {
         </button>,
       );
     },
-    [habitId, habitName, renderAppBarItems, navigate],
+    [habitId, habitName, renderAppBarItems, navigate, showToast],
   );
 
   // Only recompute when the habit changes, not when the sheet or a dialog opens.
@@ -143,6 +146,7 @@ export const StreakTracker = () => {
       setHabit((prev) => (prev ? { ...prev, name } : prev));
     } catch (error) {
       console.error("Could not update habit name", { error });
+      showToast("Couldn't save the name. Please try again.");
     }
   }
 
@@ -153,6 +157,7 @@ export const StreakTracker = () => {
       setHabit((prev) => (prev ? { ...prev, description } : prev));
     } catch (error) {
       console.error("Could not update habit description", { error });
+      showToast("Couldn't save the description. Please try again.");
     }
   }
 
@@ -165,6 +170,7 @@ export const StreakTracker = () => {
       await updateHabit(habit.id, { goal });
     } catch (error) {
       console.error("Could not update habit goal", { error });
+      showToast("Couldn't save the goal. Please try again.");
       // Only undo our own goal: days marked meanwhile and newer goals stay.
       setHabit((prev) =>
         prev && prev.goal === goal ? { ...prev, goal: previousGoal } : prev,
@@ -182,6 +188,7 @@ export const StreakTracker = () => {
       await updateHabit(habit.id, { streak: updatedHabit.streak });
     } catch (error) {
       console.error("Could not update habit", { error });
+      showToast("Couldn't save that day. Please try again.");
       setHabit(previousHabit);
     }
   }

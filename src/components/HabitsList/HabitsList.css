@@ -146,16 +146,29 @@
   text-wrap: pretty;
 }
 
-/* The list scrolls underneath, so fade it out behind the button. */
-.HabitsList-create {
+/* Creating a habit is rare, so it sits quietly at the end of the list. */
+button.HabitsList-create {
   flex-shrink: 0;
-  margin-top: -1.5rem;
-  padding: 1.5rem 0 1.875rem;
-  background: linear-gradient(to bottom, transparent, var(--bg-color) 35%);
+  height: auto;
+  min-height: 72px;
+  border: 1px dashed color-mix(in srgb, var(--text-subtle-color) 55%, transparent);
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--primary-color);
+  font-size: 0.9375rem;
 }
 
-.HabitsList-create button {
-  width: 100%;
+button.HabitsList-create:hover {
+  opacity: 1;
+  border-color: var(--primary-color);
+}
+
+button.HabitsList-create_first {
+  flex-shrink: 0;
+  align-self: center;
+  justify-self: center;
+  margin-top: 1.5rem;
+  padding: 0 1.75rem;
 }
 
 @media (min-width: 960px) {
@@ -166,7 +179,7 @@
     align-content: start;
   }
 
-  .HabitsList > :not(.HabitsList-item) {
+  .HabitsList > :not(.HabitsList-item, .HabitsList-create) {
     grid-column: 1 / -1;
   }
 
@@ -179,19 +192,12 @@
     margin-bottom: 0;
   }
 
-  /* A compact button at the end of the toolbar instead of a full-width bar. */
-  .HabitsList-create {
-    display: flex;
-    justify-content: flex-end;
-    align-items: center;
-    margin-top: 0;
-    padding: 1rem 0 1.5rem;
-    border-top: 1px solid var(--border-color);
-    background: none;
+  /* Buttons don't stretch in a grid by default; match the height of the cards next to it. */
+  button.HabitsList-create {
+    align-self: stretch;
   }
+}
 
-  .HabitsList-create button {
-    width: auto;
-    padding: 0 1.75rem;
-  }
+.HabitsList-error {
+  color: var(--text-muted-color);
 }

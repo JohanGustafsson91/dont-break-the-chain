@@ -1,0 +1,14 @@
+.ErrorBoundary {
+  gap: 0.75rem;
+  text-align: center;
+}
+
+.ErrorBoundary h1 {
+  margin: 0;
+  font-size: 1.5rem;
+}
+
+.ErrorBoundary p {
+  margin: 0 0 0.5rem;
+  color: var(--text-muted-color);
+}

@@ -11,10 +11,17 @@ import {
   clearAccountDeleted,
   wasAccountDeleted,
 } from "../../shared/accountDeletedNotice";
+import {
+  hasAcceptedCurrentTerms,
+  rememberTermsAccepted,
+} from "../../shared/termsAcceptance";
 import "./Login.css";
 
 export const Login = () => {
-  const [hasAcceptedTerms, setHasAcceptedTerms] = useState(false);
+  // Accepted earlier on this device: say so instead of showing a pre-ticked box, which
+  // would wrongly tell the next person on a shared device that they ticked it.
+  const [acceptedOnThisDevice] = useState(hasAcceptedCurrentTerms);
+  const [hasAcceptedTerms, setHasAcceptedTerms] = useState(acceptedOnThisDevice);
   const [errorMessage, setErrorMessage] = useState<string>();
   const [accountDeleted] = useState(wasAccountDeleted);
 
@@ -27,6 +34,7 @@ export const Login = () => {
 
   const handleLogin = async (provider: AuthProvider) => {
     setErrorMessage(undefined);
+    rememberTermsAccepted();
     try {
       await login({ provider });
     } catch (error) {
@@ -53,17 +61,24 @@ export const Login = () => {
       <h2 className="Login-subtitle">
         Build habits, stay consistent, and keep your streak alive!
       </h2>
-      <label className="Login-consent" id="login-consent">
-        <input
-          type="checkbox"
-          checked={hasAcceptedTerms}
-          onChange={(e) => setHasAcceptedTerms(e.target.checked)}
-        />
-        <span>
-          I accept the <Link to="/terms">terms of use</Link> and have read the{" "}
-          <Link to="/privacy">privacy policy</Link>.
-        </span>
-      </label>
+      {acceptedOnThisDevice ? (
+        <p className="Login-accepted" id="login-consent">
+          You accepted the <Link to="/terms">terms of use</Link> on this device. See
+          also the <Link to="/privacy">privacy policy</Link>.
+        </p>
+      ) : (
+        <label className="Login-consent" id="login-consent">
+          <input
+            type="checkbox"
+            checked={hasAcceptedTerms}
+            onChange={(e) => setHasAcceptedTerms(e.target.checked)}
+          />
+          <span>
+            I accept the <Link to="/terms">terms of use</Link> and have read the{" "}
+            <Link to="/privacy">privacy policy</Link>.
+          </span>
+        </label>
+      )}
       <div className="Login-buttons">
         <button
           className="Login-button"
