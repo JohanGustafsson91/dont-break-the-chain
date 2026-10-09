@@ -18,7 +18,8 @@
     no-repeat right 0.625rem center;
   color: var(--text-color);
   font: inherit;
-  font-size: 0.875rem;
+  /* 16px or more, or iOS Safari zooms in when the field gets focus. */
+  font-size: 1rem;
   appearance: none;
   cursor: pointer;
 }

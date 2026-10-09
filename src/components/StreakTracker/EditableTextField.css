@@ -27,9 +27,10 @@ textarea:focus-visible {
   outline: none;
 }
 
+/* 16px or more, or iOS Safari zooms in when the field gets focus. */
 textarea {
   min-height: 50px;
-  font-size: 0.9375rem;
+  font-size: 1rem;
   color: var(--text-muted-color);
 }
 

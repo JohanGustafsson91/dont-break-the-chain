@@ -42,6 +42,13 @@
   box-sizing: border-box;
 }
 
+/* No double-tap zoom when tapping quickly; pinch zoom still works. Also set on
+   .page, the scroll container, in case WebKit stops inheriting it at a scroller. */
+html,
+.page {
+  touch-action: manipulation;
+}
+
 body {
   margin: 0;
   display: flex;
