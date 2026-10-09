@@ -29,6 +29,12 @@
   outline: none;
 }
 
+button.ReminderDialog-turn-off {
+  align-self: flex-start;
+  margin-left: -0.625rem;
+  color: var(--error-color);
+}
+
 .ReminderDialog-single {
   grid-template-columns: 1fr;
 }

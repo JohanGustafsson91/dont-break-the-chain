@@ -170,11 +170,21 @@ export const ReminderDialog = ({ onClose }: Props) => {
             ? `Reminders now follow ${state.savedTimeZone}. Saving switches them to this device's time zone (${deviceTimeZone()}).`
             : `The time applies to all your devices, in your time zone (${deviceTimeZone()}).`}
         </span>
+        {state.isOn ? (
+          <button
+            type="button"
+            className="ghost ReminderDialog-turn-off"
+            disabled={isBusy}
+            onClick={onTurnOff}
+          >
+            Turn off reminders on this device
+          </button>
+        ) : null}
         <div className="ConfirmDialog-actions">
           {state.isOn ? (
             <>
-              <button type="button" className="secondary" disabled={isBusy} onClick={onTurnOff}>
-                Turn off here
+              <button type="button" className="secondary" disabled={isBusy} onClick={onClose}>
+                Close
               </button>
               <button
                 type="button"
