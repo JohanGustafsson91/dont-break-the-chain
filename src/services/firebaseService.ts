@@ -18,7 +18,8 @@ export const app = initializeApp(firebaseConfig);
 
 // App Check lets Firebase reject requests that don't come from this app, which
 // protects the shared Spark quotas. Without a site key (tests, a fresh checkout)
-// the app runs without it.
+// the app runs without it. It is off for now: before adding a key, the privacy
+// policy must name reCAPTCHA (see PR 5b in docs/production-readiness.md).
 const appCheckSiteKey = import.meta.env.VITE_APPCHECK_SITE_KEY;
 if (appCheckSiteKey) {
   if (import.meta.env.DEV) {

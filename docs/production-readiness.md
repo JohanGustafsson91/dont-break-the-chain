@@ -230,22 +230,24 @@ Confirm the behaviour in dev, with a GitHub account whose email is a Gmail addre
 
 ### PR 5b: App Check and caching
 
-**Owner steps**
+**Decided 2026-10-09: App Check waits.** The code is in place but stays off until a site key is added. reCAPTCHA sends device and browser data to Google on every visit, may set a cookie and shows a badge, while the risk it addresses (someone deliberately exhausting the free quota) is low and can never cost money on Spark. Turn it on if there are signs of abuse, or after the lawyer has answered the reCAPTCHA question below.
+
+**Owner steps (when turning it on)**
+- [ ] First update the privacy policy: reCAPTCHA (Google) as a recipient of device and browser data on every visit, its purpose and legal basis (art. 6(1)(f)), the US transfer and the cookie. Adjust "never shared for their own purposes" and "no automated decision-making". Bump the effective date.
 - [ ] Register a **reCAPTCHA v3** site key for each project (dev and production) in the Firebase console under App Check, with the app's domains. Classic reCAPTCHA keys now live in Google Cloud; the free tier covers about 10,000 assessments per month. Raise the App Check token lifetime in the console (for example to 1 day) so that each visitor needs fewer assessments; the trade-off is a longer replay window for a stolen token. Check what happens past the free tier without billing, since App Check could start failing exactly when the app is under attack.
 - [ ] Put the dev key in `.env.development.local` as `VITE_APPCHECK_SITE_KEY`, and add a GitHub secret `VITE_APPCHECK_SITE_KEY` with the production key in the `production` environment.
 - [ ] For local development, register the debug token that the browser console prints on first run (or set `VITE_APPCHECK_DEBUG_TOKEN`).
 - [ ] Watch the App Check metrics for one release in monitoring mode, then **enforce** App Check for Firestore and Authentication. Test Google and GitHub popup sign-in on dev with enforcement on first.
-- [ ] After enforcing, turn the missing-key warning in `deploy.yml` into an error.
+- [ ] Make the production build fail when `VITE_APPCHECK_SITE_KEY` is empty, since an enforced App Check rejects every request from a build without it.
 
 **Code**
 - Initialise App Check in `firebaseService.ts` when a site key is set; dev builds use a debug token instead of reCAPTCHA.
 - Fix `pnpm deploy` (dev Hosting): it built in production mode and so shipped the **production** Firebase config to the dev site. It now builds with `--mode development`, which reads `.env.development.local`.
 - Cache hashed assets (`/assets/**`) for a year as immutable.
-- Update the privacy policy: reCAPTCHA (Google) receives device and browser data on every visit and may set a cookie.
 
 **Done when**
 - App Check metrics show the app's traffic as verified, and enforcement doesn't break sign-in or saving.
-- The cache header is live, and the privacy policy is updated.
+- The cache header is live.
 
 ### PR 6: Launch hygiene
 
@@ -297,7 +299,7 @@ What the texts should cover, in plain language. A short review by a lawyer, or a
   - to provide the service (art. 6(1)(b), performance of a contract)
   - ❓ Habit names and notes may reveal health data (art. 9), which art. 6(1)(b) does not cover. Is explicit consent (art. 9(2)(a)) at sign-up needed, and what form should it take?
 - **Recipients and processors:**
-  - Google: Firebase Auth, Firestore and Hosting, and reCAPTCHA (App Check)
+  - Google: Firebase Auth, Firestore and Hosting, and reCAPTCHA once App Check is turned on
   - ❓ reCAPTCHA v3 runs on every visit and may set a cookie. Is it "strictly necessary" under the Swedish electronic communications act (LEK 9:28), so that no consent is needed? The policy currently says no consent is needed; revisit it after the answer. Google is an independent controller for reCAPTCHA data. Is a legitimate-interest basis enough for that? And does reCAPTCHA's risk score count as profiling or automated decision-making (art. 22) once App Check is enforced?
   - GitHub or Google: the sign-in provider the user chooses
 - **Transfers:** Firebase Auth processes data in the US. Transfers rely on the EU-US Data Privacy Framework and Standard Contractual Clauses. Check and state the Firestore location (it is `eur3`).
@@ -332,7 +334,7 @@ What the texts should cover, in plain language. A short review by a lawyer, or a
 - [ ] The privacy policy and terms are live, and acceptance is an explicit checkbox. The fonts are self-hosted.
 - [ ] Every cell of the sign-in test matrix passes. The same-email behaviour matches the documentation.
 - [ ] Export and account deletion work, including re-authentication and retry.
-- [ ] The error boundary and failure messages work. App Check is enforced.
+- [ ] The error boundary and failure messages work. App Check is enforced, or consciously deferred (it is, see PR 5b).
 - [ ] Security headers are set, stray files are removed, and the Lighthouse thresholds are met. The README is written.
 
 ## Out of scope for launch
