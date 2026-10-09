@@ -172,6 +172,13 @@ describe("Firestore rules - reminder settings belong to one user", () => {
       setDoc(own, { tokens: arrayUnion("device-b"), hour: 7 }, { merge: true }),
     );
     await assertSucceeds(updateDoc(own, { lastMarkedDate: "2026-10-09" }));
+    // The sender writes lastRemindedDate; the user's own later writes must still pass.
+    await env.withSecurityRulesDisabled(async (context) => {
+      await updateDoc(doc(context.firestore() as unknown as Firestore, "reminders", ALICE), {
+        lastRemindedDate: "2026-10-09",
+      });
+    });
+    await assertSucceeds(updateDoc(own, { hour: 21 }));
 
     await assertFails(setDoc(doc(db(ALICE), "reminders", BOB), reminder));
     await assertFails(setDoc(doc(db(), "reminders", ALICE), reminder));
@@ -181,6 +188,7 @@ describe("Firestore rules - reminder settings belong to one user", () => {
       { ...reminder, timeZone: "" },
       { ...reminder, tokens: Array.from({ length: 11 }, (_, i) => `t${i}`) },
       { ...reminder, lastMarkedDate: "today" },
+      { ...reminder, lastRemindedDate: 20261009 },
       { ...reminder, isAdmin: true },
       { hour: 20, tokens: [] },
     ]) {

@@ -56,7 +56,13 @@ describe("accountService - export and account deletion", () => {
           createdAt: new Date("2025-02-03T09:05:00Z"),
         },
       ],
-      { hour: 20, timeZone: "Europe/Stockholm", tokens: ["a", "b"], lastMarkedDate: "2025-02-14" },
+      {
+        hour: 20,
+        timeZone: "Europe/Stockholm",
+        tokens: ["a", "b"],
+        lastMarkedDate: "2025-02-14",
+        lastRemindedDate: "2025-02-13",
+      },
       new Date("2025-02-15T10:00:00Z"),
     );
 
@@ -82,7 +88,13 @@ describe("accountService - export and account deletion", () => {
         },
       ],
       // Push tokens are device secrets, so only how many devices get reminders.
-      reminders: { hour: 20, timeZone: "Europe/Stockholm", lastMarkedDate: "2025-02-14", devices: 2 },
+      reminders: {
+        hour: 20,
+        timeZone: "Europe/Stockholm",
+        lastMarkedDate: "2025-02-14",
+        lastRemindedDate: "2025-02-13",
+        devices: 2,
+      },
     });
   });
 

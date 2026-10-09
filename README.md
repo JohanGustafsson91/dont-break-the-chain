@@ -65,6 +65,11 @@ Use `pnpm run deploy`, not `pnpm deploy`, which is a built-in pnpm command.
 | Dev | `dont-break-the-chain-dev-a6si` | `pnpm run deploy`, by hand |
 | Production | `dont-break-the-chain-cb8a0` | GitHub Actions, on every merge to `main` |
 
+Daily reminders are sent by `scripts/send-reminders.mjs`, which the "Send daily reminders"
+workflow runs every hour against production. It signs in with Workload Identity
+Federation, so no key is stored anywhere. `DRY_RUN=1` shows who would get a reminder
+without sending anything.
+
 - `firebase deploy` without `-P` targets dev, unless you have run `firebase use` to pick another project.
 - Production deploys use a least-privilege service account and the `production`
   environment's secrets.

@@ -1,0 +1,50 @@
+name: Send daily reminders
+
+# Every hour, a few minutes past, to stay clear of GitHub's busiest top-of-hour slot.
+# Scheduled runs use the default branch. GitHub turns schedules off after 60 days
+# without repository activity; re-enable this workflow in the Actions tab if so.
+on:
+  schedule:
+    - cron: "7 * * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write # for Workload Identity Federation
+
+# Never two runs at once, so nobody gets the same reminder twice.
+concurrency:
+  group: reminders
+  cancel-in-progress: false
+
+jobs:
+  send:
+    name: Send reminders
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: "20"
+
+      # No stored key: GitHub's OIDC token is exchanged for a short-lived access token
+      # of the reminder-sender service account. Only this workflow on main may do that.
+      - name: Authenticate to Google Cloud
+        id: auth
+        uses: google-github-actions/auth@v3
+        with:
+          workload_identity_provider: ${{ vars.REMINDERS_WIF_PROVIDER }}
+          service_account: ${{ vars.REMINDERS_SERVICE_ACCOUNT }}
+          token_format: access_token
+          create_credentials_file: false
+
+      - name: Send reminders
+        run: node scripts/send-reminders.mjs
+        env:
+          ACCESS_TOKEN: ${{ steps.auth.outputs.access_token }}
+          PROJECT_ID: dont-break-the-chain-cb8a0
+          APP_URL: https://dont-break-the-chain-cb8a0.web.app/

@@ -40,6 +40,7 @@ export const buildExport = (
     hour: reminders.hour,
     timeZone: reminders.timeZone,
     lastMarkedDate: reminders.lastMarkedDate,
+    lastRemindedDate: reminders.lastRemindedDate,
     devices: reminders.tokens.length,
   },
 });

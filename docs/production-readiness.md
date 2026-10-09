@@ -294,7 +294,23 @@ Code:
 - Privacy policy: the FCM token and the reminder settings, and Google (FCM) as a processor.
 
 **PR 8: The sender**
-- A workflow that runs every hour. It finds users whose chosen hour has just started in their time zone and who haven't marked today, and sends one notification per device. Tokens that FCM reports as invalid are removed.
+
+Set up on 2026-10-09 in the production project, without keys:
+- The IAM Credentials and STS APIs are enabled.
+- The service account `reminder-sender` has `roles/datastore.user` and `roles/firebasecloudmessaging.admin`, and no keys.
+- The Workload Identity pool `github` has a provider `reminders` that accepts only `.github/workflows/reminders.yml` on `main`, in this repository. It checks the repository and owner **ids**, so a renamed or recreated repository can't use it.
+- Only identities whose `workflow_ref` is that workflow on `main` may act as the service account (`roles/iam.workloadIdentityUser`). The binding is on the workflow, not on the whole pool, so a future provider in the same pool (for example for `deploy.yml`) can't use it.
+- Anyone who can push to `main` can change the workflow or the script, and so use the account. Branch protection requires status checks but no review; that's fine while the owner is the only collaborator, but add required reviews before adding others.
+- The repository variables `REMINDERS_WIF_PROVIDER` and `REMINDERS_SERVICE_ACCOUNT` point the workflow at them.
+
+Owner step after merge:
+- [ ] Run "Send daily reminders" once by hand in the Actions tab and check that it succeeds. Then generate the production Web Push key and add the `VITE_FCM_VAPID_KEY` secret (see PR 7), which shows the menu item in production.
+
+Code:
+- `scripts/send-reminders.mjs`, run every hour by `.github/workflows/reminders.yml`, a few minutes past the hour. It has no dependencies; it calls the Firestore and FCM REST APIs with the short-lived access token from Workload Identity Federation.
+- A reminder goes out when the user's hour has started in their time zone, no habit is marked there today, and none was sent today (`lastRemindedDate`, which the rules now allow). A delayed run catches up for two hours, then gives up. Runs never overlap.
+- Tokens that FCM reports as invalid are removed. The logs show counts only, because workflow logs are public in a public repository.
+- Tested against dev with a real device: a dry run, a real send, no second send on the same day, and a fake token removed while the real one kept working.
 - It must tolerate bad documents: the rules can't check each entry of `tokens`, and a time zone that isn't a valid IANA name makes `Intl` throw. Handle each user in its own try/catch, so one bad document never stops the run for everyone.
 - Notification text never includes habit names or notes; they can be health data, and they would pass through the browsers' push services.
 - It authenticates with **Workload Identity Federation**, without a stored key. Firestore IAM roles cover the whole database and server credentials bypass the security rules, so the service account (`roles/datastore.user` plus FCM send) can technically read every habit. The script only touches `reminders`, and Workload Identity limits who can use the account to this repository's workflow on `main`.

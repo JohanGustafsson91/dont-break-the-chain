@@ -31,7 +31,8 @@ export const PrivacyPolicy = () => (
       <li>
         <strong>Reminders, only if you turn them on:</strong> the time you chose, your
         time zone, the date you last marked a habit (so you aren't reminded on days you
-        already did), and a push token for each device that gets reminders. Turning
+        already did), the date of the last reminder (so you get at most one a day), and
+        a push token for each device that gets reminders. Turning
         reminders off on a device, logging out there, or deleting your account removes
         that device's token.
       </li>
