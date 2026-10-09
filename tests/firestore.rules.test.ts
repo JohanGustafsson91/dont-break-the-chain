@@ -7,6 +7,7 @@ import {
   type RulesTestEnvironment,
 } from "@firebase/rules-unit-testing";
 import {
+  arrayUnion,
   collection,
   deleteDoc,
   doc,
@@ -158,5 +159,44 @@ describe("Firestore rules - habits belong to one user", () => {
   it("should only let the owner delete a habit", async () => {
     await assertFails(deleteDoc(doc(db(BOB), "habits", "alice-habit")));
     await assertSucceeds(deleteDoc(doc(db(ALICE), "habits", "alice-habit")));
+  });
+});
+
+describe("Firestore rules - reminder settings belong to one user", () => {
+  const reminder = { hour: 20, timeZone: "Europe/Stockholm", tokens: ["device-a"] };
+
+  it("should let users save only their own, valid reminder settings", async () => {
+    const own = doc(db(ALICE), "reminders", ALICE);
+    await assertSucceeds(setDoc(own, reminder));
+    await assertSucceeds(
+      setDoc(own, { tokens: arrayUnion("device-b"), hour: 7 }, { merge: true }),
+    );
+    await assertSucceeds(updateDoc(own, { lastMarkedDate: "2026-10-09" }));
+
+    await assertFails(setDoc(doc(db(ALICE), "reminders", BOB), reminder));
+    await assertFails(setDoc(doc(db(), "reminders", ALICE), reminder));
+    for (const invalid of [
+      { ...reminder, hour: 24 },
+      { ...reminder, hour: "20" },
+      { ...reminder, timeZone: "" },
+      { ...reminder, tokens: Array.from({ length: 11 }, (_, i) => `t${i}`) },
+      { ...reminder, lastMarkedDate: "today" },
+      { ...reminder, isAdmin: true },
+      { hour: 20, tokens: [] },
+    ]) {
+      await assertFails(setDoc(own, invalid));
+    }
+  });
+
+  it("should only let the owner read or delete reminder settings", async () => {
+    await env.withSecurityRulesDisabled(async (context) => {
+      await setDoc(doc(context.firestore() as unknown as Firestore, "reminders", ALICE), reminder);
+    });
+
+    await assertFails(getDoc(doc(db(BOB), "reminders", ALICE)));
+    await assertFails(updateDoc(doc(db(BOB), "reminders", ALICE), { hour: 8 }));
+    await assertFails(deleteDoc(doc(db(BOB), "reminders", ALICE)));
+    await assertSucceeds(getDoc(doc(db(ALICE), "reminders", ALICE)));
+    await assertSucceeds(deleteDoc(doc(db(ALICE), "reminders", ALICE)));
   });
 });

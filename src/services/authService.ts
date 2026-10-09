@@ -8,6 +8,7 @@ import {
   signOut,
   type User,
 } from "firebase/auth";
+import { forgetThisDevice } from "./reminderService";
 import { AUTH_STATUS, AUTH_PROVIDERS } from "../shared/constants";
 
 export type AuthProvider = (typeof AUTH_PROVIDERS)[keyof typeof AUTH_PROVIDERS];
@@ -66,6 +67,8 @@ export const useAuth = () => {
 };
 
 export const logout = async () => {
+  // Otherwise this device would keep getting reminders for the account.
+  await forgetThisDevice();
   await signOut(auth);
 };
 

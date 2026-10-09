@@ -28,6 +28,13 @@ export const PrivacyPolicy = () => (
         <strong>Your habits:</strong> their names, descriptions and goals, which days
         you marked, and any notes you write.
       </li>
+      <li>
+        <strong>Reminders, only if you turn them on:</strong> the time you chose, your
+        time zone, the date you last marked a habit (so you aren't reminded on days you
+        already did), and a push token for each device that gets reminders. Turning
+        reminders off on a device, logging out there, or deleting your account removes
+        that device's token.
+      </li>
     </ul>
     <p>
       Habit names and notes can reveal things about your health, such as "take
@@ -41,7 +48,8 @@ export const PrivacyPolicy = () => (
 
     <h2>Why it is stored</h2>
     <p>
-      To provide the app to you: to sign you in and to show and save your habits.
+      To provide the app to you: to sign you in, to show and save your habits, and, if
+      you turn them on, to send you reminders.
       The legal basis is that it is necessary to provide the service you asked for
       (GDPR article 6(1)(b)). Your account data is needed to use the app: without it
       you cannot sign in. Everything you write in habits and notes is optional.
@@ -61,8 +69,9 @@ export const PrivacyPolicy = () => (
     <h2>Who else is involved</h2>
     <ul>
       <li>
-        <strong>Google (Firebase)</strong> provides sign-in, the database and hosting,
-        as a processor under its data processing terms. Your habits are stored in
+        <strong>Google (Firebase)</strong> provides sign-in, the database, hosting and
+        push notifications (Firebase Cloud Messaging), as a processor under its data
+        processing terms. Your habits are stored in
         Google's European multi-region (eur3).
       </li>
       <li>
@@ -72,11 +81,21 @@ export const PrivacyPolicy = () => (
         name, email address and profile picture link with the app, and learns that you
         use this app. Your profile picture is loaded from its servers.
       </li>
+      <li>
+        <strong>GitHub</strong> runs the scheduled job that sends reminders, as a
+        processor. The job reads only reminder settings, never your habits or notes.
+      </li>
+      <li>
+        <strong>Your browser's push service</strong> (for example Apple's, Google's or
+        Mozilla's) delivers each reminder to your device. Reminders only say that today
+        isn't marked yet; they never contain your habits or notes.
+      </li>
     </ul>
 
     <h2>Transfers outside the EU</h2>
     <p>
-      Firebase Authentication may process account data in the United States. Such
+      Firebase Authentication and Cloud Messaging may process account data and push
+      tokens in the United States, and GitHub runs the reminder job there. Such
       transfers rely on the EU-US Data Privacy Framework and the European Commission's
       Standard Contractual Clauses.
     </p>
@@ -93,8 +112,8 @@ export const PrivacyPolicy = () => (
       You can ask for a copy of your data, have it corrected or deleted, restrict or
       object to its processing, and receive it in a portable format. You can export
       your data and delete your account yourself from the account menu (your picture,
-      top right). Deleting removes your habits, days and notes for good, and then your
-      account. Your sign-in provider keeps its own record that you used the app; you
+      top right). Deleting removes your habits, days, notes and reminder settings for
+      good, and then your account. Your sign-in provider keeps its own record that you used the app; you
       can remove the app's access in your Google or GitHub account settings. Google's
       technical logs expire on their own. If you can't sign in any more, or for
       anything else, email{" "}
@@ -109,7 +128,8 @@ export const PrivacyPolicy = () => (
       a token in your browser's storage, which the app needs to work. The login page
       also remembers, on this device only, that you accepted the current terms, so
       you don't have to tick the box every time; it contains nothing that identifies
-      you. Neither requires consent.
+      you. If you turn on reminders, the browser also keeps this device's push token.
+      None of this requires consent.
     </p>
 
     <h2>Security</h2>

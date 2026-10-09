@@ -38,6 +38,13 @@ vi.mock("../../services/firebaseService", () => ({
   db: {},
 }));
 
+vi.mock("../../services/reminderService", () => ({
+  recordDayMarked: vi.fn(),
+  remindersAvailable: false,
+  forgetThisDevice: vi.fn(),
+  syncReminderToken: vi.fn(),
+}));
+
 describe("StreakTracker - Complete user journey", () => {
   beforeEach(() => {
     vi.clearAllMocks();

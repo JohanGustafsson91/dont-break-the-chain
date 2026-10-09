@@ -27,6 +27,7 @@ import { ProgressBar } from "./ProgressBar";
 import { HABIT_STATUS, STREAK_ICONS } from "../../shared/constants";
 import { BottomSheet } from "./BottomSheet";
 import { useAppBarContext } from "../AppBar/AppBar.Context";
+import { recordDayMarked } from "../../services/reminderService";
 import { StreakStatusRadioGroup } from "../StreakStatusRadioGroup/StreakStatusRadioGroup";
 import { ConfirmDialog } from "../ConfirmDialog/ConfirmDialog";
 import { useToast } from "../Toast/Toast.Context";
@@ -199,6 +200,7 @@ export const StreakTracker = () => {
     try {
       setHabit(updatedHabit);
       await updateHabit(habit.id, { streak: updatedHabit.streak });
+      void recordDayMarked(date, status);
     } catch (error) {
       console.error("Could not update habit", { error });
       showToast("Couldn't save that day. Please try again.");
