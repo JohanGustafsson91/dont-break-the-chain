@@ -65,11 +65,17 @@ Findings from the codebase as of `main` @ `c4a6fa9`, verified by an independent 
   - `README.md` is the Vite template.
   - `public/site.webmanifest` ("DBTC") and the VitePWA manifest ("Don't break the chain") disagree, and both ship.
 - **Concurrent writes can overwrite each other.** Each habit stores its whole `streak` array in one document, so edits from two devices at once can overwrite each other (last write wins). This is accepted for launch and documented as a known limitation.
-- **Spark quotas are shared.** About 50k reads and 20k writes per day across all users. A buggy or abusive client can exhaust them, and the app then stops working until the daily reset. App Check reduces the risk. Budget alerts are **not available on Spark**, because they need a billing account.
+- **Spark quotas are shared.** About 50k reads and 20k writes per day across all users. A buggy or abusive client can exhaust them, and the app then stops working until the daily reset. Budget alerts are **not available on Spark**, because they need a billing account.
+
+**Rate limiting (analysed 2026-10-09)**
+- **Spark is the cost cap.** Abuse can make the app unavailable until the daily reset, but it can never cost money. That is the main reason to stay on Spark.
+- **Throttling in the security rules was rejected.** Rules have no counters across requests, so throttling would need a "last write" timestamp per user that every write must update. That conflicts with fast taps in the calendar, and an attacker with a valid token could still burn the read quota, because rules cannot limit reads that way.
+- **App Check is the main defence** (PR 5b). It rejects requests that don't come from the real app, which stops scripts that reuse the public web config. It doesn't stop a determined user scripting the real app in a browser, or replaying a token taken from it until the token expires (a longer token lifetime makes that window longer); at this scale that is accepted.
+- **Hosting has a transfer limit of 360 MB per day** on Spark. Hashed assets are cached for a year (PR 5b), so returning visitors mostly hit their browser cache and the service worker.
 
 ## Work plan
 
-Six pull requests, in this order. Steps marked **(owner)** are done by hand in the
+The pull requests below, in this order. Steps marked **(owner)** are done by hand in the
 Firebase, Google Cloud or GitHub consoles. Code changes cannot do them.
 
 ### PR 1: Lock down data, CI and environments
@@ -215,24 +221,33 @@ Confirm the behaviour in dev, with a GitHub account whose email is a Gmail addre
 - Known gap: another device that stays signed in keeps a valid token for up to about an hour, and could create a habit after the deletion query. Such a document is unreachable from the app. Purge it manually in the console (query `author == <uid>`) if a deleted user reports it. Closing this fully needs the Admin SDK (Blaze).
 - A failure at any step leaves a state the user can retry.
 
-### PR 5: Robustness
+### PR 5a: Robustness (done, #70)
 
-**Owner steps**
-- [ ] App Check with **reCAPTCHA v3**, which works on Spark. reCAPTCHA Enterprise may need billing.
-- [ ] Enforce App Check for Firestore after one release in monitoring mode.
-
-**Code**
-- Add a top-level error boundary with a friendly message and a reload button.
-- Add a small toast/message system, used for every silent failure listed above: login, fetch, create, mark day, goal, name/description and delete.
-- Initialise App Check in `firebaseService.ts`, with a debug token that is used **only in dev builds**.
-- Update the privacy policy: reCAPTCHA (Google) becomes a recipient of visitor data.
+- A top-level error boundary with a friendly message and a reload button.
+- A small toast system, used for every silent failure listed above: fetch, create, mark day, goal, name/description, delete and export.
+- Terms acceptance is remembered per device and per terms version.
 - Error monitoring (Sentry or similar) is deferred. At launch traffic, the error boundary and the browser console are enough, and leaving it out avoids another data processor.
 
+### PR 5b: App Check and caching
+
+**Decided 2026-10-09: App Check waits.** The code is in place but stays off until a site key is added. reCAPTCHA sends device and browser data to Google on every visit, may set a cookie and shows a badge, while the risk it addresses (someone deliberately exhausting the free quota) is low and can never cost money on Spark. Turn it on if there are signs of abuse, or after the lawyer has answered the reCAPTCHA question below.
+
+**Owner steps (when turning it on)**
+- [ ] First update the privacy policy: reCAPTCHA (Google) as a recipient of device and browser data on every visit, its purpose and legal basis (art. 6(1)(f)), the US transfer and the cookie. Adjust "never shared for their own purposes" and "no automated decision-making". Bump the effective date.
+- [ ] Register a **reCAPTCHA v3** site key for each project (dev and production) in the Firebase console under App Check, with the app's domains. Classic reCAPTCHA keys now live in Google Cloud; the free tier covers about 10,000 assessments per month. Raise the App Check token lifetime in the console (for example to 1 day) so that each visitor needs fewer assessments; the trade-off is a longer replay window for a stolen token. Check what happens past the free tier without billing, since App Check could start failing exactly when the app is under attack.
+- [ ] Put the dev key in `.env.development.local` as `VITE_APPCHECK_SITE_KEY`, and add a GitHub secret `VITE_APPCHECK_SITE_KEY` with the production key in the `production` environment.
+- [ ] For local development, register the debug token that the browser console prints on first run (or set `VITE_APPCHECK_DEBUG_TOKEN`).
+- [ ] Watch the App Check metrics for one release in monitoring mode, then **enforce** App Check for Firestore and Authentication. Test Google and GitHub popup sign-in on dev with enforcement on first.
+- [ ] Make the production build fail when `VITE_APPCHECK_SITE_KEY` is empty, since an enforced App Check rejects every request from a build without it.
+
+**Code**
+- Initialise App Check in `firebaseService.ts` when a site key is set; dev builds use a debug token instead of reCAPTCHA.
+- Fix `pnpm deploy` (dev Hosting): it built in production mode and so shipped the **production** Firebase config to the dev site. It now builds with `--mode development`, which reads `.env.development.local`.
+- Cache hashed assets (`/assets/**`) for a year as immutable.
+
 **Done when**
-- A forced render error shows the error boundary.
-- Forced save and fetch failures show messages.
-- App Check metrics show the app's traffic.
-- The privacy policy is updated.
+- App Check metrics show the app's traffic as verified, and enforcement doesn't break sign-in or saving.
+- The cache header is live.
 
 ### PR 6: Launch hygiene
 
@@ -249,6 +264,27 @@ Confirm the behaviour in dev, with a GitHub account whose email is a Gmail addre
 - Lighthouse on the main flows: **Accessibility ≥ 90** and **Best Practices ≥ 90**, with no failing audits in the PWA category.
 - `README.md`: what the app is, how to set up dev and the emulator, how deployment works (`firebase deploy` targets dev, `deploy:prod` targets production), and the known limitations.
 
+### PR 7 and 8: Daily reminders (decided 2026-10-09)
+
+Push reminders that work on Spark, without Cloud Functions: a scheduled GitHub Actions workflow sends them through Firebase Cloud Messaging (FCM), which is free.
+
+**PR 7: The app side**
+- Reminder settings in the account menu: on/off and the hour of the day. The browser's IANA time zone is saved with it, so "20:00" means 20:00 where the user is.
+- One `reminders/{uid}` document per user: the hour, the time zone, one FCM token per device, and `lastMarkedDate`, which the app updates when today is marked so that users who are done get no reminder.
+- Switch VitePWA to `injectManifest`, so the service worker can show push notifications.
+- Security rules and rules tests for `reminders`: owner-only, with field validation. Account deletion also deletes the reminders document.
+- Privacy policy: the FCM token and the reminder settings, and Google (FCM) as a processor.
+
+**PR 8: The sender**
+- A workflow that runs every hour. It finds users whose chosen hour has just started in their time zone and who haven't marked today, and sends one notification per device. Tokens that FCM reports as invalid are removed.
+- It authenticates with **Workload Identity Federation**, without a stored key. Firestore IAM roles cover the whole database and server credentials bypass the security rules, so the service account (`roles/datastore.user` plus FCM send) can technically read every habit. The script only touches `reminders`, and Workload Identity limits who can use the account to this repository's workflow on `main`.
+
+**Limitations**
+- On iPhone, push works only when the app is installed on the home screen (iOS 16.4 or later).
+- GitHub can delay scheduled runs by several minutes, so reminders are approximate.
+- In a public repository, GitHub turns off scheduled workflows after 60 days without repository activity. Re-enabling the workflow, or a periodic keep-alive, is needed.
+- Each run reads the reminders documents, which counts against the shared Spark read quota (24 runs a day times the number of users with reminders on).
+
 ## Legal content
 
 What the texts should cover, in plain language. A short review by a lawyer, or a reputable GDPR template service, is recommended before launch. **Specific questions for that review are marked ❓.**
@@ -263,7 +299,8 @@ What the texts should cover, in plain language. A short review by a lawyer, or a
   - to provide the service (art. 6(1)(b), performance of a contract)
   - ❓ Habit names and notes may reveal health data (art. 9), which art. 6(1)(b) does not cover. Is explicit consent (art. 9(2)(a)) at sign-up needed, and what form should it take?
 - **Recipients and processors:**
-  - Google: Firebase Auth, Firestore and Hosting, and later reCAPTCHA
+  - Google: Firebase Auth, Firestore and Hosting, and reCAPTCHA once App Check is turned on
+  - ❓ reCAPTCHA v3 runs on every visit and may set a cookie. Is it "strictly necessary" under the Swedish electronic communications act (LEK 9:28), so that no consent is needed? The policy currently says no consent is needed; revisit it after the answer. Google is an independent controller for reCAPTCHA data. Is a legitimate-interest basis enough for that? And does reCAPTCHA's risk score count as profiling or automated decision-making (art. 22) once App Check is enforced?
   - GitHub or Google: the sign-in provider the user chooses
 - **Transfers:** Firebase Auth processes data in the US. Transfers rely on the EU-US Data Privacy Framework and Standard Contractual Clauses. Check and state the Firestore location (it is `eur3`).
   - ❓ Firebase Hosting serves the app from a global CDN, which sees visitors' IP addresses. Does that need to be mentioned as a transfer?
@@ -297,16 +334,15 @@ What the texts should cover, in plain language. A short review by a lawyer, or a
 - [ ] The privacy policy and terms are live, and acceptance is an explicit checkbox. The fonts are self-hosted.
 - [ ] Every cell of the sign-in test matrix passes. The same-email behaviour matches the documentation.
 - [ ] Export and account deletion work, including re-authentication and retry.
-- [ ] The error boundary and failure messages work. App Check is enforced.
+- [ ] The error boundary and failure messages work. App Check is enforced, or consciously deferred (it is, see PR 5b).
 - [ ] Security headers are set, stray files are removed, and the Lighthouse thresholds are met. The README is written.
 
 ## Out of scope for launch
 
 - **Backups.** Spark has none. Users can export their data. Revisit on Blaze: scheduled exports or point-in-time recovery.
-- **Push notifications.** They need Blaze for scheduled functions. The untracked `functions/` folder holds an earlier attempt.
 - **Conflict-free concurrent edits**, for example one document per day or field-level updates.
 - **Offline writes** (Firestore persistent cache).
-- **Error monitoring service** (see PR 5).
+- **Error monitoring service** (see PR 5a).
 - **Localisation.** The UI is English only.
 
 ## Open questions

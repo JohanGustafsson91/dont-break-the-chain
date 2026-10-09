@@ -42,11 +42,20 @@
   box-sizing: border-box;
 }
 
+/* No double-tap zoom when tapping quickly; pinch zoom still works. Also set on
+   .page, the scroll container, in case WebKit stops inheriting it at a scroller. */
+html,
+.page {
+  touch-action: manipulation;
+}
+
 body {
   margin: 0;
   display: flex;
   min-width: 320px;
   height: 100vh;
+  /* The visible height, so mobile browser toolbars don't hide the bottom of the app. */
+  height: 100dvh;
   background-color: var(--bg-color);
   color: var(--text-color);
   overflow: hidden;
