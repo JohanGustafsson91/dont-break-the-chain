@@ -54,10 +54,16 @@ describe("reminderService - daily reminder settings", () => {
     await recordTodayProgress([habit(true)]);
     await recordTodayProgress([habit(true)]); // unchanged: no second write
     expect(firestore.updateDoc).toHaveBeenCalledTimes(1);
-    expect(firestore.updateDoc).toHaveBeenLastCalledWith("reminder-doc", { lastMarkedDate: "2026-10-09" });
+    expect(firestore.updateDoc).toHaveBeenLastCalledWith("reminder-doc", {
+      lastMarkedDate: "2026-10-09",
+      progress: { date: "2026-10-09", left: 0, total: 1, openChain: 0, doneChain: 1 },
+    });
 
     await recordTodayProgress([habit(true), habit(false)]); // a habit left to do
-    expect(firestore.updateDoc).toHaveBeenLastCalledWith("reminder-doc", { lastMarkedDate: "delete-field" });
+    expect(firestore.updateDoc).toHaveBeenLastCalledWith("reminder-doc", {
+      lastMarkedDate: "delete-field",
+      progress: { date: "2026-10-09", left: 1, total: 2, openChain: 0, doneChain: 1 },
+    });
     expect(firestore.updateDoc).toHaveBeenCalledTimes(2);
   });
 
@@ -84,7 +90,10 @@ describe("reminderService - daily reminder settings", () => {
     await first;
 
     expect(firestore.updateDoc).toHaveBeenCalledTimes(2);
-    expect(firestore.updateDoc).toHaveBeenLastCalledWith("reminder-doc", { lastMarkedDate: "delete-field" });
+    expect(firestore.updateDoc).toHaveBeenLastCalledWith(
+      "reminder-doc",
+      expect.objectContaining({ lastMarkedDate: "delete-field" }),
+    );
   });
 
   it("should not fail or retry all day when the user has no reminders", async () => {
@@ -94,8 +103,17 @@ describe("reminderService - daily reminder settings", () => {
     );
     const { recordTodayProgress } = await load();
 
-    await expect(recordTodayProgress([])).resolves.toBeUndefined();
-    await recordTodayProgress([]);
+    const habit = (marked: boolean) => ({
+      id: "h1",
+      name: "Run",
+      description: "",
+      goal: { type: "daily" as const },
+      streak: marked ? [{ date: new Date(), status: "GOOD" as const, notes: "" }] : [],
+    });
+    await expect(recordTodayProgress([habit(false)])).resolves.toBeUndefined();
+    // Marking changes the counts, but a user without reminders gets no more writes.
+    await recordTodayProgress([habit(true)]);
+    await recordTodayProgress([habit(false), habit(true)]);
     expect(firestore.updateDoc).toHaveBeenCalledTimes(1);
   });
 
@@ -209,5 +227,26 @@ describe("reminderService - daily reminder settings", () => {
     const settings = await getReminderSettings();
     expect(settings).toBeUndefined();
     expect(isOnForThisDevice(settings)).toBe(false);
+  });
+
+  it("should count what's left today and the chains at stake, never weekly ones", async () => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date(2026, 9, 9, 12)); // Friday 9 Oct 2026
+    const { summarizeProgress } = await load();
+    const days = (...ds: number[]) => ds.map((d) => ({ date: new Date(Date.UTC(2026, 9, d)), status: "GOOD" as const, notes: "" }));
+    const habit = (goal: object, streak: object[]) => ({ id: "h", name: "H", description: "", goal, streak }) as never;
+    const today = new Date(Date.UTC(2026, 9, 9));
+
+    const progress = summarizeProgress(
+      [
+        habit({ type: "daily" }, days(5, 6, 7, 8)), // not done; chain of 4 up to yesterday
+        habit({ type: "daily" }, days(7, 8, 9)), // done; chain of 3
+        habit({ type: "daily" }, [...days(8), { date: today, status: "BAD", notes: "" }]), // ✗ today: done, chain 0
+        habit({ type: "weekly", times: 1 }, days(1, 2, 3, 4, 5, 6, 7, 8)), // goal met this week; no chain
+      ],
+      today,
+    );
+
+    expect(progress).toEqual({ date: "2026-10-09", left: 1, total: 4, openChain: 4, doneChain: 3 });
   });
 });

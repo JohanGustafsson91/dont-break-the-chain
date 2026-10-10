@@ -79,13 +79,28 @@ service cloud.firestore {
       }
 
       function isValidReminder(data) {
-        return data.keys().hasOnly(['hour', 'timeZone', 'tokens', 'lastMarkedDate', 'lastRemindedDate'])
+        return data.keys().hasOnly(['hour', 'timeZone', 'tokens', 'lastMarkedDate', 'lastRemindedDate', 'progress'])
           && data.keys().hasAll(['hour', 'timeZone', 'tokens'])
           && data.hour is int && data.hour >= 0 && data.hour <= 23
           && data.timeZone is string && data.timeZone.size() > 0 && data.timeZone.size() <= 64
           && data.tokens is list && data.tokens.size() <= 10
           && isDateOrMissing(data, 'lastMarkedDate')
-          && isDateOrMissing(data, 'lastRemindedDate');
+          && isDateOrMissing(data, 'lastRemindedDate')
+          && (!('progress' in data) || isValidProgress(data.progress));
+      }
+
+      // Counts for the day, never habit names (see ReminderProgress in reminderService).
+      function isValidProgress(p) {
+        return p is map
+          && p.keys().hasOnly(['date', 'left', 'total', 'openChain', 'doneChain'])
+          && p.keys().hasAll(['date', 'left', 'total', 'openChain', 'doneChain'])
+          && p.date is string && p.date.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$')
+          && isCount(p.left, 500) && isCount(p.total, 500) && p.left <= p.total
+          && isCount(p.openChain, 10000) && isCount(p.doneChain, 10000);
+      }
+
+      function isCount(n, max) {
+        return n is int && n >= 0 && n <= max;
       }
 
       function isDateOrMissing(data, key) {

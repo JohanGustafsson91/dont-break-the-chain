@@ -41,6 +41,7 @@ export const buildExport = (
     timeZone: reminders.timeZone,
     lastMarkedDate: reminders.lastMarkedDate,
     lastRemindedDate: reminders.lastRemindedDate,
+    progress: reminders.progress,
     devices: reminders.tokens.length,
   },
 });

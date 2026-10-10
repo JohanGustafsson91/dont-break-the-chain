@@ -18,11 +18,39 @@ import { pathToFileURL } from "node:url";
 // A run delayed by GitHub still catches up, but not so late that it surprises anyone.
 const CATCH_UP_HOURS = 2;
 
-const NOTIFICATION = {
-  title: "Don't break the chain",
-  // Never habit names or notes: they can be health data, and they would pass through
-  // the browsers' push services.
-  body: "Some of your habits aren't marked yet today. Keep your chain going!",
+const TITLE = "Don't break the chain";
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+const previousDay = (date) => new Date(Date.parse(`${date}T00:00:00Z`) - DAY_MS).toISOString().slice(0, 10);
+
+/**
+ * The notification text, from the counts the app saves (progress). Never habit names
+ * or notes: they can be health data, and they would pass through the browsers' push
+ * services. Yesterday's counts still tell which chain is open today, but not how many
+ * habits wait (a weekly goal may already be met), so they only feed the chain nudge.
+ * Older counts say nothing reliable, so the text stays general.
+ */
+export const reminderBody = (progress, localDate) => {
+  let left, total, chain;
+  if (progress?.date === localDate) {
+    ({ left, total } = progress);
+    chain = progress.openChain;
+  } else if (progress?.date === previousDay(localDate)) {
+    chain = progress.doneChain;
+  }
+
+  const day =
+    progress?.date === previousDay(localDate) ? "Today isn't marked yet."
+    : left === undefined || !total ? "Some habits aren't marked yet."
+    : total === 1 ? "Today isn't marked yet."
+    : left === 1 ? "One habit left today."
+    : left < total ? `${left} of ${total} habits left today.`
+    : `All ${total} habits are waiting.`;
+  const nudge =
+    chain >= 3 ? `Keep your ${chain}-day chain going 🔗`
+    : left === 1 ? "Finish the day ✅"
+    : "Keep your chain going.";
+  return `${day} ${nudge}`;
 };
 
 /** The user's local date (YYYY-MM-DD) and hour at `now`. Throws on an invalid zone. */
@@ -80,7 +108,20 @@ const fromFirestore = (fields = {}) => ({
   tokens: (fields.tokens?.arrayValue?.values ?? []).map((v) => v.stringValue),
   lastMarkedDate: fields.lastMarkedDate?.stringValue,
   lastRemindedDate: fields.lastRemindedDate?.stringValue,
+  progress: fromProgress(fields.progress?.mapValue?.fields),
 });
+
+function fromProgress(p) {
+  return (
+    p && {
+      date: p.date?.stringValue,
+      left: Number(p.left?.integerValue),
+      total: Number(p.total?.integerValue),
+      openChain: Number(p.openChain?.integerValue ?? 0),
+      doneChain: Number(p.doneChain?.integerValue ?? 0),
+    }
+  );
+}
 
 const createApi = ({ accessToken, projectId }) => {
   const headers = { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" };
@@ -105,14 +146,14 @@ const createApi = ({ accessToken, projectId }) => {
       } while (pageToken);
     },
 
-    async send(token, link) {
+    async send(token, link, body) {
       try {
         await call(`https://fcm.googleapis.com/v1/projects/${projectId}/messages:send`, {
           method: "POST",
           body: JSON.stringify({
             message: {
               token,
-              notification: NOTIFICATION,
+              notification: { title: TITLE, body },
               webpush: { fcm_options: { link } },
             },
           }),
@@ -168,12 +209,13 @@ export const sendReminders = async ({ api, now, link, dryRun }) => {
       counts.due += 1;
       if (dryRun) continue;
 
+      const body = reminderBody(settings.progress, date);
       const deadTokens = [];
       let sent = 0;
       // Each device on its own: a temporary error for one must not hold up the others.
       for (const token of settings.tokens.filter((t) => typeof t === "string")) {
         try {
-          if ((await api.send(token, link)) === "sent") sent += 1;
+          if ((await api.send(token, link, body)) === "sent") sent += 1;
           else deadTokens.push(token);
         } catch (error) {
           counts.failed += 1;

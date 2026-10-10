@@ -316,6 +316,10 @@ Code:
 - Notification text never includes habit names or notes; they can be health data, and they would pass through the browsers' push services.
 - It authenticates with **Workload Identity Federation**, without a stored key. Firestore IAM roles cover the whole database and server credentials bypass the security rules, so the service account (`roles/datastore.user` plus FCM send) can technically read every habit. The script only touches `reminders`, and Workload Identity limits who can use the account to this repository's workflow on `main`.
 
+**Reliability (2026-10-10):** GitHub's schedule skipped every run between 14:21 and 18:38 on 10 October, so a reminder never went out. A Cloudflare Worker with a cron trigger (`cloudflare/reminder-trigger`, free plan) now starts the workflow two minutes past every hour through the GitHub API, with a fine-grained token limited to "Actions: Read and write" on this repository. GitHub's schedule stays as a backup; double runs send nothing extra.
+
+**Specific texts (2026-10-10):** the app saves counts with the reminder settings (`progress`: the day, habits left of total, the longest chain still open and the longest done that day). The sender builds the text from them, e.g. "2 of 5 habits left today. Keep your 12-day chain going 🔗". The rules allow only these numeric fields there, so habit names never reach the sender or the push services.
+
 **Limitations**
 - On iPhone, push works only when the app is installed on the home screen (iOS 16.4 or later).
 - GitHub can delay scheduled runs by several minutes, so reminders are approximate.

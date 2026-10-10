@@ -86,7 +86,8 @@ run on every pull request ("End-to-end tests" workflow).
 | Production | `dont-break-the-chain-cb8a0` | GitHub Actions, on every merge to `main` |
 
 Daily reminders are sent by `scripts/send-reminders.mjs`, which the "Send daily reminders"
-workflow runs every hour against production. It signs in with Workload Identity
+workflow runs every hour against production. A small Cloudflare Worker
+(`cloudflare/reminder-trigger`) starts it on time, since GitHub's own schedule skips runs. It signs in with Workload Identity
 Federation, so no key is stored anywhere. `DRY_RUN=1` shows who would get a reminder
 without sending anything.
 

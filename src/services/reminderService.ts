@@ -11,7 +11,7 @@ import {
 import { deleteToken, getMessaging, getToken, isSupported } from "firebase/messaging";
 import { app, auth, db } from "./firebaseService";
 import { getToday } from "../utils/date";
-import { isEverythingDoneToday, type Habit } from "../domain/Habit";
+import { calculateCurrentStreak, isEverythingDoneToday, type Habit } from "../domain/Habit";
 import { getAllHabits } from "./habitService";
 
 // One document per user (id = uid). See firestore.rules for its shape.
@@ -22,8 +22,37 @@ const VAPID_KEY = import.meta.env.VITE_FCM_VAPID_KEY;
 
 export const DEFAULT_REMINDER_HOUR = 20;
 
-// What recordTodayProgress last saved (or found no reminders for), to skip repeats.
-let lastRecorded: { day: string; done: boolean } | undefined;
+export interface ReminderProgress {
+  /** The local day these counts are for. */
+  date: string;
+  /** Habits still to do that day, of `total`. */
+  left: number;
+  total: number;
+  /** Longest chain among daily habits still to do that day (the chain up to the day before). */
+  openChain: number;
+  /** Longest chain among daily habits done that day; still open the next day. */
+  doneChain: number;
+}
+
+/** The numbers the reminder sender may use about the user's day. */
+export const summarizeProgress = (habits: Habit[], today: Date): ReminderProgress => {
+  const isDone = (habit: Habit) => isEverythingDoneToday([habit], today);
+  const longestChain = (list: Habit[]) =>
+    Math.max(0, ...list.filter((h) => h.goal.type === "daily").map((h) => calculateCurrentStreak(h).count));
+  return {
+    date: today.toISOString().slice(0, 10),
+    left: habits.filter((h) => !isDone(h)).length,
+    total: habits.length,
+    openChain: longestChain(habits.filter((h) => !isDone(h))),
+    doneChain: longestChain(habits.filter(isDone)),
+  };
+};
+
+// What recordTodayProgress last saved, to skip repeats.
+let lastRecorded: string | undefined;
+// Set once a write shows the user has no reminders, so marking days doesn't send a
+// denied write each time. Cleared wherever reminders may start or the user changes.
+let noReminders = false;
 
 /** Reminders need a Web Push key for the Firebase project; without one they are hidden. */
 export const remindersAvailable = Boolean(VAPID_KEY);
@@ -34,6 +63,8 @@ export interface ReminderSettings {
   tokens: string[];
   /** The last day on which every habit was done (see isEverythingDoneToday). */
   lastMarkedDate?: string;
+  /** Counts only, never names, so the reminder can be specific. */
+  progress?: ReminderProgress;
   /** Written by the sender, so a reminder goes out at most once a day. */
   lastRemindedDate?: string;
 }
@@ -128,6 +159,7 @@ export const turnOnReminders = async (hour: number) => {
   );
   storage.set(token);
   lastRecorded = undefined;
+  noReminders = false;
   // So a day that is already done doesn't get a reminder.
   void refreshTodayProgress();
 };
@@ -202,6 +234,7 @@ const forgetLocalToken = async () => {
 /** Best effort, so logging out still works offline or without permission. */
 export const forgetThisDevice = async () => {
   lastRecorded = undefined;
+  noReminders = false;
   if (!storage.get()) return;
 
   await withTimeout(turnOffRemindersOnThisDevice(), 3000).catch((error) => {
@@ -213,6 +246,7 @@ export const forgetThisDevice = async () => {
 export const deleteReminders = async () => {
   await deleteDoc(reminderDoc());
   lastRecorded = undefined;
+  noReminders = false;
   await forgetLocalToken();
 };
 
@@ -225,20 +259,25 @@ export const deleteReminders = async () => {
  * Never throws: it must not affect saving the day itself.
  */
 export const recordTodayProgress = async (habits: Habit[]) => {
-  if (!auth.currentUser) return;
+  if (!auth.currentUser || noReminders) return;
   const today = getToday();
   // Calendar days are UTC midnights of the local date, so this is the local YYYY-MM-DD.
   const day = today.toISOString().slice(0, 10);
   const done = isEverythingDoneToday(habits, today);
-  if (lastRecorded?.day === day && lastRecorded.done === done) return;
+  const progress = summarizeProgress(habits, today);
+  const key = JSON.stringify({ day, done, progress });
+  if (lastRecorded === key) return;
 
   // Set before the write: a quick ✓ then undo must not be skipped while the first
   // write is still on its way. One client's writes arrive in order, so the last wins.
-  lastRecorded = { day, done };
+  lastRecorded = key;
   try {
-    await updateDoc(reminderDoc(), { lastMarkedDate: done ? day : deleteField() });
+    await updateDoc(reminderDoc(), { lastMarkedDate: done ? day : deleteField(), progress });
   } catch (error) {
-    if (hasNoReminders(error)) return;
+    if (hasNoReminders(error)) {
+      noReminders = true;
+      return;
+    }
     lastRecorded = undefined;
     console.warn("Could not record today's progress for reminders", { error });
   }

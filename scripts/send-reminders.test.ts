@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, onTestFinished } from "vitest";
-import { isDeadToken, localTime, reminderDue, sendReminders } from "./send-reminders.mjs";
+import { isDeadToken, localTime, reminderBody, reminderDue, sendReminders } from "./send-reminders.mjs";
 
 const STOCKHOLM = "Europe/Stockholm";
 // 18:05 UTC on 9 October 2026 is 20:05 in Stockholm (summer time).
@@ -57,10 +57,11 @@ describe("send-reminders - a run", () => {
 
     const counts = await sendReminders({ api, now: NOW, link: "https://app", dryRun: false });
 
+    const body = "Some habits aren't marked yet. Keep your chain going.";
     expect(send.mock.calls).toEqual([
-      ["a", "https://app"],
-      ["dead", "https://app"],
-      ["b", "https://app"],
+      ["a", "https://app", body],
+      ["dead", "https://app", body],
+      ["b", "https://app", body],
     ]);
     expect(api.update).toHaveBeenCalledWith("reminders/u1", {
       remindedDate: "2026-10-09",
@@ -163,5 +164,53 @@ describe("send-reminders - FCM errors", () => {
     await sendReminders({ api, now: NOW, link: "https://app", dryRun: false });
 
     expect(JSON.stringify(warn.mock.calls)).not.toContain("Secret");
+  });
+});
+
+describe("send-reminders - the notification text", () => {
+  const today = "2026-10-10";
+  const p = (date: string, left: number, total: number, openChain = 0, doneChain = 0) => ({ date, left, total, openChain, doneChain });
+
+  it("should say how much is left today, and name the chain at stake", () => {
+    expect(reminderBody(p(today, 2, 5, 12), today)).toBe("2 of 5 habits left today. Keep your 12-day chain going 🔗");
+    expect(reminderBody(p(today, 1, 4), today)).toBe("One habit left today. Finish the day ✅");
+    expect(reminderBody(p(today, 1, 4, 9), today)).toBe("One habit left today. Keep your 9-day chain going 🔗");
+    expect(reminderBody(p(today, 3, 3, 2), today)).toBe("All 3 habits are waiting. Keep your chain going.");
+    expect(reminderBody(p(today, 1, 1), today)).toBe("Today isn't marked yet. Finish the day ✅");
+  });
+
+  it("should use yesterday's counts only for the chain when the app wasn't opened today", () => {
+    // How many wait today is unknown (a weekly goal may be met); the chains done
+    // yesterday are the ones still open.
+    expect(reminderBody(p("2026-10-09", 0, 4, 0, 15), today)).toBe("Today isn't marked yet. Keep your 15-day chain going 🔗");
+    expect(reminderBody(p("2026-10-09", 0, 1, 0, 0), today)).toBe("Today isn't marked yet. Keep your chain going.");
+    // Across a year boundary.
+    expect(reminderBody(p("2026-12-31", 0, 2, 0, 40), "2027-01-01")).toBe("Today isn't marked yet. Keep your 40-day chain going 🔗");
+  });
+
+  it("should read the counts from the Firestore document", async () => {
+    const progress = {
+      mapValue: {
+        fields: {
+          date: { stringValue: "2026-10-09" },
+          left: { integerValue: "2" },
+          total: { integerValue: "5" },
+          openChain: { integerValue: "12" },
+          doneChain: { integerValue: "3" },
+        },
+      },
+    };
+    const send = vi.fn().mockResolvedValue("sent");
+    const api = fakeApi([doc("reminders/u1", { ...firestoreFields(base), progress })], send);
+
+    // 18:05 UTC on 9 October 2026 is 20:05 in Stockholm.
+    await sendReminders({ api, now: new Date("2026-10-09T18:05:00Z"), link: "https://app", dryRun: false });
+
+    expect(send).toHaveBeenCalledWith("device-a", "https://app", "2 of 5 habits left today. Keep your 12-day chain going 🔗");
+  });
+
+  it("should stay general without fresh counts", () => {
+    expect(reminderBody(p("2026-10-01", 2, 5, 30, 30), today)).toBe("Some habits aren't marked yet. Keep your chain going.");
+    expect(reminderBody(undefined, today)).toBe("Some habits aren't marked yet. Keep your chain going.");
   });
 });
