@@ -30,19 +30,30 @@ describe("habitStatusLine - daily habit, not marked yet", () => {
     expect(line(daily(...range(1, 3), ...range(10, 14)))).toBe("Today extends your record");
   });
 
-  it("should point out a milestone", () => {
+  it("should point out a milestone today, or one coming up", () => {
     expect(line(daily(...range(9, 14)))).toBe("Today makes it 7 days");
+    expect(line(daily(...range(4, 14, 0), ...range(1, 14)))).toBe("Today extends your record");
+    // 11 days so far, so 3 more to 14 (no earlier record to talk about).
+    expect(line(daily(...range(4, 14)))).toBe("3 days to a 14-day chain");
+  });
+
+  it("should not let a miss become two", () => {
+    expect(line(daily(day(13), day(14, "BAD")))).toBe("Don't miss twice");
   });
 
   it("should warn gently on the weekday that tends to slip", () => {
     expect(line(daily(day(25, "BAD", 0), day(1, "BAD"), day(8, "BAD"), day(13), day(14)))).toBe("Saturdays tend to slip");
   });
 
-  it("should otherwise keep the chain, restart, or start", () => {
+  it("should count a new habit's first week", () => {
+    const fresh = { ...daily(day(12), day(13)), createdAt: new Date(Date.UTC(2025, 1, 12, 9)) };
+    expect(line(fresh)).toBe("First week: 2 of 7 done");
+  });
+
+  it("should otherwise keep the chain, pick it back up, or start", () => {
     expect(line(daily(...range(12, 14)))).toBe("Keep your 3-day chain");
-    expect(line(daily(day(13), day(14, "BAD")))).toBe("A fresh start today");
+    expect(line(daily(day(1)))).toBe("Pick it back up today");
     expect(line(daily())).toBe("Start your first day");
-    expect(line(daily(day(1)))).toBe("Not marked today");
   });
 });
 
@@ -50,28 +61,39 @@ describe("habitStatusLine - daily habit, done today", () => {
   it("should celebrate a new record only when there was one to beat", () => {
     expect(line(daily(...range(1, 3), ...range(12, 15)))).toBe("New best: 4 days!");
     // The very first chain isn't a new record every day.
-    expect(line(daily(...range(12, 15)))).toBe("Day 4 in a row");
-    // Equal to the earlier best is not a new best.
-    expect(line(daily(...range(1, 3), ...range(13, 15)))).toBe("Day 3 in a row");
+    expect(line(daily(...range(12, 15)))).toBe("Day 4, 3 more to 7");
   });
 
-  it("should call out milestones and a record within reach", () => {
+  it("should call out milestones, the record and the next milestone", () => {
     expect(line(daily(...range(9, 15)))).toBe("7 days in a row!");
     expect(line(daily(...range(1, 10, 0), ...range(8, 15)))).toBe("Day 8, 2 to your best");
+    expect(line(daily(...range(1, 15), ...range(16, 31, 0)))).toBe("Day 31 in a row");
+  });
+
+  it("should recognise getting back on track after a miss", () => {
+    expect(line(daily(day(13), day(14, "BAD"), day(15)))).toBe("Back on track!");
     expect(line(daily(day(15)))).toBe("Day 1 of a new chain");
   });
 });
 
 describe("habitStatusLine - daily habit, missed today", () => {
-  it("should give perspective instead of guilt", () => {
+  const misses = (...comebacks: ("GOOD" | "BAD")[]) =>
+    comebacks.flatMap((next, i) => [day(1 + i * 2, "BAD"), day(2 + i * 2, next)]);
+
+  it("should show the user's own comeback rate", () => {
+    expect(line(daily(...misses("GOOD", "GOOD", "GOOD", "GOOD", "GOOD"), day(15, "BAD")))).toBe("You always bounce back");
+    expect(line(daily(...misses("GOOD", "GOOD", "GOOD", "GOOD", "BAD"), day(15, "BAD")))).toBe("You recover 8 in 10 times");
+  });
+
+  it("should otherwise give perspective, or the one rule that matters", () => {
     expect(line(daily(...range(1, 14), day(15, "BAD")))).toBe("Still 93 % good overall");
-    expect(line(daily(day(12), day(13, "BAD"), day(14, "BAD"), day(15, "BAD")))).toBe("Tomorrow is a new day");
+    expect(line(daily(day(12), day(13, "BAD"), day(14, "BAD"), day(15, "BAD")))).toBe("Just don't miss twice");
   });
 });
 
 describe("habitStatusLine - weekly goal", () => {
-  it("should celebrate a reached goal, and a run of reached weeks", () => {
-    expect(line(weekly(3, day(10), day(12), day(14)))).toBe("This week's goal is done");
+  it("should celebrate a reached goal, with days to spare or a run of weeks", () => {
+    expect(line(weekly(3, day(10), day(12), day(14)))).toBe("Done, 1 day to spare");
     expect(line(weekly(3, day(3), day(5), day(7), day(10), day(12), day(14)))).toBe("Goal met 2 weeks in a row");
   });
 
@@ -85,7 +107,7 @@ describe("habitStatusLine - weekly goal", () => {
 
 describe("habitStatusLine - fits the card", () => {
   it("should keep every line short enough for a phone card with two buttons", () => {
-    expect(lines.length).toBeGreaterThan(15);
+    expect(lines.length).toBeGreaterThan(20);
     for (const text of lines) expect(text.length, text).toBeLessThanOrEqual(26);
   });
 });
