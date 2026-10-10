@@ -1,7 +1,7 @@
 // Simple domain logic for habits - no fancy DDD, just pure functions
 
 import { HABIT_STATUS } from "../shared/constants";
-import { createDate, getToday, isNextDay, isYesterday } from "../utils/date";
+import { createDate, getToday, isNextDay, isSameDay, isYesterday } from "../utils/date";
 
 export type Goal = { type: "daily" } | { type: "weekly"; times: number };
 
@@ -208,3 +208,20 @@ export const getStreakSummary = (
         longest: calculateLongestStreak(habit).count,
         unit: "day",
       };
+
+/**
+ * Whether nothing is left to do today: every daily habit has today marked (✓ or ✗),
+ * and every weekly habit has today ✓ or has already reached its goal this week.
+ */
+export const isEverythingDoneToday = (habits: Habit[], today: Date = getToday()) =>
+  habits.every((habit) => {
+    const entriesToday = habit.streak.filter((s) => isSameDay(createDate(s.date), today));
+    if (habit.goal.type === "daily") {
+      return entriesToday.some((s) => s.status !== HABIT_STATUS.NOT_SPECIFIED);
+    }
+    // Weekly goals only have ✓; an old ✗ from when the habit was daily doesn't count.
+    return (
+      entriesToday.some((s) => s.status === HABIT_STATUS.GOOD) ||
+      countGoodDaysInWeek(habit, today) >= habit.goal.times
+    );
+  });

@@ -8,6 +8,7 @@ import {
   getStreakSummary,
   countGoodDaysInWeek,
   startOfWeek,
+  isEverythingDoneToday,
   type Habit,
 } from "./Habit";
 import { HABIT_STATUS } from "../shared/constants";
@@ -298,6 +299,64 @@ describe("Domain - Habit tracking complete workflows", () => {
       expect(getStreakSummary(habit)).toEqual({ current: 3, longest: 3, unit: "day" });
       expect(getStreakSummary(weekly(habit, 5))).toEqual({ current: 0, longest: 0, unit: "week" });
       expect(getStreakSummary(weekly(habit, 3))).toEqual({ current: 1, longest: 1, unit: "week" });
+    });
+  });
+
+  describe("Done for today - what the daily reminder checks", () => {
+    // Saturday 15 Feb 2025; its week started on Monday 10 Feb. Created inside each test,
+    // after the fake clock has replaced Date, like the habit days it is compared with.
+    const today = () => new Date("2025-02-15T00:00:00Z");
+    const day = (iso: string, status: "GOOD" | "BAD" = "GOOD") => ({
+      date: new Date(`${iso}T00:00:00Z`),
+      status,
+      notes: "",
+    });
+    const habit = (goal: Habit["goal"], streak: Habit["streak"]): Habit => ({
+      id: "h",
+      name: "Habit",
+      description: "",
+      goal,
+      streak,
+    });
+    const daily = { type: "daily" } as const;
+    const threeTimes = { type: "weekly", times: 3 } as const;
+
+    it("should need every daily habit marked today, with ✓ or ✗", () => {
+      expect(isEverythingDoneToday([habit(daily, [day("2025-02-15")])], today())).toBe(true);
+      expect(isEverythingDoneToday([habit(daily, [day("2025-02-15", "BAD")])], today())).toBe(true);
+      expect(isEverythingDoneToday([habit(daily, [day("2025-02-14")])], today())).toBe(false);
+      expect(
+        isEverythingDoneToday([habit(daily, [day("2025-02-15")]), habit(daily, [])], today()),
+      ).toBe(false);
+    });
+
+    it("should only need a weekly habit until its goal for the week is reached", () => {
+      const twoThisWeek = [day("2025-02-10"), day("2025-02-12")];
+      expect(isEverythingDoneToday([habit(threeTimes, twoThisWeek)], today())).toBe(false);
+      expect(isEverythingDoneToday([habit(threeTimes, [...twoThisWeek, day("2025-02-15")])], today())).toBe(true);
+      // Reached earlier in the week: nothing to do today.
+      expect(isEverythingDoneToday([habit(threeTimes, [...twoThisWeek, day("2025-02-13")])], today())).toBe(true);
+      // Last week's days don't count towards this week.
+      expect(isEverythingDoneToday([habit(threeTimes, [day("2025-02-07"), day("2025-02-08"), day("2025-02-09")])], today())).toBe(false);
+    });
+
+    it("should ignore an unmarked entry for today, and an old ✗ on a weekly habit", () => {
+      const unmarked = { ...day("2025-02-15"), status: "NOT_SPECIFIED" as const };
+      expect(isEverythingDoneToday([habit(daily, [unmarked])], today())).toBe(false);
+      expect(isEverythingDoneToday([habit(daily, [unmarked, day("2025-02-15")])], today())).toBe(true);
+      expect(isEverythingDoneToday([habit(threeTimes, [day("2025-02-15", "BAD")])], today())).toBe(false);
+    });
+
+    it("should count a week that spans the new year", () => {
+      // Wednesday 1 Jan 2025; the week started on Monday 30 Dec 2024.
+      const newYear = new Date("2025-01-01T00:00:00Z");
+      const twoTimes = { type: "weekly", times: 2 } as const;
+      expect(isEverythingDoneToday([habit(twoTimes, [day("2024-12-30"), day("2024-12-31")])], newYear)).toBe(true);
+      expect(isEverythingDoneToday([habit(twoTimes, [day("2024-12-29"), day("2024-12-31")])], newYear)).toBe(false);
+    });
+
+    it("should count no habits as nothing left to do", () => {
+      expect(isEverythingDoneToday([], today())).toBe(true);
     });
   });
 });

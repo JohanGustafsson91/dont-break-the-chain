@@ -41,7 +41,8 @@ vi.mock("../../services/firebaseService", () => ({
 }));
 
 vi.mock("../../services/reminderService", () => ({
-  recordDayMarked: vi.fn(),
+  recordTodayProgress: vi.fn(),
+  refreshTodayProgress: vi.fn(),
   remindersAvailable: false,
   forgetThisDevice: vi.fn(),
   syncReminderToken: vi.fn(),
@@ -153,6 +154,8 @@ describe("HabitsList - User workflows", () => {
       expect(mockNavigate).toHaveBeenCalledWith("/habits/new-habit-123", {
         state: { isNewHabit: true },
       });
+      // The new habit is left to do today.
+      expect(reminderService.refreshTodayProgress).toHaveBeenCalled();
     });
   });
 
@@ -193,8 +196,10 @@ describe("HabitsList - User workflows", () => {
         }),
       );
     });
-    // Reminders skip days that already have a mark.
-    expect(reminderService.recordDayMarked).toHaveBeenCalledWith(expect.any(Date), "GOOD");
+    // Reminders skip days with nothing left to do, so they get the habits as marked.
+    expect(reminderService.recordTodayProgress).toHaveBeenLastCalledWith([
+      expect.objectContaining({ streak: [expect.objectContaining({ status: "GOOD" })] }),
+    ]);
   });
 
   it("should ask before unmarking today when it has a note", async () => {

@@ -288,7 +288,8 @@ Owner steps:
 
 Code:
 - Reminder settings in the account menu: on/off and the hour of the day. The browser's IANA time zone is saved with it, so "20:00" means 20:00 where the user is.
-- One `reminders/{uid}` document per user: the hour, the time zone, one FCM token per device, and `lastMarkedDate`, which the app updates when today is marked so that users who are done get no reminder.
+- One `reminders/{uid}` document per user: the hour, the time zone, one FCM token per device, and `lastMarkedDate`, the last day on which everything was done, so that users who are done get no reminder.
+  - "Done" (decided 2026-10-10): every daily habit has today marked ✓ or ✗, and every weekly habit has today ✓ or has already reached its goal for the week. The app works this out (`isEverythingDoneToday`) and writes only when the result differs from its last write in that session, so about one write per app open plus one per change. The list view uses the habits it already has. A habit's own page, creating a habit, a goal change and turning reminders on read the habits once. The sender never reads habits.
 - Switch VitePWA to `injectManifest`, so the service worker can show push notifications.
 - Security rules and rules tests for `reminders`: owner-only, with field validation. Account deletion also deletes the reminders document.
 - Privacy policy: the FCM token and the reminder settings, and Google (FCM) as a processor.
@@ -308,7 +309,7 @@ Owner step after merge:
 
 Code:
 - `scripts/send-reminders.mjs`, run every hour by `.github/workflows/reminders.yml`, a few minutes past the hour. It has no dependencies; it calls the Firestore and FCM REST APIs with the short-lived access token from Workload Identity Federation.
-- A reminder goes out when the user's hour has started in their time zone, no habit is marked there today, and none was sent today (`lastRemindedDate`, which the rules now allow). A delayed run catches up for two hours, then gives up. Runs never overlap.
+- A reminder goes out when the user's hour has started in their time zone, some habit is still left to do there today (`lastMarkedDate` isn't today), and none was sent today (`lastRemindedDate`, which the rules now allow). A delayed run catches up for two hours, then gives up. Runs never overlap.
 - Tokens that FCM reports as invalid are removed. The logs show counts only, because workflow logs are public in a public repository.
 - Tested against dev with a real device: a dry run, a real send, no second send on the same day, and a fake token removed while the real one kept working.
 - It must tolerate bad documents: the rules can't check each entry of `tokens`, and a time zone that isn't a valid IANA name makes `Intl` throw. Handle each user in its own try/catch, so one bad document never stops the run for everyone.

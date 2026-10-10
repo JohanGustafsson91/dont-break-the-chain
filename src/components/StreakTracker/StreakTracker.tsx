@@ -6,6 +6,7 @@ import {
   getBadDays,
   getStreakSummary,
   markDay,
+  startOfWeek,
 } from "../../domain/Habit";
 import {
   getHabitById,
@@ -27,7 +28,7 @@ import { ProgressBar } from "./ProgressBar";
 import { HABIT_STATUS, STREAK_ICONS } from "../../shared/constants";
 import { BottomSheet } from "./BottomSheet";
 import { useAppBarContext } from "../AppBar/AppBar.Context";
-import { recordDayMarked } from "../../services/reminderService";
+import { refreshTodayProgress } from "../../services/reminderService";
 import { StreakStatusRadioGroup } from "../StreakStatusRadioGroup/StreakStatusRadioGroup";
 import { ConfirmDialog } from "../ConfirmDialog/ConfirmDialog";
 import { useToast } from "../Toast/Toast.Context";
@@ -182,6 +183,8 @@ export const StreakTracker = () => {
     try {
       setHabit((prev) => prev && { ...prev, goal });
       await updateHabit(habit.id, { goal });
+      // A daily habit needs today marked; a weekly one may not.
+      void refreshTodayProgress();
     } catch (error) {
       console.error("Could not update habit goal", { error });
       showToast("Couldn't save the goal. Please try again.");
@@ -200,7 +203,12 @@ export const StreakTracker = () => {
     try {
       setHabit(updatedHabit);
       await updateHabit(habit.id, { streak: updatedHabit.streak });
-      void recordDayMarked(date, status);
+      // Today's mark, or any day this week for a weekly goal, can change what's left today.
+      const affectsToday =
+        isSameDay(createDate(date), getToday()) ||
+        (habit.goal.type === "weekly" &&
+          startOfWeek(date).getTime() === startOfWeek(getToday()).getTime());
+      if (affectsToday) void refreshTodayProgress();
     } catch (error) {
       console.error("Could not update habit", { error });
       showToast("Couldn't save that day. Please try again.");

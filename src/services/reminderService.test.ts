@@ -6,6 +6,7 @@ import type { DocumentReference, DocumentSnapshot } from "firebase/firestore";
 vi.mock("firebase/firestore");
 vi.mock("firebase/messaging");
 vi.mock("./firebaseService", () => ({ app: {}, auth: { currentUser: { uid: "user-1" } }, db: {} }));
+vi.mock("./habitService", () => ({ getAllHabits: vi.fn().mockResolvedValue([]) }));
 
 const notFound = () => Object.assign(new Error("not-found"), { code: "not-found" });
 const snapshot = (data?: object) =>
@@ -37,28 +38,61 @@ describe("reminderService - daily reminder settings", () => {
     });
   });
 
-  it("should record a ✓ or ✗ for today once, as the local date, and ignore other days", async () => {
+  it("should save today once everything is done, and clear it when something is undone", async () => {
     vi.useFakeTimers({ toFake: ["Date"] });
     vi.setSystemTime(new Date(2026, 9, 9, 23, 30)); // late evening, local time
-    const { recordDayMarked } = await load();
+    vi.mocked(firestore.deleteField).mockReturnValue("delete-field" as never);
+    const { recordTodayProgress } = await load();
+    const habit = (marked: boolean) => ({
+      id: "h1",
+      name: "Run",
+      description: "",
+      goal: { type: "daily" as const },
+      streak: marked ? [{ date: day("2026-10-09"), status: "GOOD" as const, notes: "" }] : [],
+    });
 
-    await recordDayMarked(day("2026-10-08"), "GOOD"); // yesterday
-    await recordDayMarked(day("2026-10-09"), "NOT_SPECIFIED"); // unmarking
-    expect(firestore.updateDoc).not.toHaveBeenCalled();
-
-    await recordDayMarked(day("2026-10-09"), "BAD");
-    await recordDayMarked(day("2026-10-09"), "GOOD");
+    await recordTodayProgress([habit(true)]);
+    await recordTodayProgress([habit(true)]); // unchanged: no second write
     expect(firestore.updateDoc).toHaveBeenCalledTimes(1);
-    expect(firestore.updateDoc).toHaveBeenCalledWith("reminder-doc", { lastMarkedDate: "2026-10-09" });
+    expect(firestore.updateDoc).toHaveBeenLastCalledWith("reminder-doc", { lastMarkedDate: "2026-10-09" });
+
+    await recordTodayProgress([habit(true), habit(false)]); // a habit left to do
+    expect(firestore.updateDoc).toHaveBeenLastCalledWith("reminder-doc", { lastMarkedDate: "delete-field" });
+    expect(firestore.updateDoc).toHaveBeenCalledTimes(2);
+  });
+
+  it("should keep the last state when a quick ✓ and undo overlap", async () => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date(2026, 9, 9, 12));
+    vi.mocked(firestore.deleteField).mockReturnValue("delete-field" as never);
+    let finishFirstWrite = () => {};
+    vi.mocked(firestore.updateDoc)
+      .mockImplementationOnce(() => new Promise<void>((resolve) => (finishFirstWrite = resolve)))
+      .mockResolvedValue(undefined);
+    const { recordTodayProgress } = await load();
+    const run = (marked: boolean) => ({
+      id: "h1",
+      name: "Run",
+      description: "",
+      goal: { type: "daily" as const },
+      streak: marked ? [{ date: day("2026-10-09"), status: "GOOD" as const, notes: "" }] : [],
+    });
+
+    const first = recordTodayProgress([run(true)]); // done, still being written
+    await recordTodayProgress([run(false)]); // undone before that write finished
+    finishFirstWrite();
+    await first;
+
+    expect(firestore.updateDoc).toHaveBeenCalledTimes(2);
+    expect(firestore.updateDoc).toHaveBeenLastCalledWith("reminder-doc", { lastMarkedDate: "delete-field" });
   });
 
   it("should not fail or retry all day when the user has no reminders", async () => {
     vi.mocked(firestore.updateDoc).mockRejectedValue(notFound());
-    const { recordDayMarked } = await load();
-    const today = new Date(Date.UTC(new Date().getFullYear(), new Date().getMonth(), new Date().getDate()));
+    const { recordTodayProgress } = await load();
 
-    await expect(recordDayMarked(today, "GOOD")).resolves.toBeUndefined();
-    await recordDayMarked(today, "GOOD");
+    await expect(recordTodayProgress([])).resolves.toBeUndefined();
+    await recordTodayProgress([]);
     expect(firestore.updateDoc).toHaveBeenCalledTimes(1);
   });
 

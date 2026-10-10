@@ -21,7 +21,7 @@ import { formatGoodShare, formatWeekProgress } from "../../utils/string";
 import { StreakStatusRadioGroup } from "../StreakStatusRadioGroup/StreakStatusRadioGroup";
 import { ConfirmDialog } from "../ConfirmDialog/ConfirmDialog";
 import { useToast } from "../Toast/Toast.Context";
-import { recordDayMarked } from "../../services/reminderService";
+import { recordTodayProgress, refreshTodayProgress } from "../../services/reminderService";
 
 type Status = (typeof HABIT_STATUS)[keyof typeof HABIT_STATUS];
 
@@ -90,6 +90,8 @@ export const HabitsList = () => {
   async function onCreateHabit() {
     try {
       const habitId = await addHabit();
+      // A new habit is left to do today, even if everything else was done.
+      void refreshTodayProgress();
       navigate(`/habits/${habitId}`, { state: { isNewHabit: true } });
     } catch (error) {
       console.error("Could not create habit", { error });
@@ -108,6 +110,15 @@ export const HabitsList = () => {
       }
     })();
   }, []);
+
+  useEffect(
+    function recordProgressForReminders() {
+      // Also covers load, so habits added, deleted or changed elsewhere count too.
+      // A failed save rolls the list back, and this runs again with the real state.
+      if (habits.status === "resolved") void recordTodayProgress(habits.data);
+    },
+    [habits],
+  );
 
   function navigateToDetailView(id: Habit["id"]) {
     return navigate(`/habits/${id}`);
@@ -145,7 +156,6 @@ export const HabitsList = () => {
         data: prev.data.map((h) => (h.id === habit.id ? updatedHabit : h)),
       }));
       await updateHabit(habit.id, { streak: updatedHabit.streak });
-      void recordDayMarked(date, status);
     } catch (error) {
       console.error("Could not update habit", { error });
       showToast("Couldn't save that day. Please try again.");

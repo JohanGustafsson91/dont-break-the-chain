@@ -2,6 +2,7 @@ import {
   arrayRemove,
   arrayUnion,
   deleteDoc,
+  deleteField,
   doc,
   getDoc,
   setDoc,
@@ -9,9 +10,9 @@ import {
 } from "firebase/firestore";
 import { deleteToken, getMessaging, getToken, isSupported } from "firebase/messaging";
 import { app, auth, db } from "./firebaseService";
-import { HABIT_STATUS } from "../shared/constants";
-import { getToday, isSameDay } from "../utils/date";
-import type { StreakDay } from "../domain/Habit";
+import { getToday } from "../utils/date";
+import { isEverythingDoneToday, type Habit } from "../domain/Habit";
+import { getAllHabits } from "./habitService";
 
 // One document per user (id = uid). See firestore.rules for its shape.
 const COLLECTION = "reminders";
@@ -21,8 +22,8 @@ const VAPID_KEY = import.meta.env.VITE_FCM_VAPID_KEY;
 
 export const DEFAULT_REMINDER_HOUR = 20;
 
-// The last day recordMarkedToday saved (or found no reminders for), to skip repeats.
-let lastRecordedDay: string | undefined;
+// What recordTodayProgress last saved (or found no reminders for), to skip repeats.
+let lastRecorded: { day: string; done: boolean } | undefined;
 
 /** Reminders need a Web Push key for the Firebase project; without one they are hidden. */
 export const remindersAvailable = Boolean(VAPID_KEY);
@@ -31,6 +32,7 @@ export interface ReminderSettings {
   hour: number;
   timeZone: string;
   tokens: string[];
+  /** The last day on which every habit was done (see isEverythingDoneToday). */
   lastMarkedDate?: string;
   /** Written by the sender, so a reminder goes out at most once a day. */
   lastRemindedDate?: string;
@@ -119,7 +121,9 @@ export const turnOnReminders = async (hour: number) => {
     { merge: true },
   );
   storage.set(token);
-  lastRecordedDay = undefined;
+  lastRecorded = undefined;
+  // So a day that is already done doesn't get a reminder.
+  void refreshTodayProgress();
 };
 
 const currentDeviceToken = async () =>
@@ -191,7 +195,7 @@ const forgetLocalToken = async () => {
 
 /** Best effort, so logging out still works offline or without permission. */
 export const forgetThisDevice = async () => {
-  lastRecordedDay = undefined;
+  lastRecorded = undefined;
   if (!storage.get()) return;
 
   await withTimeout(turnOffRemindersOnThisDevice(), 3000).catch((error) => {
@@ -202,31 +206,44 @@ export const forgetThisDevice = async () => {
 
 export const deleteReminders = async () => {
   await deleteDoc(reminderDoc());
-  lastRecordedDay = undefined;
+  lastRecorded = undefined;
   await forgetLocalToken();
 };
 
 
 /**
- * Lets the reminder sender skip users who already marked a habit today. Only a ✓ or ✗
- * for today counts. Users without reminders have no document, so the update fails with
- * not-found, which is fine. Never throws: it must not affect saving the day itself.
+ * Lets the reminder sender skip users who have nothing left to do today, without the
+ * sender ever reading habits. Saves today's date once everything is done, and clears
+ * it if something is undone again. Writes only when that changes. Users without
+ * reminders have no document, so the update fails with not-found, which is fine.
+ * Never throws: it must not affect saving the day itself.
  */
-export const recordDayMarked = async (date: Date, status: StreakDay["status"]) => {
+export const recordTodayProgress = async (habits: Habit[]) => {
+  if (!auth.currentUser) return;
   const today = getToday();
-  if (status === HABIT_STATUS.NOT_SPECIFIED || !isSameDay(date, today)) return;
-
   // Calendar days are UTC midnights of the local date, so this is the local YYYY-MM-DD.
   const day = today.toISOString().slice(0, 10);
-  if (day === lastRecordedDay) return;
+  const done = isEverythingDoneToday(habits, today);
+  if (lastRecorded?.day === day && lastRecorded.done === done) return;
+
+  // Set before the write: a quick ✓ then undo must not be skipped while the first
+  // write is still on its way. One client's writes arrive in order, so the last wins.
+  lastRecorded = { day, done };
   try {
-    await updateDoc(reminderDoc(), { lastMarkedDate: day });
-    lastRecordedDay = day;
+    await updateDoc(reminderDoc(), { lastMarkedDate: done ? day : deleteField() });
   } catch (error) {
-    if (isNotFound(error)) {
-      lastRecordedDay = day;
-      return;
-    }
-    console.warn("Could not record today's mark for reminders", { error });
+    if (isNotFound(error)) return;
+    lastRecorded = undefined;
+    console.warn("Could not record today's progress for reminders", { error });
+  }
+};
+
+/** For views that don't have every habit at hand, such as a single habit's page. */
+export const refreshTodayProgress = async () => {
+  if (!auth.currentUser) return;
+  try {
+    await recordTodayProgress(await getAllHabits());
+  } catch (error) {
+    console.warn("Could not record today's progress for reminders", { error });
   }
 };

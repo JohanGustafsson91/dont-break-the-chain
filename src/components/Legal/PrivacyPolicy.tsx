@@ -30,8 +30,8 @@ export const PrivacyPolicy = () => (
       </li>
       <li>
         <strong>Reminders, only if you turn them on:</strong> the time you chose, your
-        time zone, the date you last marked a habit (so you aren't reminded on days you
-        already did), the date of the last reminder (so you get at most one a day), and
+        time zone, the last date on which all your habits were done for the day (so you
+        aren't reminded on days you're done), the date of the last reminder (so you get at most one a day), and
         a push token for each device that gets reminders. Turning
         reminders off on a device, logging out there, or deleting your account removes
         that device's token.
@@ -88,8 +88,8 @@ export const PrivacyPolicy = () => (
       </li>
       <li>
         <strong>Your browser's push service</strong> (for example Apple's, Google's or
-        Mozilla's) delivers each reminder to your device. Reminders only say that today
-        isn't marked yet; they never contain your habits or notes.
+        Mozilla's) delivers each reminder to your device. Reminders only say that some
+        habits aren't marked yet today; they never contain your habits or notes.
       </li>
     </ul>
 
