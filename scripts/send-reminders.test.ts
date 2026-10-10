@@ -179,10 +179,34 @@ describe("send-reminders - the notification text", () => {
     expect(reminderBody(p(today, 1, 1), today)).toBe("Today isn't marked yet. Finish the day ✅");
   });
 
-  it("should use yesterday's counts when the app wasn't opened today", () => {
-    // Everything waits today; the chains done yesterday are the ones still open.
-    expect(reminderBody(p("2026-10-09", 0, 4, 0, 15), today)).toBe("All 4 habits are waiting. Keep your 15-day chain going 🔗");
-    expect(reminderBody(p("2026-10-09", 0, 1, 0, 0), today)).toBe("Today isn't marked yet. Finish the day ✅");
+  it("should use yesterday's counts only for the chain when the app wasn't opened today", () => {
+    // How many wait today is unknown (a weekly goal may be met); the chains done
+    // yesterday are the ones still open.
+    expect(reminderBody(p("2026-10-09", 0, 4, 0, 15), today)).toBe("Today isn't marked yet. Keep your 15-day chain going 🔗");
+    expect(reminderBody(p("2026-10-09", 0, 1, 0, 0), today)).toBe("Today isn't marked yet. Keep your chain going.");
+    // Across a year boundary.
+    expect(reminderBody(p("2026-12-31", 0, 2, 0, 40), "2027-01-01")).toBe("Today isn't marked yet. Keep your 40-day chain going 🔗");
+  });
+
+  it("should read the counts from the Firestore document", async () => {
+    const progress = {
+      mapValue: {
+        fields: {
+          date: { stringValue: "2026-10-09" },
+          left: { integerValue: "2" },
+          total: { integerValue: "5" },
+          openChain: { integerValue: "12" },
+          doneChain: { integerValue: "3" },
+        },
+      },
+    };
+    const send = vi.fn().mockResolvedValue("sent");
+    const api = fakeApi([doc("reminders/u1", { ...firestoreFields(base), progress })], send);
+
+    // 18:05 UTC on 9 October 2026 is 20:05 in Stockholm.
+    await sendReminders({ api, now: new Date("2026-10-09T18:05:00Z"), link: "https://app", dryRun: false });
+
+    expect(send).toHaveBeenCalledWith("device-a", "https://app", "2 of 5 habits left today. Keep your 12-day chain going 🔗");
   });
 
   it("should stay general without fresh counts", () => {

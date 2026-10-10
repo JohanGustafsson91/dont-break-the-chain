@@ -26,8 +26,9 @@ const previousDay = (date) => new Date(Date.parse(`${date}T00:00:00Z`) - DAY_MS)
 /**
  * The notification text, from the counts the app saves (progress). Never habit names
  * or notes: they can be health data, and they would pass through the browsers' push
- * services. Counts from yesterday still tell how many habits wait and which chain is
- * open today; older ones say nothing reliable, so the text stays general.
+ * services. Yesterday's counts still tell which chain is open today, but not how many
+ * habits wait (a weekly goal may already be met), so they only feed the chain nudge.
+ * Older counts say nothing reliable, so the text stays general.
  */
 export const reminderBody = (progress, localDate) => {
   let left, total, chain;
@@ -35,12 +36,12 @@ export const reminderBody = (progress, localDate) => {
     ({ left, total } = progress);
     chain = progress.openChain;
   } else if (progress?.date === previousDay(localDate)) {
-    left = total = progress.total;
     chain = progress.doneChain;
   }
 
   const day =
-    left === undefined || !total ? "Some habits aren't marked yet."
+    progress?.date === previousDay(localDate) ? "Today isn't marked yet."
+    : left === undefined || !total ? "Some habits aren't marked yet."
     : total === 1 ? "Today isn't marked yet."
     : left === 1 ? "One habit left today."
     : left < total ? `${left} of ${total} habits left today.`

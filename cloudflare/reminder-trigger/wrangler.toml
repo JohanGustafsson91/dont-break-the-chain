@@ -2,6 +2,12 @@
 name = "dbtc-reminder-trigger"
 main = "src/index.js"
 compatibility_date = "2026-10-01"
+# Only a cron trigger; no public workers.dev address.
+workers_dev = false
+
+# Keep logs, so a failure (such as an expired token) can be read afterwards.
+[observability]
+enabled = true
 
 [triggers]
 # Two minutes past every hour. GitHub's own schedule (:07) stays as a backup.

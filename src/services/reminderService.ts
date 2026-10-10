@@ -48,8 +48,11 @@ export const summarizeProgress = (habits: Habit[], today: Date): ReminderProgres
   };
 };
 
-// What recordTodayProgress last saved (or found no reminders for), to skip repeats.
+// What recordTodayProgress last saved, to skip repeats.
 let lastRecorded: string | undefined;
+// Set once a write shows the user has no reminders, so marking days doesn't send a
+// denied write each time. Cleared wherever reminders may start or the user changes.
+let noReminders = false;
 
 /** Reminders need a Web Push key for the Firebase project; without one they are hidden. */
 export const remindersAvailable = Boolean(VAPID_KEY);
@@ -156,6 +159,7 @@ export const turnOnReminders = async (hour: number) => {
   );
   storage.set(token);
   lastRecorded = undefined;
+  noReminders = false;
   // So a day that is already done doesn't get a reminder.
   void refreshTodayProgress();
 };
@@ -230,6 +234,7 @@ const forgetLocalToken = async () => {
 /** Best effort, so logging out still works offline or without permission. */
 export const forgetThisDevice = async () => {
   lastRecorded = undefined;
+  noReminders = false;
   if (!storage.get()) return;
 
   await withTimeout(turnOffRemindersOnThisDevice(), 3000).catch((error) => {
@@ -241,6 +246,7 @@ export const forgetThisDevice = async () => {
 export const deleteReminders = async () => {
   await deleteDoc(reminderDoc());
   lastRecorded = undefined;
+  noReminders = false;
   await forgetLocalToken();
 };
 
@@ -253,7 +259,7 @@ export const deleteReminders = async () => {
  * Never throws: it must not affect saving the day itself.
  */
 export const recordTodayProgress = async (habits: Habit[]) => {
-  if (!auth.currentUser) return;
+  if (!auth.currentUser || noReminders) return;
   const today = getToday();
   // Calendar days are UTC midnights of the local date, so this is the local YYYY-MM-DD.
   const day = today.toISOString().slice(0, 10);
@@ -268,7 +274,10 @@ export const recordTodayProgress = async (habits: Habit[]) => {
   try {
     await updateDoc(reminderDoc(), { lastMarkedDate: done ? day : deleteField(), progress });
   } catch (error) {
-    if (hasNoReminders(error)) return;
+    if (hasNoReminders(error)) {
+      noReminders = true;
+      return;
+    }
     lastRecorded = undefined;
     console.warn("Could not record today's progress for reminders", { error });
   }

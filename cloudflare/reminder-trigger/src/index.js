@@ -4,8 +4,8 @@
 // from GitHub's schedule does nothing.
 //
 // Needs one secret, GITHUB_TOKEN: a fine-grained token for this repository only, with
-// "Actions: Read and write" and nothing else. It can start workflows here, not read or
-// change code or secrets.
+// "Actions: Read and write" and nothing else. With it one can start, cancel or delete
+// workflow runs here, but not read or change code, secrets or variables.
 const DISPATCH_URL =
   "https://api.github.com/repos/JohanGustafsson91/dont-break-the-chain/actions/workflows/reminders.yml/dispatches";
 

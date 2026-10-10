@@ -18,4 +18,7 @@ workflow sends at most one reminder per user and day, so double runs are harmles
    cron. After the next full hour, the repository's Actions tab shows a
    "Send daily reminders" run started by `workflow_dispatch`.
 
-If runs stop, look at the Worker's logs (an expired token answers 401).
+If runs stop, look at the Worker's logs: Workers & Pages → `dbtc-reminder-trigger` →
+Observability (an expired token answers 401). GitHub emails a warning before a
+fine-grained token expires; renew it then and replace the secret. GitHub's own schedule
+keeps sending reminders meanwhile, just less reliably.
