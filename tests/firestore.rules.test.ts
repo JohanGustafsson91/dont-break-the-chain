@@ -172,6 +172,16 @@ describe("Firestore rules - reminder settings belong to one user", () => {
       setDoc(own, { tokens: arrayUnion("device-b"), hour: 7 }, { merge: true }),
     );
     await assertSucceeds(updateDoc(own, { lastMarkedDate: "2026-10-09" }));
+    const progress = { date: "2026-10-09", left: 2, total: 5, openChain: 12, doneChain: 3 };
+    await assertSucceeds(updateDoc(own, { progress }));
+    for (const bad of [
+      { ...progress, left: 6 }, // more left than there are
+      { ...progress, total: -1 },
+      { ...progress, name: "Morning run" }, // never names
+      { date: "2026-10-09", left: 1, total: 2 },
+    ]) {
+      await assertFails(updateDoc(own, { progress: bad }));
+    }
     // The sender writes lastRemindedDate; the user's own later writes must still pass.
     await env.withSecurityRulesDisabled(async (context) => {
       await updateDoc(doc(context.firestore() as unknown as Firestore, "reminders", ALICE), {

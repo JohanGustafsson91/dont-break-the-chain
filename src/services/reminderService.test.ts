@@ -54,10 +54,16 @@ describe("reminderService - daily reminder settings", () => {
     await recordTodayProgress([habit(true)]);
     await recordTodayProgress([habit(true)]); // unchanged: no second write
     expect(firestore.updateDoc).toHaveBeenCalledTimes(1);
-    expect(firestore.updateDoc).toHaveBeenLastCalledWith("reminder-doc", { lastMarkedDate: "2026-10-09" });
+    expect(firestore.updateDoc).toHaveBeenLastCalledWith("reminder-doc", {
+      lastMarkedDate: "2026-10-09",
+      progress: { date: "2026-10-09", left: 0, total: 1, openChain: 0, doneChain: 1 },
+    });
 
     await recordTodayProgress([habit(true), habit(false)]); // a habit left to do
-    expect(firestore.updateDoc).toHaveBeenLastCalledWith("reminder-doc", { lastMarkedDate: "delete-field" });
+    expect(firestore.updateDoc).toHaveBeenLastCalledWith("reminder-doc", {
+      lastMarkedDate: "delete-field",
+      progress: { date: "2026-10-09", left: 1, total: 2, openChain: 0, doneChain: 1 },
+    });
     expect(firestore.updateDoc).toHaveBeenCalledTimes(2);
   });
 
@@ -84,7 +90,10 @@ describe("reminderService - daily reminder settings", () => {
     await first;
 
     expect(firestore.updateDoc).toHaveBeenCalledTimes(2);
-    expect(firestore.updateDoc).toHaveBeenLastCalledWith("reminder-doc", { lastMarkedDate: "delete-field" });
+    expect(firestore.updateDoc).toHaveBeenLastCalledWith(
+      "reminder-doc",
+      expect.objectContaining({ lastMarkedDate: "delete-field" }),
+    );
   });
 
   it("should not fail or retry all day when the user has no reminders", async () => {
