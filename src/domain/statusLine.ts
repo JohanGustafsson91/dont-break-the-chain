@@ -23,9 +23,14 @@ import {
 import { hardestWeekday } from "./insights";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
-const MILESTONES = [7, 14, 21, 30, 50, 100, 200, 365];
+// Milestones never run out: these, then every full year (730, 1095, …).
+const MILESTONES = [7, 14, 21, 30, 50, 100, 200, 365, 500, 1000];
+const YEAR = 365;
+const isMilestone = (n: number) => MILESTONES.includes(n) || (n > 0 && n % YEAR === 0);
 const days = (n: number) => `${n} ${pluralize(n, "day")}`;
-const nextMilestone = (n: number) => MILESTONES.find((m) => m > n);
+const nextMilestone = (n: number) =>
+  Math.min(MILESTONES.find((m) => m > n) ?? Infinity, (Math.floor(n / YEAR) + 1) * YEAR);
+const years = (n: number) => `${n / YEAR} ${pluralize(n / YEAR, "year")}`;
 
 type Status = Habit["streak"][number]["status"];
 const statusOn = (habit: Habit, date: Date): Status | undefined =>
@@ -85,10 +90,13 @@ export const habitStatusLine = (habit: Habit): string => {
 
   if (todayStatus === HABIT_STATUS.GOOD) {
     const milestone = nextMilestone(current);
-    if (best >= 2 && current > best) return `New best: ${days(current)} 🏆`;
-    if (MILESTONES.includes(current)) return `${current} days in a row 🎉`;
+    if (isMilestone(current)) {
+      return current % YEAR === 0 ? `${years(current)} in a row 🎉` : `${current} days in a row 🎉`;
+    }
+    // Only on the day the record falls; after that it's just a long chain.
+    if (best >= 2 && current === best + 1) return `New best: ${days(current)} 🏆`;
     if (current >= 2 && best > current && best - current <= 3) return `Day ${current}, ${best - current} to your best 🎯`;
-    if (current >= 2 && milestone && milestone - current <= 5) return `Day ${current}, ${milestone - current} more to ${milestone} 🎯`;
+    if (current >= 2 && milestone && milestone - current <= 5) return `Day ${current}, ${milestone - current} to ${milestone} 🎯`;
     if (missedYesterday) return "Back on track 💪";
     return current <= 1 ? "Day 1 of a new chain 🌱" : `Day ${current} in a row 🔗`;
   }
@@ -104,14 +112,16 @@ export const habitStatusLine = (habit: Habit): string => {
   }
 
   // Not marked yet. `current` is the chain up to yesterday, still alive.
+  if (current > 0 && isMilestone(current + 1)) {
+    return (current + 1) % YEAR === 0 ? `Today makes ${years(current + 1)} 🎯` : `Today is day ${current + 1} 🎯`;
+  }
   if (current >= 2 && best >= 2 && current === best) return "Beat your best today 🏆";
-  if (current >= 2 && best >= 2 && current > best) return "On a record run 🏆";
-  if (current > 0 && MILESTONES.includes(current + 1)) return `Today is day ${current + 1} 🎯`;
   if (missedYesterday) return "Don't miss twice 💪";
   const hardest = hardestWeekday(habit, today);
   if (hardest && hardest.weekday === today.getUTCDay()) return `${hardest.name} tend to slip`;
   const milestone = nextMilestone(current);
   if (current >= 3 && milestone && milestone - current <= 3) return `${days(milestone - current)} to ${milestone} in a row 🎯`;
+  if (current >= 2 && best >= 2 && current > best) return "On a record run 🏆";
   if (habit.createdAt) {
     const age = Math.floor((today.getTime() - createDate(habit.createdAt).getTime()) / DAY_MS);
     if (age >= 1 && age < 7) {
