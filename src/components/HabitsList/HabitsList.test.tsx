@@ -180,7 +180,7 @@ describe("HabitsList - User workflows", () => {
     });
 
     // User marks today as GOOD by clicking the good radio button
-    const goodRadio = screen.getByRole("radio", { name: "✓" });
+    const goodRadio = screen.getByRole("radio", { name: "Done" });
     await userEvent.click(goodRadio);
 
     // The habit service should be called to update the streak
@@ -225,14 +225,14 @@ describe("HabitsList - User workflows", () => {
     });
 
     // Clicking the already checked ✓ unmarks today, which would delete the note
-    await userEvent.click(screen.getByRole("radio", { name: "✓" }));
+    await userEvent.click(screen.getByRole("radio", { name: "Done" }));
 
     const dialog = screen.getByRole("alertdialog");
     expect(within(dialog).getByText(/Felt calm/)).toBeInTheDocument();
     await userEvent.click(within(dialog).getByRole("button", { name: "Cancel" }));
     expect(habitService.updateHabit).not.toHaveBeenCalled();
 
-    await userEvent.click(screen.getByRole("radio", { name: "✓" }));
+    await userEvent.click(screen.getByRole("radio", { name: "Done" }));
     await userEvent.click(
       within(screen.getByRole("alertdialog")).getByRole("button", { name: "Remove" }),
     );
@@ -264,8 +264,8 @@ describe("HabitsList - User workflows", () => {
     });
 
     expect(screen.getByText("1/3 this week")).toBeInTheDocument();
-    expect(screen.getByRole("radio", { name: "✓" })).toBeInTheDocument();
-    expect(screen.queryByRole("radio", { name: "✗" })).not.toBeInTheDocument();
+    expect(screen.getByRole("radio", { name: "Done" })).toBeInTheDocument();
+    expect(screen.queryByRole("radio", { name: "Missed" })).not.toBeInTheDocument();
   });
 
   it("should display habits with no streak data", async () => {
