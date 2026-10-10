@@ -11,8 +11,8 @@ export const Terms = () => (
 
     <h2>The service</h2>
     <p>
-      Don't Break The Chain is a free habit tracker run by {LEGAL.controllerName}, a
-      private individual in Sweden. There is no company behind it and no paid plan.
+      Don't Break The Chain is a free habit tracker run by a private individual in
+      Sweden (the operator, named in the <Link to="/privacy">privacy policy</Link>). There is no company behind it and no paid plan.
     </p>
 
     <h2>Who can use it</h2>
@@ -50,7 +50,7 @@ export const Terms = () => (
 
     <h2>Liability</h2>
     <p>
-      To the extent permitted by applicable law, {LEGAL.controllerName} is not liable
+      To the extent permitted by applicable law, the operator is not liable
       for indirect damage, loss of data, loss of profit or similar loss arising from
       your use of the service. Nothing in these terms limits liability that cannot be
       limited by law, such as for intent or gross negligence, your rights as a

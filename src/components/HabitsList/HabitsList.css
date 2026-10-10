@@ -1,9 +1,10 @@
+/* Compact, so several habits fit on a phone: the list is used every day. */
 .HabitsList-item {
   display: flex;
   flex-direction: column;
-  gap: 0.875rem;
-  padding: 1.25rem;
-  margin-bottom: 0.75rem;
+  gap: 0.625rem;
+  padding: 0.875rem 1.125rem 1rem;
+  margin-bottom: 0.625rem;
   cursor: pointer;
   border: 1px solid var(--border-color);
   border-radius: var(--radius-md);
@@ -42,6 +43,7 @@
   font-size: 1.125rem;
   font-weight: 600;
   letter-spacing: -0.3px;
+  white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
@@ -60,7 +62,7 @@
 .HabitsList-item_text {
   display: flex;
   flex-direction: column;
-  gap: 0.25rem;
+  gap: 0.125rem;
   min-width: 0;
 }
 
@@ -106,10 +108,13 @@
   color: var(--text-color);
 }
 
+/* One line, always: a short status, not a paragraph. */
 .HabitsList-status-text {
   font-size: 0.875rem;
   color: var(--text-muted-color);
-  text-wrap: pretty;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .HabitsList-item_success .HabitsList-status-text {

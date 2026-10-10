@@ -196,6 +196,9 @@ describe("HabitsList - User workflows", () => {
         }),
       );
     });
+    // The card's status line follows the mark.
+    expect(await screen.findByText("Day 1 of a new chain")).toBeInTheDocument();
+
     // Reminders skip days with nothing left to do, so they get the habits as marked.
     expect(reminderService.recordTodayProgress).toHaveBeenLastCalledWith([
       expect.objectContaining({ streak: [expect.objectContaining({ status: "GOOD" })] }),
