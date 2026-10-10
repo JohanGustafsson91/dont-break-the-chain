@@ -1,0 +1,8 @@
+# Cloudflare Worker that starts the reminder workflow on time. See README.md.
+name = "dbtc-reminder-trigger"
+main = "src/index.js"
+compatibility_date = "2026-10-01"
+
+[triggers]
+# Two minutes past every hour. GitHub's own schedule (:07) stays as a backup.
+crons = ["2 * * * *"]
