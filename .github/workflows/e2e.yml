@@ -5,7 +5,7 @@ name: End-to-end tests
 on:
   pull_request:
     # Only changes that can affect the running app; docs, scripts or other workflows
-    # skip the ~6 minute run. If this check is ever made required, replace this with a
+    # skip the run. If this check is ever made required, replace this with a
     # job that decides, because a skipped workflow leaves a required check pending.
     paths:
       - "src/**"
@@ -20,6 +20,10 @@ on:
       - "firestore.rules"
       - "firebase.json"
       - ".github/workflows/e2e.yml"
+  # Merges to main only fill the browser cache (see warm-cache below): caches made in a
+  # pull request aren't shared with other pull requests, but main's caches are.
+  push:
+    branches: [main]
   workflow_dispatch:
 
 permissions:
@@ -30,7 +34,7 @@ jobs:
     name: E2E (dev, ${{ matrix.project }})
     # Pull requests from forks and Dependabot get no secrets, so they can't sign in.
     if: >-
-      github.event_name != 'pull_request' ||
+      github.event_name == 'workflow_dispatch' ||
       (github.event.pull_request.head.repo.full_name == github.repository &&
       github.actor != 'dependabot[bot]')
     runs-on: ubuntu-latest
@@ -112,3 +116,43 @@ jobs:
           name: playwright-report-${{ matrix.project }}
           path: playwright-report
           retention-days: 7
+
+  warm-cache:
+    name: Cache browser (${{ matrix.browser }})
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    strategy:
+      matrix:
+        browser: [chromium, webkit]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v6
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: "20"
+          cache: "pnpm"
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Get Playwright version
+        id: playwright
+        run: echo "version=$(pnpm exec playwright --version | awk '{print $2}')" >> "$GITHUB_OUTPUT"
+
+      - name: Cache browser
+        id: browser-cache
+        uses: actions/cache@v6
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ steps.playwright.outputs.version }}-${{ matrix.browser }}
+
+      # Only the download is needed for the cache; no system packages, no tests.
+      - name: Download browser
+        if: steps.browser-cache.outputs.cache-hit != 'true'
+        run: pnpm exec playwright install ${{ matrix.browser }}
