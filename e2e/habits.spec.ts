@@ -1,4 +1,4 @@
-import { test, expect, createHabit, reloadWhenSaved, tap, holdDay } from "./fixtures";
+import { test, expect, createHabit, reloadWhenSaved, tap, holdDay, openHabit } from "./fixtures";
 
 const card = (page: import("@playwright/test").Page, name: string) =>
   page.locator(".HabitsList-item", { hasText: name });
@@ -45,7 +45,7 @@ test.describe("Habits", () => {
 
   test("should ask before unmarking a day that has a note, from the list", async ({ signedIn: page }) => {
     await createHabit(page, "Yoga");
-    await page.getByText("Yoga").click();
+    await openHabit(page, "Yoga");
     await holdDay(page, new Date().getDate());
     await tap(page.getByRole("radio", { name: "Done" }));
     await page.getByLabel("Note").fill("Felt great");
@@ -77,7 +77,7 @@ test.describe("Habits", () => {
 
   test("should delete a habit only after confirming", async ({ signedIn: page }) => {
     await createHabit(page, "Old habit");
-    await page.getByText("Old habit").click();
+    await openHabit(page, "Old habit");
 
     await page.getByRole("button", { name: "Delete" }).click();
     const dialog = page.getByRole("alertdialog");

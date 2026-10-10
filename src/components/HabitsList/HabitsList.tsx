@@ -21,57 +21,15 @@ import { formatGoodShare, formatWeekProgress } from "../../utils/string";
 import { StreakStatusRadioGroup } from "../StreakStatusRadioGroup/StreakStatusRadioGroup";
 import { ConfirmDialog } from "../ConfirmDialog/ConfirmDialog";
 import { useToast } from "../Toast/Toast.Context";
+import { habitStatusLine } from "../../domain/statusLine";
 import { recordTodayProgress, refreshTodayProgress } from "../../services/reminderService";
 
 type Status = (typeof HABIT_STATUS)[keyof typeof HABIT_STATUS];
-
-const motivationalMessages = {
-  [HABIT_STATUS.GOOD]: [
-    "Great job! Every step counts toward your goal! 🚀",
-    "Consistency is key—you're building something amazing! 🔥",
-    "Another day, another win! Keep up the great work! 💪",
-    "You're on fire! 🔥 Keep the streak alive!",
-    "Your future self is thanking you right now. Keep going! 😊",
-    "Success is built one day at a time. You're doing awesome! 🎯",
-    "Momentum is on your side! Keep pushing forward! 🚀",
-    "That's another brick in the wall of success! Keep stacking! 🏗️",
-    "Discipline > Motivation. And you've got it! 💯",
-    "You're proving to yourself that you can do this! Keep it up! 💪",
-  ],
-  [HABIT_STATUS.BAD]: [
-    "It's okay—every day is a new chance to start fresh. 🌱",
-    "Missed a day? No worries! Just get back on track tomorrow. 😊",
-    "One setback doesn't define your progress. Keep going! 💪",
-    "Chains get stronger by overcoming breaks—don't give up! 🔗",
-    "Progress isn't perfect. What matters is showing up again! 🔄",
-    "Failure is just a stepping stone to success. Keep at it! 🚀",
-    "Even a broken chain can be mended. Restart today! 🔄",
-    "Missed a day? Learn from it and push forward! 💡",
-    "Momentum can be rebuilt. Just take the next step! 👣",
-    "You haven't failed until you stop trying. Get back up! 💪",
-  ],
-  [HABIT_STATUS.NOT_SPECIFIED]: [
-    "Keep the streak alive! Mark your progress for today.",
-    "No entry for today yet—tap to stay on track!",
-    "Your chain is waiting! Log today's progress.",
-    "Don't let the streak end—check in for today!",
-    "One small action today keeps the momentum going!",
-  ],
-} as const;
 
 const itemClassByDayStatus = {
   [HABIT_STATUS.GOOD]: "HabitsList-item_success",
   [HABIT_STATUS.BAD]: "HabitsList-item_bad",
   [HABIT_STATUS.NOT_SPECIFIED]: "",
-};
-
-// Stable for the whole day, so the message doesn't change on every re-render.
-const pickMessage = (
-  status: keyof typeof motivationalMessages,
-  habitIndex: number,
-) => {
-  const messages = motivationalMessages[status];
-  return messages[(new Date().getDate() + habitIndex) % messages.length];
 };
 
 const todayLabel = () =>
@@ -186,7 +144,7 @@ export const HabitsList = () => {
                   </div>
                 </div>
               ) : (
-                habits.data.map((habit, index) => {
+                habits.data.map((habit) => {
                   const { id, name } = habit;
                   const goodDays = getGoodDays(habit).length;
                   const badDays = getBadDays(habit).length;
@@ -216,9 +174,11 @@ export const HabitsList = () => {
                     >
                       <div className="HabitsList-item_row HabitsList-item_header">
                         <div className="HabitsList-item_text">
-                          <span className="HabitsList-item_title">{name}</span>
+                          <span className="HabitsList-item_title" title={name}>
+                            {name}
+                          </span>
                           <span className="HabitsList-status-text">
-                            {pickMessage(currentDayStatus, index)}
+                            {habitStatusLine(habit)}
                           </span>
                         </div>
 

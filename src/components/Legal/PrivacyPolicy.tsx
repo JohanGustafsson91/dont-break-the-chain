@@ -10,7 +10,7 @@ export const PrivacyPolicy = () => (
 
     <h2>Who is responsible</h2>
     <p>
-      The data controller is {LEGAL.controllerName}, a private individual in Sweden,
+      The data controller (the operator) is {LEGAL.controllerName}, a private individual in Sweden,
       who runs the app for free. Contact:{" "}
       <a href={`mailto:${LEGAL.contactEmail}`}>{LEGAL.contactEmail}</a>.
     </p>

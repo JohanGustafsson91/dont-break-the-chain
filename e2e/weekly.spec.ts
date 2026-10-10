@@ -1,8 +1,8 @@
-import { test, expect, createHabit, reloadWhenSaved, tap } from "./fixtures";
+import { test, expect, createHabit, reloadWhenSaved, tap, openHabit } from "./fixtures";
 
 test("should track a weekly goal: progress in the list and only a ✓", async ({ signedIn: page }) => {
   await createHabit(page, "Strength");
-  await page.getByText("Strength").click();
+  await openHabit(page, "Strength");
 
   await page.getByLabel("Goal").selectOption({ label: "3 times a week" });
   await page.getByRole("button", { name: "‹ Habits" }).click();
@@ -17,7 +17,7 @@ test("should track a weekly goal: progress in the list and only a ✓", async ({
   await expect(page.locator(".HabitsList-item", { hasText: "Strength" })).toContainText("1/3 this week");
 
   // Back to every day: ✗ is available again.
-  await page.getByText("Strength").click();
+  await openHabit(page, "Strength");
   await page.getByLabel("Goal").selectOption({ label: "Every day" });
   await page.evaluate(() => window.__e2e!.waitForWrites());
   await page.getByRole("button", { name: "‹ Habits" }).click();

@@ -41,10 +41,14 @@ const goodShare = (statuses: Status[]) => {
 const daysInRange = (from: number, to: number) =>
   Array.from({ length: to - from + 1 }, (_, i) => from + i);
 
-/** "You miss most often on Sundays: 4 of the last 6." */
-const weekdayInsight = (habit: Habit, today: number) => {
+const WEEKDAY_LOOKBACK = 6;
+
+/**
+ * The weekday the user clearly misses most often (as "Sundays"), counted over the last
+ * six of each weekday, or undefined when no weekday stands out. `today` is a day number.
+ */
+const hardestWeekdayOn = (habit: Habit, today: number) => {
   const days = statusByDay(habit);
-  const LOOKBACK = 6;
   const MIN_MISSES = 3;
   // Must clearly beat every other weekday, or it's just noise (or misses everywhere).
   const MIN_LEAD = 2;
@@ -53,19 +57,30 @@ const weekdayInsight = (habit: Habit, today: number) => {
     // Day 0 (1970-01-01) was a Thursday, hence the +4.
     const lastOccurrence = today - ((today + 4 - weekday + 7) % 7);
     const occurrences = Array.from(
-      { length: LOOKBACK },
+      { length: WEEKDAY_LOOKBACK },
       (_, i) => lastOccurrence - i * 7,
     );
     const count = occurrences.filter(
       (day) => days.get(day) === HABIT_STATUS.BAD,
     ).length;
-    return { name, count };
+    return { name, weekday, count };
   });
 
   const [worst, runnerUp] = [...misses].sort((a, b) => b.count - a.count);
-
   return worst.count >= MIN_MISSES && worst.count - runnerUp.count >= MIN_LEAD
-    ? `You miss most often on ${worst.name}: ${worst.count} of the last ${LOOKBACK}.`
+    ? worst
+    : undefined;
+};
+
+/** The weekday the user clearly misses most often, as in "Sundays", if any. */
+export const hardestWeekday = (habit: Habit, now: Date = getToday()) =>
+  hardestWeekdayOn(habit, toDayNumber(now));
+
+/** "You miss most often on Sundays: 4 of the last 6." */
+const weekdayInsight = (habit: Habit, today: number) => {
+  const worst = hardestWeekdayOn(habit, today);
+  return worst
+    ? `You miss most often on ${worst.name}: ${worst.count} of the last ${WEEKDAY_LOOKBACK}.`
     : undefined;
 };
 

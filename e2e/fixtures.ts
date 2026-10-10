@@ -53,8 +53,18 @@ export const createHabit = async (page: Page, name: string) => {
   await field.blur();
   await page.evaluate(() => window.__e2e!.waitForWrites());
   await page.getByRole("button", { name: "‹ Habits" }).click();
-  await expect(page.getByText(name)).toBeVisible();
+  await expect(habitTitle(page, name)).toBeVisible();
 };
+
+/**
+ * A habit's title on the list. Exact, because getByText matches substrings
+ * case-insensitively, and status lines like "Start your first day" contain words.
+ */
+export const habitTitle = (page: Page, name: string) =>
+  page.locator(".HabitsList-item_title").getByText(name, { exact: true });
+
+/** Opens a habit's page from the list. */
+export const openHabit = (page: Page, name: string) => habitTitle(page, name).click();
 
 /**
  * Taps a ✓/✗ status button. The radio itself is visually hidden (it's there for
@@ -66,12 +76,25 @@ export const tap = (radio: Locator) => radio.locator("xpath=ancestor::label[1]")
 /** Taps a calendar day, which cycles its status. */
 export const calendarDay = (page: Page, day: number) => page.getByTitle(`Day ${day}`, { exact: true });
 
-/** Holds a calendar day until the sheet for its status and note opens. */
+/**
+ * Holds a calendar day until the sheet for its status and note opens. Right after a
+ * reload the first press can land before the app listens; such a press registers
+ * nothing (releasing it changes no status), so it simply tries again.
+ */
 export const holdDay = async (page: Page, day: number) => {
-  await calendarDay(page, day).hover();
-  await page.mouse.down();
-  await expect(page.getByRole("button", { name: "Done", exact: true })).toBeVisible();
-  await page.mouse.up();
+  const done = page.getByRole("button", { name: "Done", exact: true });
+  for (let attempt = 1; ; attempt++) {
+    await calendarDay(page, day).hover();
+    await page.mouse.down();
+    try {
+      await expect(done).toBeVisible({ timeout: 3000 });
+      await page.mouse.up();
+      return;
+    } catch (error) {
+      await page.mouse.up();
+      if (attempt === 3) throw error;
+    }
+  }
 };
 
 /** Holds a day for longer than a long press (500 ms) without expecting a sheet. */

@@ -1,9 +1,9 @@
-import { test, expect, createHabit, reloadWhenSaved, tap, calendarDay, holdDay, holdDayFor } from "./fixtures";
+import { test, expect, createHabit, reloadWhenSaved, tap, calendarDay, holdDay, holdDayFor, openHabit } from "./fixtures";
 
 test.describe("A habit's calendar", () => {
   test("should cycle a day's status with taps", async ({ signedIn: page }) => {
     await createHabit(page, "Water");
-    await page.getByText("Water").click();
+    await openHabit(page, "Water");
     const today = new Date().getDate();
 
     await calendarDay(page, today).click();
@@ -18,7 +18,7 @@ test.describe("A habit's calendar", () => {
 
   test("should mark a day with a note, keep both, and ask before removing them", async ({ signedIn: page }) => {
     await createHabit(page, "Gym");
-    await page.getByText("Gym").click();
+    await openHabit(page, "Gym");
     const today = new Date().getDate();
 
     await holdDay(page, today);
@@ -51,7 +51,7 @@ test.describe("A habit's calendar", () => {
 
   test("should not allow marking days in the future", async ({ signedIn: page }) => {
     await createHabit(page, "Stretch");
-    await page.getByText("Stretch").click();
+    await openHabit(page, "Stretch");
 
     const tomorrow = new Date();
     tomorrow.setDate(tomorrow.getDate() + 1);
@@ -64,7 +64,7 @@ test.describe("A habit's calendar", () => {
 
   test("should go back a month and not past the current one", async ({ signedIn: page }) => {
     await createHabit(page, "Walk");
-    await page.getByText("Walk").click();
+    await openHabit(page, "Walk");
 
     const label = (date: Date) =>
       `${date.toLocaleDateString("en-US", { month: "long" })} ${date.getFullYear()}`;
