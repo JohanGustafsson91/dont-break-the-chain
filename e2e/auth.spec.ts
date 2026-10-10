@@ -1,4 +1,4 @@
-import { test, expect } from "./fixtures";
+import { test, expect, credentials } from "./fixtures";
 
 test.describe("Signed out", () => {
   test.use({ storageState: { cookies: [], origins: [] } });
@@ -33,9 +33,9 @@ test.describe("Signed out", () => {
 });
 
 test.describe("Signing out", () => {
-  test("should sign out from the account menu", async ({ signedIn: page }) => {
+  test("should sign out from the account menu", async ({ signedIn: page }, testInfo) => {
     await page.getByRole("button", { name: "Account menu" }).click();
-    await expect(page.getByText(process.env.E2E_EMAIL!)).toBeVisible();
+    await expect(page.getByText(credentials(testInfo.project.name).email)).toBeVisible();
     await page.getByRole("button", { name: "Log out" }).click();
 
     await expect(page.getByRole("button", { name: "Continue with Google" })).toBeVisible();
