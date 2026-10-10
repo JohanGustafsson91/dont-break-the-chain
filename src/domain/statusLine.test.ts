@@ -61,7 +61,7 @@ describe("habitStatusLine - daily habit, done today", () => {
   it("should celebrate a new record only when there was one to beat", () => {
     expect(line(daily(...range(1, 3), ...range(12, 15)))).toBe("New best: 4 days 🏆");
     // The very first chain isn't a new record every day.
-    expect(line(daily(...range(12, 15)))).toBe("Day 4, 3 more to 7 🎯");
+    expect(line(daily(...range(12, 15)))).toBe("Day 4, 3 to 7 🎯");
   });
 
   it("should call out milestones, the record and the next milestone", () => {
@@ -73,6 +73,32 @@ describe("habitStatusLine - daily habit, done today", () => {
   it("should recognise getting back on track after a miss", () => {
     expect(line(daily(day(13), day(14, "BAD"), day(15)))).toBe("Back on track 💪");
     expect(line(daily(day(15)))).toBe("Day 1 of a new chain 🌱");
+  });
+});
+
+describe("habitStatusLine - long chains", () => {
+  // A chain of n days ending on `endDay` (today is the 15th).
+  const chain = (n: number, endDay: number) =>
+    Array.from({ length: n }, (_, i) => ({
+      date: new Date(Date.UTC(2025, 1, endDay - (n - 1) + i)),
+      status: "GOOD" as const,
+      notes: "",
+    }));
+
+  it("should keep finding milestones after a year: 500, 1000 and every full year", () => {
+    expect(line(daily(...chain(500, 15)))).toBe("500 days in a row 🎉");
+    expect(line(daily(...chain(1000, 15)))).toBe("1000 days in a row 🎉");
+    expect(line(daily(...chain(365, 15)))).toBe("1 year in a row 🎉");
+    expect(line(daily(...chain(730, 15)))).toBe("2 years in a row 🎉");
+  });
+
+  it("should point to the next one, even far beyond a year", () => {
+    expect(line(daily(...chain(729, 14)))).toBe("Today makes 2 years 🎯");
+    expect(line(daily(...chain(999, 14)))).toBe("Today is day 1000 🎯");
+    // 910 days: 1000 is still 90 days away, so no countdown yet.
+    expect(line(daily(...chain(910, 14)))).toBe("910 days, keep going 🔗");
+    expect(line(daily(...chain(997, 15)))).toBe("Day 997, 3 to 1000 🎯");
+    expect(line(daily(...chain(1092, 14)))).toBe("3 days to 1095 in a row 🎯");
   });
 });
 
