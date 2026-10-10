@@ -2,8 +2,9 @@ import { existsSync, readFileSync } from "node:fs";
 import { defineConfig, devices } from "@playwright/test";
 
 // End-to-end tests: the app as built from this branch, served locally, against the
-// real dev Firebase project. The test account's credentials come from E2E_EMAIL and
-// E2E_PASSWORD (GitHub secrets in CI, or .env.e2e.local on your machine).
+// real dev Firebase project. Each browser has its own test account: E2E_EMAIL and
+// E2E_PASSWORD for Chromium, E2E_WEBKIT_EMAIL and E2E_WEBKIT_PASSWORD for WebKit
+// (GitHub secrets in CI, or .env.e2e.local on your machine).
 if (existsSync(".env.e2e.local")) {
   for (const line of readFileSync(".env.e2e.local", "utf8").split("\n")) {
     const match = line.match(/^\s*([A-Z0-9_]+)\s*=\s*(.*)\s*$/);

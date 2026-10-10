@@ -1,8 +1,8 @@
 import { readFile } from "node:fs/promises";
-import { test, expect, createHabit } from "./fixtures";
+import { test, expect, createHabit, credentials } from "./fixtures";
 
 test.describe("Account menu", () => {
-  test("should export all habits as JSON, without push tokens", async ({ signedIn: page }) => {
+  test("should export all habits as JSON, without push tokens", async ({ signedIn: page }, testInfo) => {
     await createHabit(page, "Meditate");
     await page.evaluate(() => window.__e2e!.seedReminder());
 
@@ -12,7 +12,7 @@ test.describe("Account menu", () => {
     const file = await (await download).path();
 
     const data = JSON.parse(await readFile(file, "utf8"));
-    expect(data.account.email).toBe(process.env.E2E_EMAIL);
+    expect(data.account.email).toBe(credentials(testInfo.project.name).email);
     expect(data.habits.map((h: { name: string }) => h.name)).toEqual(["Meditate"]);
     // Reminder settings are included, but only a device count instead of the tokens.
     expect(data.reminders).toMatchObject({ hour: 20, timeZone: "Europe/Stockholm", devices: 1 });

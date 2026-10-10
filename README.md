@@ -68,11 +68,12 @@ run on every pull request ("End-to-end tests" workflow).
 - They sign in to a test account with email and password, which only the dev project
   allows. The app has no UI for that: a test-only hook (`src/e2e/testHooks.ts`) is
   included only when `VITE_E2E=true`, never in a normal build.
-- Locally, put the account in `.env.e2e.local` (git-ignored):
-  `E2E_EMAIL=…` and `E2E_PASSWORD=…`. In CI they are the `E2E_EMAIL` and
-  `E2E_PASSWORD` secrets, and the dev web config comes from `DEV_VITE_*` variables.
+- Each browser has its own test account, so CI runs Chromium and WebKit side by side.
+  Locally, put them in `.env.e2e.local` (git-ignored): `E2E_EMAIL`, `E2E_PASSWORD`,
+  `E2E_WEBKIT_EMAIL` and `E2E_WEBKIT_PASSWORD`. In CI they are secrets with the same
+  names, and the dev web config comes from `DEV_VITE_*` variables.
 - Each browser signs in once and the tests reuse that session; every test starts by
-  deleting the account's habits. Runs share the account, so they never overlap.
+  deleting the account's habits. Runs of the same browser never overlap.
 - The report uploaded when CI fails has screenshots but no traces: traces would contain
   the test password and session, and anyone can download a public repo's artifacts.
 - Firebase limits sign-ins and session restores per IP. Running the whole suite many

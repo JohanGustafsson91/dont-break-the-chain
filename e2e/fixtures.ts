@@ -1,9 +1,16 @@
 import { test as base, expect, type Locator, type Page } from "@playwright/test";
 
-export const credentials = () => {
-  const { E2E_EMAIL: email, E2E_PASSWORD: password } = process.env;
+/**
+ * The test account for a browser project. Each browser has its own account, so CI can
+ * run the browsers in parallel (a shared account would have tests deleting each
+ * other's habits): WebKit uses E2E_WEBKIT_*, everything else E2E_*.
+ */
+export const credentials = (project: string) => {
+  const prefix = project.includes("webkit") ? "E2E_WEBKIT" : "E2E";
+  const email = process.env[`${prefix}_EMAIL`];
+  const password = process.env[`${prefix}_PASSWORD`];
   if (!email || !password) {
-    throw new Error("Set E2E_EMAIL and E2E_PASSWORD (or .env.e2e.local) to run the end-to-end tests.");
+    throw new Error(`Set ${prefix}_EMAIL and ${prefix}_PASSWORD (or .env.e2e.local) to run the ${project} tests.`);
   }
   return { email, password };
 };
