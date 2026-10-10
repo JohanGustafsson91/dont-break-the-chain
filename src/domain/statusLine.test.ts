@@ -27,7 +27,9 @@ const line = (habit: Habit) => {
 describe("habitStatusLine - daily habit, not marked yet", () => {
   it("should point out a record within reach", () => {
     expect(line(daily(...range(1, 3), ...range(12, 14)))).toBe("Beat your best today 🏆");
-    expect(line(daily(...range(1, 3), ...range(10, 14)))).toBe("On a record run 🏆");
+    // Beyond the record: the next milestone (7) is near, so that comes first.
+    expect(line(daily(...range(1, 3), ...range(10, 14)))).toBe("2 days to 7 in a row 🎯");
+    expect(line(daily(...range(1, 3), ...range(5, 14)))).toBe("On a record run 🏆");
   });
 
   it("should point out a milestone today, or one coming up", () => {
@@ -84,6 +86,15 @@ describe("habitStatusLine - long chains", () => {
       status: "GOOD" as const,
       notes: "",
     }));
+
+  it("should not call every day of an all-time-best chain a new record", () => {
+    // 910 days, all of it the longest chain ever: a record run, not a new best each day.
+    expect(line(daily(...chain(910, 15)))).toBe("Day 910 in a row 🔗");
+    expect(line(daily(...chain(910, 14)))).toBe("910 days, keep going 🔗");
+    // A milestone beats the record wording, done or not.
+    expect(line(daily(...chain(1000, 15)))).toBe("1000 days in a row 🎉");
+    expect(line(daily(...chain(999, 14)))).toBe("Today is day 1000 🎯");
+  });
 
   it("should keep finding milestones after a year: 500, 1000 and every full year", () => {
     expect(line(daily(...chain(500, 15)))).toBe("500 days in a row 🎉");
