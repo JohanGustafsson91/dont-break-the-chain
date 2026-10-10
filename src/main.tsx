@@ -8,6 +8,11 @@ import "@fontsource/victor-mono/latin-600.css";
 import "./index.css";
 import { App } from "./components/App/App.tsx";
 import { registerSW } from "virtual:pwa-register";
+import { canonicalRedirect } from "./shared/canonicalHost";
+
+// One address for everyone: sessions, installs and reminders belong to an address.
+const redirectTo = canonicalRedirect(window.location, import.meta.env.VITE_CANONICAL_HOST);
+if (redirectTo) window.location.replace(redirectTo);
 
 // Removed from every build except the end-to-end test build.
 if (import.meta.env.VITE_E2E === "true") void import("./e2e/testHooks");

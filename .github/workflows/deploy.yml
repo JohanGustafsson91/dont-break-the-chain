@@ -19,7 +19,7 @@ jobs:
 
     environment:
       name: production
-      url: https://dont-break-the-chain-cb8a0.web.app/ # Replace with your actual Firebase URL
+      url: https://dontbreakthechain.se/
 
     steps:
       # Checkout the repository code
@@ -76,6 +76,8 @@ jobs:
           VITE_MEASUREMENT_ID: ${{ secrets.VITE_MEASUREMENT_ID }}
           VITE_APPCHECK_SITE_KEY: ${{ secrets.VITE_APPCHECK_SITE_KEY }}
           VITE_FCM_VAPID_KEY: ${{ secrets.VITE_FCM_VAPID_KEY }}
+          # Visitors on the old Firebase addresses are sent here (src/shared/canonicalHost.ts).
+          VITE_CANONICAL_HOST: dontbreakthechain.se
           VITE_ENVIRONMENT: production
 
       # Authenticate only after the build, so the install, test and build steps never see the credentials.

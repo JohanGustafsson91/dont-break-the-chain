@@ -1,7 +1,7 @@
 # Don't Break The Chain
 
 A small, free habit tracker. Mark each day as done (✓) or missed (✗), and keep the
-chain of good days going. Live at https://dont-break-the-chain-cb8a0.web.app.
+chain of good days going. Live at https://dontbreakthechain.se.
 
 - Daily habits, or weekly goals such as "3 times a week"
 - A calendar with notes per day, current and longest streaks, and a year overview

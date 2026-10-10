@@ -47,4 +47,4 @@ jobs:
         env:
           ACCESS_TOKEN: ${{ steps.auth.outputs.access_token }}
           PROJECT_ID: dont-break-the-chain-cb8a0
-          APP_URL: https://dont-break-the-chain-cb8a0.web.app/
+          APP_URL: https://dontbreakthechain.se/

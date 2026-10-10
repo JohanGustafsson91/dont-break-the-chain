@@ -252,7 +252,7 @@ Confirm the behaviour in dev, with a GitHub account whose email is a Gmail addre
 ### PR 6: Launch hygiene
 
 **Owner steps**
-- [ ] Decide between the `web.app` URL and a custom domain (affects `authDomain`, see PR 3).
+- [x] Decide between the `web.app` URL and a custom domain (affects `authDomain`, see PR 3). Decided 2026-10-10: `dontbreakthechain.se`, registered at Loopia, DNS at Cloudflare (free; DNS only, no proxy), served by Firebase Hosting. The old Firebase addresses redirect to it, and `authDomain` is the domain itself so sign-in stays first-party. Note: `dontbreakthechain.com` belongs to an unrelated service with the same name.
 - [ ] Check usage in the Firebase console regularly. Set budget alerts if the project moves to Blaze.
 
 **Code**
