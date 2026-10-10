@@ -4,6 +4,22 @@ name: End-to-end tests
 # project, in desktop Chromium and mobile WebKit (Safari's engine).
 on:
   pull_request:
+    # Only changes that can affect the running app; docs, scripts or other workflows
+    # skip the ~6 minute run. If this check is ever made required, replace this with a
+    # job that decides, because a skipped workflow leaves a required check pending.
+    paths:
+      - "src/**"
+      - "public/**"
+      - "e2e/**"
+      - "index.html"
+      - "vite.config.ts"
+      - "playwright.config.ts"
+      - "tsconfig*.json"
+      - "package.json"
+      - "pnpm-lock.yaml"
+      - "firestore.rules"
+      - "firebase.json"
+      - ".github/workflows/e2e.yml"
   workflow_dispatch:
 
 permissions:
