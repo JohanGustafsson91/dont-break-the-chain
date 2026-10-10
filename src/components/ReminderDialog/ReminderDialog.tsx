@@ -100,7 +100,7 @@ export const ReminderDialog = ({ onClose }: Props) => {
   const onTurnOn = () =>
     run(
       () => turnOnReminders(hour),
-      `Reminders are on. You'll get one at ${formatHour(hour)} on days you haven't marked yet.`,
+      `Reminders are on. You'll get one at ${formatHour(hour)} when some of your habits aren't marked yet.`,
       "Couldn't turn on reminders.",
     );
 
@@ -148,7 +148,7 @@ export const ReminderDialog = ({ onClose }: Props) => {
     return (
       <>
         <span className="ConfirmDialog-body">
-          Get a notification on days you haven't marked any habit yet.
+          Get a notification when some of your habits aren't marked yet that day.
         </span>
         <div className="ReminderDialog-time">
           <label htmlFor={hourId}>Remind me at</label>

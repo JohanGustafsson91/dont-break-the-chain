@@ -70,8 +70,8 @@ service cloud.firestore {
     }
 
     // Daily reminder settings, one document per user (id = uid): the hour and time
-    // zone to remind at, one push token per device, the last day a habit was marked,
-    // and the last day a reminder was sent. Only the user may touch it; the reminder
+    // zone to remind at, one push token per device, the last day on which every habit
+    // was done (lastMarkedDate), and the last day a reminder was sent. Only the user may touch it; the reminder
     // sender (scripts/send-reminders.mjs) uses server credentials.
     match /reminders/{uid} {
       function isOwner() {

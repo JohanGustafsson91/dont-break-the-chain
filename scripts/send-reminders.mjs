@@ -1,8 +1,10 @@
 // Sends the daily reminders. Run every hour by .github/workflows/reminders.yml.
 //
 // For each reminders/{uid} document it sends one notification per device when the
-// user's chosen hour has started in their time zone, no habit is marked there today,
-// and no reminder went out today. It talks to the Firestore and FCM REST APIs with a
+// user's chosen hour has started in their time zone, some habit is still left to do
+// there today, and no reminder went out today. The app works out "left to do" and
+// saves the day everything was done as lastMarkedDate, so this script never reads
+// habits. It talks to the Firestore and FCM REST APIs with a
 // short-lived access token, so it needs no dependencies and no stored key.
 //
 // Env: ACCESS_TOKEN, PROJECT_ID, APP_URL. Optional: DRY_RUN=1 (send and write
@@ -20,7 +22,7 @@ const NOTIFICATION = {
   title: "Don't break the chain",
   // Never habit names or notes: they can be health data, and they would pass through
   // the browsers' push services.
-  body: "You haven't marked any habit today. Keep your chain going!",
+  body: "Some of your habits aren't marked yet today. Keep your chain going!",
 };
 
 /** The user's local date (YYYY-MM-DD) and hour at `now`. Throws on an invalid zone. */

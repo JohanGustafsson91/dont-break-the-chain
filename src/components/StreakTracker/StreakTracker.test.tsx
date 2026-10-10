@@ -5,6 +5,7 @@ import userEvent from "@testing-library/user-event";
 import { StreakTracker } from "./StreakTracker";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import * as habitService from "../../services/habitService";
+import * as reminderService from "../../services/reminderService";
 import { AppBarProvider } from "../AppBar/AppBar.Provider";
 import { ToastProvider } from "../Toast/Toast.Provider";
 import { AppBar } from "../AppBar/AppBar";
@@ -39,7 +40,7 @@ vi.mock("../../services/firebaseService", () => ({
 }));
 
 vi.mock("../../services/reminderService", () => ({
-  recordDayMarked: vi.fn(),
+  refreshTodayProgress: vi.fn(),
   remindersAvailable: false,
   forgetThisDevice: vi.fn(),
   syncReminderToken: vi.fn(),
@@ -209,6 +210,8 @@ describe("StreakTracker - Complete user journey", () => {
     await waitFor(() => {
       expect(screen.queryByText(/Today isn't marked yet/)).not.toBeInTheDocument();
     });
+    // Marking today can finish the day, which the daily reminder needs to know.
+    expect(reminderService.refreshTodayProgress).toHaveBeenCalled();
 
     // PART 5: User navigates to previous month to view history
     await user.click(screen.getByRole("button", { name: "Previous month" }));
