@@ -10,6 +10,11 @@ lerna-debug.log*
 node_modules
 dist
 dist-ssr
+dist-e2e
+test-results
+playwright-report
+# Saved test sessions (end-to-end tests)
+playwright/.auth
 dev-dist
 *.local
 

@@ -35,10 +35,13 @@ export const StreakStatusRadioGroup = ({
           type="radio"
           name={groupName}
           className={`radio-input ${checked ? "radio-input_checked" : ""}`}
+          // Screen readers would read the symbols as "check mark" and "ballot X".
+          aria-label={verboseTextByStatus[status]}
           value={status}
           checked={checked}
           onClick={(e) => {
-            e.preventDefault();
+            // Not preventDefault: on a controlled radio it keeps the browser's checked
+            // state stale, so assistive tech would announce the wrong status.
             e.stopPropagation();
 
             // Toggle behavior: if already checked, uncheck (set to NOT_SPECIFIED)

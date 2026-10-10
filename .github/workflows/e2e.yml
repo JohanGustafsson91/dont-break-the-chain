@@ -1,0 +1,70 @@
+name: End-to-end tests
+
+# The app built from the pull request, served locally, against the dev Firebase
+# project, in desktop Chromium and mobile WebKit (Safari's engine).
+on:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# All runs share one test account in dev, so they must never overlap. GitHub keeps one
+# waiting run per group: if two pull requests wait at once, the older one is cancelled
+# and needs a re-run.
+concurrency:
+  group: e2e-dev
+  cancel-in-progress: false
+
+jobs:
+  e2e:
+    name: E2E (dev)
+    # Pull requests from forks and Dependabot get no secrets, so they can't sign in.
+    if: >-
+      github.event_name != 'pull_request' ||
+      (github.event.pull_request.head.repo.full_name == github.repository &&
+      github.actor != 'dependabot[bot]')
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v6
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: "20"
+          cache: "pnpm"
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Install browsers
+        run: pnpm exec playwright install --with-deps chromium webkit
+
+      - name: Run end-to-end tests
+        run: pnpm test:e2e
+        env:
+          CI: "true"
+          E2E_EMAIL: ${{ secrets.E2E_EMAIL }}
+          E2E_PASSWORD: ${{ secrets.E2E_PASSWORD }}
+          # The dev project's web config. It is public by design (every visitor gets it).
+          VITE_API_KEY: ${{ vars.DEV_VITE_API_KEY }}
+          VITE_AUTH_DOMAIN: ${{ vars.DEV_VITE_AUTH_DOMAIN }}
+          VITE_PROJECT_ID: ${{ vars.DEV_VITE_PROJECT_ID }}
+          VITE_STORAGE_BUCKET: ${{ vars.DEV_VITE_STORAGE_BUCKET }}
+          VITE_MESSAGING_SENDER_ID: ${{ vars.DEV_VITE_MESSAGING_SENDER_ID }}
+          VITE_APP_ID: ${{ vars.DEV_VITE_APP_ID }}
+          VITE_FCM_VAPID_KEY: ${{ vars.DEV_VITE_FCM_VAPID_KEY }}
+
+      # Screenshots and error context only; traces are off in CI (see playwright.config.ts).
+      - name: Upload report
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: playwright-report
+          path: playwright-report
+          retention-days: 7

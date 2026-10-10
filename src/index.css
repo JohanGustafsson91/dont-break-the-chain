@@ -136,7 +136,7 @@ button:disabled {
 button:focus-visible,
 input:focus-visible,
 textarea:focus-visible,
-.radio-label:focus-within {
+.radio-label:has(.radio-input:focus-visible) {
   outline: 2px solid var(--primary-color);
   outline-offset: 2px;
 }
@@ -204,6 +204,7 @@ button.error {
 }
 
 .radio-label {
+  position: relative;
   flex: 1;
   display: flex;
   align-items: center;
@@ -237,7 +238,17 @@ button.error {
   color: var(--on-accent-color);
 }
 
-.radio-input,
+/* Hidden from sight but not from keyboards and screen readers, so the ✓/✗ buttons can
+   be reached with Tab and arrow keys; the label shows keyboard focus (focus-visible). */
+.radio-input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: 0;
+  opacity: 0;
+  pointer-events: none;
+}
+
 .radio-custom {
   display: none;
 }

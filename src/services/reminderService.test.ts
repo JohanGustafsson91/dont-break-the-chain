@@ -88,7 +88,10 @@ describe("reminderService - daily reminder settings", () => {
   });
 
   it("should not fail or retry all day when the user has no reminders", async () => {
-    vi.mocked(firestore.updateDoc).mockRejectedValue(notFound());
+    // What the rules answer for an update to a missing reminders document.
+    vi.mocked(firestore.updateDoc).mockRejectedValue(
+      Object.assign(new Error("denied"), { code: "permission-denied" }),
+    );
     const { recordTodayProgress } = await load();
 
     await expect(recordTodayProgress([])).resolves.toBeUndefined();

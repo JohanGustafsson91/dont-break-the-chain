@@ -53,10 +53,30 @@ in `docs/production-readiness.md` (PR 3).
 | `pnpm dev` | Dev server against the dev project |
 | `pnpm test` | Unit and component tests |
 | `pnpm test:rules` | Security rules tests in the Firestore emulator (offline, no login or config needed) |
+| `pnpm test:e2e` | End-to-end tests in a real browser, against the dev project (see below) |
 | `pnpm lint` | ESLint |
 | `pnpm run deploy` | Tests, builds for dev and deploys hosting and rules to the **dev** project |
 
 Use `pnpm run deploy`, not `pnpm deploy`, which is a built-in pnpm command.
+
+## End-to-end tests
+
+Playwright runs the app built from your branch, served on `localhost`, against the
+**dev** Firebase project, in desktop Chromium and mobile WebKit (Safari's engine). They
+run on every pull request ("End-to-end tests" workflow).
+
+- They sign in to a test account with email and password, which only the dev project
+  allows. The app has no UI for that: a test-only hook (`src/e2e/testHooks.ts`) is
+  included only when `VITE_E2E=true`, never in a normal build.
+- Locally, put the account in `.env.e2e.local` (git-ignored):
+  `E2E_EMAIL=…` and `E2E_PASSWORD=…`. In CI they are the `E2E_EMAIL` and
+  `E2E_PASSWORD` secrets, and the dev web config comes from `DEV_VITE_*` variables.
+- Each browser signs in once and the tests reuse that session; every test starts by
+  deleting the account's habits. Runs share the account, so they never overlap.
+- The report uploaded when CI fails has screenshots but no traces: traces would contain
+  the test password and session, and anyone can download a public repo's artifacts.
+- Firebase limits sign-ins and session restores per IP. Running the whole suite many
+  times in a row locally can get throttled (pages hang on "Loading"); wait a while.
 
 ## Environments and deployment
 

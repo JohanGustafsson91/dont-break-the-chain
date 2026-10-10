@@ -56,7 +56,7 @@ export default defineConfig({
     environment: "jsdom",
     setupFiles: "./test-setup.ts",
     // Rules tests need the Firestore emulator; they run via `pnpm test:rules`.
-    exclude: [...configDefaults.exclude, "tests/**"],
+    exclude: [...configDefaults.exclude, "tests/**", "e2e/**"],
     css: false,
     coverage: {
       provider: "v8",

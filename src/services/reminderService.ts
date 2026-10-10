@@ -72,6 +72,12 @@ const storage = {
 
 const isNotFound = (error: unknown) => (error as { code?: string })?.code === "not-found";
 
+// Updating a missing reminders document is checked by the rules as an update to an
+// incomplete document, so a user without reminders gets permission-denied, not
+// not-found.
+const hasNoReminders = (error: unknown) =>
+  isNotFound(error) || (error as { code?: string })?.code === "permission-denied";
+
 // Firestore writes wait for the server, so offline they would never settle. Used where
 // a reminder clean-up must not hold up something else, such as logging out.
 const withTimeout = <T>(promise: Promise<T>, ms: number) =>
@@ -143,7 +149,7 @@ const removeToken = async (token: string) => {
   try {
     await updateDoc(reminderDoc(), { tokens: arrayRemove(token) });
   } catch (error) {
-    if (!isNotFound(error)) throw error;
+    if (!hasNoReminders(error)) throw error;
   }
 };
 
@@ -215,7 +221,7 @@ export const deleteReminders = async () => {
  * Lets the reminder sender skip users who have nothing left to do today, without the
  * sender ever reading habits. Saves today's date once everything is done, and clears
  * it if something is undone again. Writes only when that changes. Users without
- * reminders have no document, so the update fails with not-found, which is fine.
+ * reminders have no document, so the update is denied (see hasNoReminders), which is fine.
  * Never throws: it must not affect saving the day itself.
  */
 export const recordTodayProgress = async (habits: Habit[]) => {
@@ -232,7 +238,7 @@ export const recordTodayProgress = async (habits: Habit[]) => {
   try {
     await updateDoc(reminderDoc(), { lastMarkedDate: done ? day : deleteField() });
   } catch (error) {
-    if (isNotFound(error)) return;
+    if (hasNoReminders(error)) return;
     lastRecorded = undefined;
     console.warn("Could not record today's progress for reminders", { error });
   }
