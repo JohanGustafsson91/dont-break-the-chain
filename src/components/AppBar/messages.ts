@@ -17,6 +17,9 @@ export const accountMenuMessages = defineMessages({
     deleteTitle: "Delete your account?",
     deleteBody:
       "All your habits, days and notes are deleted for good, and your account is removed. Export your data first if you want a copy. You'll be asked to sign in again to confirm. Access you gave the app in your Google or GitHub account can be removed there.",
+    deleteBodyPassword:
+      "All your habits, days and notes are deleted for good, and your account is removed. Export your data first if you want a copy. Enter your password to confirm.",
+    password: "Password",
     deleteConfirm: "Delete everything",
     back: "‹ Habits",
     backToOverview: "‹ Overview",
@@ -37,6 +40,9 @@ export const accountMenuMessages = defineMessages({
     deleteTitle: "Radera ditt konto?",
     deleteBody:
       "Alla dina vanor, dagar och anteckningar raderas för gott, och ditt konto tas bort. Exportera din data först om du vill ha en kopia. Du får logga in igen för att bekräfta. Åtkomst du gett appen i ditt Google- eller GitHub-konto kan tas bort där.",
+    deleteBodyPassword:
+      "Alla dina vanor, dagar och anteckningar raderas för gott, och ditt konto tas bort. Exportera din data först om du vill ha en kopia. Ange ditt lösenord för att bekräfta.",
+    password: "Lösenord",
     deleteConfirm: "Radera allt",
     back: "‹ Vanor",
     backToOverview: "‹ Översikt",

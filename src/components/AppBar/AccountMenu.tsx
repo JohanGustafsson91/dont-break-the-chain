@@ -2,7 +2,7 @@ import "./AccountMenu.css";
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import type { User } from "../../services/firebaseService";
-import { logout } from "../../services/authService";
+import { logout, usesPassword } from "../../services/authService";
 import {
   deleteAccountAndData,
   deletionFailureMessage,
@@ -19,6 +19,9 @@ import { accountMenuMessages, languageNames } from "./messages";
 export const AccountMenu = ({ user }: Props) => {
   const [isOpen, setIsOpen] = useState(false);
   const [isConfirmingDelete, setIsConfirmingDelete] = useState(false);
+  // Email accounts confirm with their password instead of a sign-in window.
+  const [password, setPassword] = useState("");
+  const needsPassword = usesPassword(user);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isReminderOpen, setIsReminderOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
@@ -74,8 +77,9 @@ export const AccountMenu = ({ user }: Props) => {
   async function onDelete() {
     setIsConfirmingDelete(false);
     setIsDeleting(true);
-    showToast(t.confirmIdentity);
-    const result = await deleteAccountAndData();
+    if (!needsPassword) showToast(t.confirmIdentity);
+    const result = await deleteAccountAndData(needsPassword ? password : undefined);
+    setPassword("");
     setIsDeleting(false);
 
     if (result.ok) {
@@ -188,14 +192,28 @@ export const AccountMenu = ({ user }: Props) => {
       {isConfirmingDelete ? (
         <ConfirmDialog
           title={t.deleteTitle}
-          body={t.deleteBody}
+          body={needsPassword ? t.deleteBodyPassword : t.deleteBody}
           confirmLabel={t.deleteConfirm}
+          confirmDisabled={needsPassword && password === ""}
           onCancel={() => {
             setIsConfirmingDelete(false);
+            setPassword("");
             triggerRef.current?.focus();
           }}
           onConfirm={onDelete}
-        />
+        >
+          {needsPassword ? (
+            <label className="AccountMenu-password">
+              <span>{t.password}</span>
+              <input
+                type="password"
+                autoComplete="current-password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+              />
+            </label>
+          ) : null}
+        </ConfirmDialog>
       ) : null}
     </div>
   );

@@ -15,6 +15,7 @@ vi.mock("firebase/auth");
 vi.mock("firebase/firestore");
 vi.mock("firebase/app");
 vi.mock("react-firebase-hooks/auth");
+vi.mock("../../services/firebaseService", () => ({ app: {}, auth: {}, db: {} }));
 
 describe("Login - User authentication flow", () => {
   const signInWithPopupSpy = vi.spyOn(firebaseAuth, "signInWithPopup");
@@ -69,7 +70,7 @@ describe("Login - User authentication flow", () => {
     const [, provider] = signInWithPopupSpy.mock.calls[0];
     expect(provider).toBeInstanceOf(firebaseAuth.GoogleAuthProvider);
     expect(await screen.findByRole("alert")).toHaveTextContent(
-      "An account with this email already exists. Sign in with GitHub instead.",
+      "An account with this email already exists. Sign in with GitHub or your email and password instead.",
     );
 
     // Closing the window is not an error worth showing, and clears the old message.
@@ -96,6 +97,33 @@ describe("Login - User authentication flow", () => {
     await userEvent.click(screen.getByRole("button", { name: "Svenska" }));
     expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent("En bock om dagen. Bryt inte kedjan.");
     expect(screen.getByText("Idag är det dag 7 🎯")).toBeInTheDocument();
+  });
+
+  it("should sign in or create an account with email and password, and help with a forgotten password", async () => {
+    const consoleErrorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+    onTestFinished(() => consoleErrorSpy.mockRestore());
+    renderLogin();
+    await userEvent.click(screen.getByRole("button", { name: "Continue with email" }));
+
+    // A wrong password says so, without telling whether the email has an account.
+    vi.mocked(firebaseAuth.signInWithEmailAndPassword).mockRejectedValueOnce(
+      Object.assign(new Error("bad"), { code: "auth/invalid-credential" }),
+    );
+    await userEvent.type(screen.getByLabelText("Email"), "ada@example.com");
+    await userEvent.type(screen.getByLabelText("Password"), "wrong password");
+    await userEvent.click(screen.getByRole("button", { name: "Sign in" }));
+    expect(vi.mocked(firebaseAuth.signInWithEmailAndPassword).mock.calls[0].slice(1)).toEqual(["ada@example.com", "wrong password"]);
+    expect(await screen.findByRole("alert")).toHaveTextContent("Wrong email or password.");
+
+    vi.mocked(firebaseAuth.sendPasswordResetEmail).mockResolvedValueOnce();
+    await userEvent.click(screen.getByRole("button", { name: "Forgot your password?" }));
+    expect(await screen.findByRole("status")).toHaveTextContent("If there's an account for ada@example.com");
+
+    await userEvent.click(screen.getByRole("button", { name: "New here? Create an account" }));
+    expect(screen.getByText("At least 8 characters.")).toBeInTheDocument();
+    vi.mocked(firebaseAuth.createUserWithEmailAndPassword).mockResolvedValueOnce({ user: { uid: "new" } } as firebaseAuth.UserCredential);
+    await userEvent.click(screen.getByRole("button", { name: "Create account" }));
+    expect(vi.mocked(firebaseAuth.createUserWithEmailAndPassword).mock.calls[0].slice(1)).toEqual(["ada@example.com", "wrong password"]);
   });
 
   it("should confirm a deleted account once", () => {
@@ -127,7 +155,7 @@ describe("Login - User authentication flow", () => {
     await userEvent.click(screen.getByRole("button", { name: "Fortsätt med Google" }));
 
     expect(await screen.findByRole("alert")).toHaveTextContent(
-      "Det finns redan ett konto med den här e-postadressen. Logga in med GitHub i stället.",
+      "Det finns redan ett konto med den här e-postadressen. Logga in med GitHub eller med e-post och lösenord i stället.",
     );
   });
 

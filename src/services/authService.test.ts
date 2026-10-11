@@ -3,7 +3,19 @@ import { renderHook } from "@testing-library/react";
 import * as firebaseAuth from "firebase/auth";
 import * as firebaseFirestore from "firebase/firestore";
 import * as reactFirebaseHooks from "react-firebase-hooks/auth";
-import { useAuth, login, logout, signInErrorMessage } from "./authService";
+import {
+  useAuth,
+  login,
+  logout,
+  signInErrorMessage,
+  emailErrorMessage,
+  reauthenticate,
+  sendPasswordReset,
+  signUpWithEmail,
+  usesPassword,
+} from "./authService";
+import * as firebaseService from "./firebaseService";
+import { setLanguageSetting } from "../i18n/i18n";
 import { AUTH_STATUS, AUTH_PROVIDERS } from "../shared/constants";
 import type { User, Auth } from "firebase/auth";
 import type { Firestore } from "firebase/firestore";
@@ -153,10 +165,10 @@ describe("authService - Authentication workflows", () => {
 
       expect(
         signInErrorMessage(failure("auth/account-exists-with-different-credential"), AUTH_PROVIDERS.GOOGLE),
-      ).toBe("An account with this email already exists. Sign in with GitHub instead.");
+      ).toBe("An account with this email already exists. Sign in with GitHub or your email and password instead.");
       expect(
         signInErrorMessage(failure("auth/account-exists-with-different-credential"), AUTH_PROVIDERS.GITHUB),
-      ).toBe("An account with this email already exists. Sign in with Google instead.");
+      ).toBe("An account with this email already exists. Sign in with Google or your email and password instead.");
       expect(signInErrorMessage(failure("auth/popup-closed-by-user"), AUTH_PROVIDERS.GOOGLE)).toBeUndefined();
       expect(signInErrorMessage(failure("auth/popup-blocked"), AUTH_PROVIDERS.GOOGLE)).toMatch(/blocked/);
       expect(signInErrorMessage(failure("auth/network-request-failed"), AUTH_PROVIDERS.GOOGLE)).toMatch(/connection/);
@@ -250,6 +262,63 @@ describe("authService - Authentication workflows", () => {
 
       expect(result.current.status).toBe(AUTH_STATUS.REJECTED);
       expect(result.current.user).toBeUndefined();
+    });
+  });
+
+  describe("Email and password", () => {
+    const err = (code: string) => Object.assign(new Error(code), { code });
+
+    it("should create the account, signed in, and send a verification email in the app's language", async () => {
+      setLanguageSetting("sv");
+      const user = { uid: "new" } as User;
+      vi.mocked(firebaseAuth.createUserWithEmailAndPassword).mockResolvedValue({ user } as firebaseAuth.UserCredential);
+      vi.mocked(firebaseAuth.sendEmailVerification).mockResolvedValue();
+
+      await signUpWithEmail(" ada@example.com ", "long enough");
+
+      expect(firebaseAuth.createUserWithEmailAndPassword).toHaveBeenCalledWith(firebaseService.auth, "ada@example.com", "long enough");
+      expect(firebaseAuth.sendEmailVerification).toHaveBeenCalledWith(user);
+      expect((firebaseService.auth as unknown as { languageCode: string }).languageCode).toBe("sv");
+      setLanguageSetting("auto");
+    });
+
+    it("should still sign up when the verification email can't be sent", async () => {
+      vi.spyOn(console, "warn").mockImplementationOnce(() => {});
+      vi.mocked(firebaseAuth.createUserWithEmailAndPassword).mockResolvedValue({ user: { uid: "u" } } as firebaseAuth.UserCredential);
+      vi.mocked(firebaseAuth.sendEmailVerification).mockRejectedValue(err("auth/network-request-failed"));
+
+      await expect(signUpWithEmail("ada@example.com", "long enough")).resolves.toEqual({ uid: "u" });
+    });
+
+    it("should send a password reset email", async () => {
+      vi.mocked(firebaseAuth.sendPasswordResetEmail).mockResolvedValue();
+      await sendPasswordReset("ada@example.com ");
+      expect(firebaseAuth.sendPasswordResetEmail).toHaveBeenCalledWith(firebaseService.auth, "ada@example.com");
+    });
+
+    it("should explain what went wrong, without saying whether an email has an account", () => {
+      expect(emailErrorMessage(err("auth/invalid-credential"), "signIn")).toMatch(/^Wrong email or password/);
+      expect(emailErrorMessage(err("auth/email-already-in-use"), "signUp")).toMatch(/^There's already an account/);
+      expect(emailErrorMessage(err("auth/weak-password"), "signUp")).toBe("Choose a password with at least 8 characters.");
+      expect(emailErrorMessage(err("auth/invalid-email"), "signIn")).toBe("Enter a valid email address.");
+      expect(emailErrorMessage(err("auth/too-many-requests"), "signIn")).toMatch(/^Too many attempts/);
+      expect(emailErrorMessage(err("something/else"), "reset")).toBe("Couldn't send the email. Please try again.");
+    });
+
+    it("should confirm an email account with its password, and others with their provider's window", async () => {
+      const emailUser = { email: "ada@example.com", providerData: [{ providerId: "password" }] } as unknown as User;
+      const googleUser = { email: "ada@gmail.com", providerData: [{ providerId: "google.com" }, { providerId: "password" }] } as unknown as User;
+      vi.mocked(firebaseAuth.EmailAuthProvider.credential).mockReturnValue("credential" as never);
+
+      expect(usesPassword(emailUser)).toBe(true);
+      expect(usesPassword(googleUser)).toBe(false);
+
+      await reauthenticate(emailUser, "secret");
+      expect(firebaseAuth.EmailAuthProvider.credential).toHaveBeenCalledWith("ada@example.com", "secret");
+      expect(firebaseAuth.reauthenticateWithCredential).toHaveBeenCalledWith(emailUser, "credential");
+
+      await reauthenticate(googleUser);
+      expect(firebaseAuth.reauthenticateWithPopup).toHaveBeenCalledWith(googleUser, expect.any(firebaseAuth.GoogleAuthProvider));
     });
   });
 });

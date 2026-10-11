@@ -8,6 +8,7 @@ export const loginMessages = defineMessages({
     titleAccent: "Don't break the chain.",
     pitch: "Track your habits, watch the chain grow, and get a nudge only when a habit is still open today.",
     continueWith: (provider: string) => `Continue with ${provider}`,
+    continueWithEmail: "Continue with email",
     legalBefore: "By continuing you accept the ",
     termsLink: "terms of use",
     legalMiddle: ". See how your data is handled in the ",
@@ -27,6 +28,7 @@ export const loginMessages = defineMessages({
     titleAccent: "Bryt inte kedjan.",
     pitch: "Följ dina vanor, se kedjan växa och få en påminnelse bara när du har något kvar att bocka av idag.",
     continueWith: (provider: string) => `Fortsätt med ${provider}`,
+    continueWithEmail: "Fortsätt med e-post",
     legalBefore: "Genom att fortsätta godkänner du ",
     termsLink: "användarvillkoren",
     legalMiddle: ". Läs om hur din data hanteras i ",
@@ -39,5 +41,32 @@ export const loginMessages = defineMessages({
     demoCheck: "Markera dagen som klar",
     demoNext: "Starta din egen kedja ↓",
     language: "Språk",
+  },
+});
+
+export const emailFormMessages = defineMessages({
+  en: {
+    email: "Email",
+    password: "Password",
+    passwordHint: "At least 8 characters.",
+    signIn: "Sign in",
+    createAccount: "Create account",
+    newHere: "New here? Create an account",
+    haveAccount: "Already have an account? Sign in",
+    forgot: "Forgot your password?",
+    enterEmailFirst: "Enter your email first, then tap “Forgot your password?” again.",
+    resetSent: (email: string) => `If there's an account for ${email}, you'll get an email with a link to choose a new password.`,
+  },
+  sv: {
+    email: "E-post",
+    password: "Lösenord",
+    passwordHint: "Minst 8 tecken.",
+    signIn: "Logga in",
+    createAccount: "Skapa konto",
+    newHere: "Ny här? Skapa ett konto",
+    haveAccount: "Har du redan ett konto? Logga in",
+    forgot: "Glömt lösenordet?",
+    enterEmailFirst: "Fyll i din e-postadress först och tryck sedan på ”Glömt lösenordet?” igen.",
+    resetSent: (email: string) => `Om det finns ett konto för ${email} får du ett mejl med en länk för att välja ett nytt lösenord.`,
   },
 });

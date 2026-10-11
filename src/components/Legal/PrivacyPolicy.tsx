@@ -29,7 +29,9 @@ const english = (
     <ul>
       <li>
         <strong>Your account:</strong> the name, email address, profile picture link and
-        account ID that Google or GitHub shares when you sign in.
+        account ID that Google or GitHub shares when you sign in, or your email address if
+        you sign up with a password. Firebase stores the password scrambled (hashed), so
+        no one can read it, not even me.
       </li>
       <li>
         <strong>Your habits:</strong> names, descriptions, goals, the days you mark and
@@ -66,11 +68,12 @@ const english = (
     <h2>Who else is involved</h2>
     <ul>
       <li>
-        <strong>Google Firebase</strong> handles sign-in, the database (in the EU, eur3),
-        hosting and push messages, as a processor under Google's data processing terms.
+        <strong>Google Firebase</strong> handles sign-in (including the emails to confirm
+        your address or reset your password), the database (in the EU, eur3), hosting and
+        push messages, as a processor under Google's data processing terms.
       </li>
       <li>
-        <strong>Google or GitHub</strong>, whichever you sign in with, is an independent
+        <strong>Google or GitHub</strong>, if you sign in with one, is an independent
         controller: it learns that you use the app, and your profile picture is loaded from
         it.
       </li>
@@ -145,7 +148,9 @@ const swedish = (
     <ul>
       <li>
         <strong>Ditt konto:</strong> namn, e-postadress, länk till profilbild och konto-id
-        som Google eller GitHub delar när du loggar in.
+        som Google eller GitHub delar när du loggar in, eller din e-postadress om du
+        registrerar dig med lösenord. Firebase lagrar lösenordet krypterat (hashat), så
+        ingen kan läsa det, inte ens jag.
       </li>
       <li>
         <strong>Dina vanor:</strong> namn, beskrivningar, mål, dagarna du markerar och dina
@@ -182,13 +187,14 @@ const swedish = (
     <h2>Vilka mer som är inblandade</h2>
     <ul>
       <li>
-        <strong>Google Firebase</strong> står för inloggning, databasen (i EU, eur3), drift
-        och pushnotiser, som personuppgiftsbiträde enligt Googles
+        <strong>Google Firebase</strong> står för inloggning (även mejlen för att bekräfta
+        din adress eller återställa lösenordet), databasen (i EU, eur3), drift och
+        pushnotiser, som personuppgiftsbiträde enligt Googles
         personuppgiftsbiträdesavtal.
       </li>
       <li>
-        <strong>Google eller GitHub</strong>, den du loggar in med, är självständigt
-        personuppgiftsansvarig: den får veta att du använder appen, och din profilbild hämtas
+        <strong>Google eller GitHub</strong>, om du loggar in med någon av dem, är
+        självständigt personuppgiftsansvarig: den får veta att du använder appen, och din profilbild hämtas
         därifrån.
       </li>
       <li>

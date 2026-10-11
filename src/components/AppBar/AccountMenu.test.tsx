@@ -134,6 +134,30 @@ describe("AccountMenu - export, delete, legal links and log out", () => {
     );
   });
 
+  it("should ask an email account for its password before deleting", async () => {
+    vi.mocked(accountService.deleteAccountAndData).mockResolvedValue({ ok: true });
+    const emailUser = { ...user, providerData: [{ providerId: "password" }] } as unknown as User;
+    render(
+      <ToastProvider>
+        <MemoryRouter>
+          <AccountMenu user={emailUser} />
+        </MemoryRouter>
+      </ToastProvider>,
+    );
+
+    await userEvent.click(screen.getByRole("button", { name: "Account menu" }));
+    await userEvent.click(screen.getByRole("button", { name: "Delete my account" }));
+    const dialog = screen.getByRole("alertdialog");
+    expect(dialog).toHaveTextContent("Enter your password to confirm.");
+    const confirm = within(dialog).getByRole("button", { name: "Delete everything" });
+    expect(confirm).toBeDisabled();
+
+    await userEvent.type(within(dialog).getByLabelText("Password"), "my password");
+    await userEvent.click(confirm);
+
+    expect(accountService.deleteAccountAndData).toHaveBeenCalledWith("my password");
+  });
+
   it("should let the user choose the app's language, following the browser by default", async () => {
     onTestFinished(() => setLanguageSetting("auto"));
     renderMenu();
