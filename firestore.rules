@@ -39,14 +39,20 @@ service cloud.firestore {
         return streak is list && streak.size() <= 4000;
       }
 
+      // The habit's place in the user's own sorted list (0, 1, 2, …).
+      function isValidOrder(order) {
+        return order is int && order >= 0 && order <= 10000;
+      }
+
       function changedFieldsAreValid() {
         let changed = request.resource.data.diff(resource.data).affectedKeys();
         let data = request.resource.data;
-        return changed.hasOnly(['name', 'description', 'goal', 'streak'])
+        return changed.hasOnly(['name', 'description', 'goal', 'streak', 'order'])
           && (!('name' in changed) || isValidName(data.name))
           && (!('description' in changed) || isValidDescription(data.description))
           && (!('goal' in changed) || isValidGoal(data.goal))
-          && (!('streak' in changed) || isValidStreak(data.streak));
+          && (!('streak' in changed) || isValidStreak(data.streak))
+          && (!('order' in changed) || isValidOrder(data.order));
       }
 
       function isValidNewHabit() {

@@ -1,7 +1,7 @@
 import { afterEach, describe, it, expect, vi } from "vitest";
 import * as firestore from "firebase/firestore";
 import type { DocumentReference, DocumentSnapshot, QuerySnapshot } from "firebase/firestore";
-import { addHabit, getAllHabits } from "./habitService";
+import { addHabit, getAllHabits, saveHabitOrder } from "./habitService";
 
 vi.mock("firebase/firestore");
 
@@ -57,5 +57,26 @@ describe("habitService - goals stored in Firestore", () => {
     await expect(getAllHabits()).rejects.toThrow("Not signed in");
     await expect(addHabit()).rejects.toThrow("Not signed in");
     expect(firestore.addDoc).not.toHaveBeenCalled();
+  });
+
+  it("should return habits in the user's order and save only the given places", async () => {
+    vi.mocked(firestore.getDocs).mockResolvedValue({
+      docs: [
+        firestoreDoc("new", { name: "New", description: "", streak: [], createdAt: 1_800_000_000_000 }),
+        firestoreDoc("second", { name: "Second", description: "", streak: [], order: 1 }),
+        firestoreDoc("first", { name: "First", description: "", streak: [], order: 0 }),
+      ],
+    } as unknown as QuerySnapshot);
+
+    expect((await getAllHabits()).map((h) => h.id)).toEqual(["first", "second", "new"]);
+
+    const batch = { update: vi.fn(), commit: vi.fn().mockResolvedValue(undefined) };
+    vi.mocked(firestore.writeBatch).mockReturnValue(batch as unknown as firestore.WriteBatch);
+    vi.mocked(firestore.doc).mockImplementation((_db, _collection, id) => ({ id }) as unknown as DocumentReference);
+
+    await saveHabitOrder([{ id: "new", order: 2 }]);
+
+    expect(batch.update).toHaveBeenCalledExactlyOnceWith({ id: "new" }, { order: 2 });
+    expect(batch.commit).toHaveBeenCalledOnce();
   });
 });
