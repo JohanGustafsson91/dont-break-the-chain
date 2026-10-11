@@ -31,10 +31,10 @@ const english = (
         you marked, and any notes you write.
       </li>
       <li>
-        <strong>Reminders, only if you turn them on:</strong> the time you chose, your
-        time zone, the last date on which all your habits were done for the day (so you
-        aren't reminded on days you're done), the date of the last reminder (so you get at
-        most one a day), how many habits are left that day and the length of your longest
+        <strong>Reminders, only if you turn them on:</strong> the times you chose (up to
+        three), your time zone, the last date on which all your habits were done for the day (so you
+        aren't reminded on days you're done), the date and time of the last reminder (so you get
+        each one at most once a day), how many habits are left that day and the length of your longest
         current chain (numbers only, so the reminder can be specific), the language the
         reminder is written in, and a push token for each device that gets reminders. Turning
         reminders off on a device, logging out there, or deleting your account removes
@@ -183,10 +183,10 @@ const swedish = (
         markerat och de anteckningar du skriver.
       </li>
       <li>
-        <strong>Påminnelser, bara om du slår på dem:</strong> tiden du valt, din tidszon,
+        <strong>Påminnelser, bara om du slår på dem:</strong> tiderna du valt (upp till tre), din tidszon,
         det senaste datum då alla dina vanor var klara för dagen (så att du inte får
-        påminnelser de dagar du är klar), datumet för den senaste påminnelsen (så att du
-        får högst en om dagen), hur många vanor som är kvar den dagen och längden på din
+        påminnelser de dagar du är klar), datum och tid för den senaste påminnelsen (så att du
+        får varje påminnelse högst en gång om dagen), hur många vanor som är kvar den dagen och längden på din
         längsta pågående kedja (bara siffror, så att påminnelsen kan bli konkret),
         språket påminnelsen skrivs på, och en push-token för varje enhet som får
         påminnelser. Om du stänger av påminnelser på en enhet, loggar ut där eller raderar

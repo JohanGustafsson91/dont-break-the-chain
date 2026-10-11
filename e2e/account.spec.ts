@@ -15,16 +15,16 @@ test.describe("Account menu", () => {
     expect(data.account.email).toBe(credentials(testInfo.project.name).email);
     expect(data.habits.map((h: { name: string }) => h.name)).toEqual(["Meditate"]);
     // Reminder settings are included, but only a device count instead of the tokens.
-    expect(data.reminders).toMatchObject({ hour: 20, timeZone: "Europe/Stockholm", devices: 1 });
+    expect(data.reminders).toMatchObject({ hours: [20], timeZone: "Europe/Stockholm", devices: 1 });
     expect(JSON.stringify(data)).not.toContain("fake-device-token-for-e2e");
     await expect(page.getByRole("status")).toHaveText(/Your data has been downloaded/);
   });
 
   test("should open the daily reminder settings and close them again", async ({ signedIn: page }) => {
     await page.getByRole("button", { name: "Account menu" }).click();
-    await page.getByRole("button", { name: "Daily reminder" }).click();
+    await page.getByRole("button", { name: "Daily reminders" }).click();
 
-    const dialog = page.getByRole("dialog", { name: "Daily reminder" });
+    const dialog = page.getByRole("dialog", { name: "Daily reminders" });
     await expect(dialog).toBeVisible();
     // Which buttons show depends on the browser's push support; there is always a way out.
     await dialog.getByRole("button", { name: /^(Close|Cancel)$/ }).click();

@@ -196,6 +196,17 @@ describe("Firestore rules - reminder settings belong to one user", () => {
     });
     await assertSucceeds(updateDoc(own, { hour: 21 }));
     await assertSucceeds(updateDoc(own, { language: "sv" }));
+    await assertSucceeds(updateDoc(own, { hour: 12, hours: [12, 18, 21] }));
+    await assertSucceeds(updateDoc(own, { lastRemindedHour: 18 }));
+    await assertFails(updateDoc(own, { hours: [] }));
+    await assertFails(updateDoc(own, { hour: 8, hours: [8, 12, 18, 21] }));
+    await assertFails(updateDoc(own, { hour: 12, hours: [12, 24] }));
+    await assertFails(updateDoc(own, { hour: 12, hours: [12, "18"] }));
+    await assertFails(updateDoc(own, { hour: 12, hours: [1, 2, 24] }));
+    await assertFails(updateDoc(own, { hour: 12, hours: 12 }));
+    // An older app version changing only `hour` while `hours` exists.
+    await assertFails(updateDoc(own, { hour: 8 }));
+    await assertFails(updateDoc(own, { lastRemindedHour: 24 }));
     await assertFails(updateDoc(own, { language: "de" }));
     await assertFails(updateDoc(own, { language: 1 }));
 

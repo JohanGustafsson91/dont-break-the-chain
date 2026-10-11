@@ -14,6 +14,10 @@ const firestoreFields = (s: Record<string, unknown>) => ({
   ...(s.lastMarkedDate !== undefined && { lastMarkedDate: { stringValue: s.lastMarkedDate } }),
   ...(s.lastRemindedDate !== undefined && { lastRemindedDate: { stringValue: s.lastRemindedDate } }),
   ...(s.language !== undefined && { language: { stringValue: s.language } }),
+  ...(s.hours !== undefined && {
+    hours: { arrayValue: { values: (s.hours as number[]).map((h) => ({ integerValue: String(h) })) } },
+  }),
+  ...(s.lastRemindedHour !== undefined && { lastRemindedHour: { integerValue: String(s.lastRemindedHour) } }),
 });
 
 const fakeApi = (docs: ReturnType<typeof doc>[], send = vi.fn().mockResolvedValue("sent")) => ({
@@ -33,9 +37,26 @@ describe("send-reminders - who gets a reminder", () => {
 
   it("should remind from the chosen hour, catch up two hours, and then stop", () => {
     expect(reminderDue({ ...base, hour: 21 }, NOW).due).toBe(false); // not yet
-    expect(reminderDue(base, NOW)).toEqual({ due: true, date: "2026-10-09" });
+    expect(reminderDue(base, NOW)).toEqual({ due: true, date: "2026-10-09", hour: 20 });
     expect(reminderDue({ ...base, hour: 18 }, NOW).due).toBe(true); // a delayed run catches up
     expect(reminderDue({ ...base, hour: 17 }, NOW).due).toBe(false); // too late to surprise anyone
+  });
+
+  it("should remind at each chosen hour once, and only the latest one a late run catches up", () => {
+    // 20:05 in Stockholm.
+    const three = { ...base, hour: undefined, hours: [12, 18, 20] };
+    expect(reminderDue(three, NOW)).toEqual({ due: true, date: "2026-10-09", hour: 20 });
+    // 18:00 already went out today; 20:00 hasn't.
+    expect(reminderDue({ ...three, lastRemindedDate: "2026-10-09", lastRemindedHour: 18 }, NOW).due).toBe(true);
+    expect(reminderDue({ ...three, lastRemindedDate: "2026-10-09", lastRemindedHour: 20 }, NOW).due).toBe(false);
+    // Yesterday's reminder doesn't count today.
+    expect(reminderDue({ ...three, lastRemindedDate: "2026-10-08", lastRemindedHour: 20 }, NOW).due).toBe(true);
+    // A day reminded before the hour was saved counts as done.
+    expect(reminderDue({ ...three, lastRemindedDate: "2026-10-09" }, NOW).due).toBe(false);
+    // Between chosen hours, and nothing within the catch-up window: not due.
+    expect(reminderDue({ ...base, hours: [9, 12] }, NOW).due).toBe(false);
+    // A done day gets none of them.
+    expect(reminderDue({ ...three, lastMarkedDate: "2026-10-09" }, NOW).due).toBe(false);
   });
 
   it("should skip days that are already marked or already reminded", () => {
@@ -78,9 +99,21 @@ describe("send-reminders - a run", () => {
     ]);
     expect(api.update).toHaveBeenCalledWith("reminders/u1", {
       remindedDate: "2026-10-09",
+      remindedHour: 20,
       deadTokens: ["dead"],
     });
     expect(counts).toEqual({ checked: 1, due: 1, sent: 2, deadTokens: 1, failed: 0 });
+  });
+
+  it("should send the evening reminder after the midday one, and remember which went out", async () => {
+    const send = vi.fn().mockResolvedValue("sent");
+    const fields = firestoreFields({ ...base, hours: [12, 20], lastRemindedDate: "2026-10-09", lastRemindedHour: 12 });
+    const api = fakeApi([doc("reminders/u1", fields)], send);
+
+    await sendReminders({ api, now: NOW, link: "https://app", dryRun: false });
+
+    expect(send).toHaveBeenCalledTimes(1);
+    expect(api.update).toHaveBeenCalledWith("reminders/u1", { remindedDate: "2026-10-09", remindedHour: 20, deadTokens: [] });
   });
 
   it("should keep going when one user's document is broken", async () => {
@@ -153,6 +186,7 @@ describe("send-reminders - FCM errors", () => {
     expect(counts).toMatchObject({ sent: 1, deadTokens: 1, failed: 1 });
     expect(api.update).toHaveBeenCalledWith("reminders/u1", {
       remindedDate: "2026-10-09",
+      remindedHour: 20,
       deadTokens: ["dead"],
     });
     expect(warn).toHaveBeenCalledWith("A reminder failed:", "HTTP 503");

@@ -132,8 +132,23 @@ describe("reminderService - daily reminder settings", () => {
     vi.mocked(Notification.requestPermission).mockResolvedValue("denied");
     const { turnOnReminders, NotificationsBlockedError } = await load();
 
-    await expect(turnOnReminders(20)).rejects.toBeInstanceOf(NotificationsBlockedError);
+    await expect(turnOnReminders([20])).rejects.toBeInstanceOf(NotificationsBlockedError);
     expect(firestore.setDoc).not.toHaveBeenCalled();
+  });
+
+  it("should store a single reminder time exactly as older app versions do", async () => {
+    vi.mocked(firestore.deleteField).mockReturnValue("delete-field" as never);
+    const { updateReminderHours } = await load();
+
+    await updateReminderHours([20]);
+    expect(firestore.updateDoc).toHaveBeenLastCalledWith("reminder-doc", {
+      hour: 20,
+      hours: "delete-field",
+      timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+    });
+
+    await updateReminderHours([21, 12, 12]);
+    expect(firestore.updateDoc).toHaveBeenLastCalledWith("reminder-doc", expect.objectContaining({ hour: 12, hours: [12, 21] }));
   });
 
   it("should save this device's token with the hour and time zone, replacing its old token", async () => {
@@ -141,12 +156,14 @@ describe("reminderService - daily reminder settings", () => {
     localStorage.setItem("reminderToken", "token-old");
     const { turnOnReminders, isOnForThisDevice } = await load();
 
-    await turnOnReminders(7);
+    await turnOnReminders([21, 7, 7]);
 
     expect(firestore.setDoc).toHaveBeenCalledWith(
       "reminder-doc",
       {
+        // Sorted, without repeats; `hour` is the first, for older app versions.
         hour: 7,
+        hours: [7, 21],
         timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
         tokens: { union: ["token-new"] },
         language: "en",

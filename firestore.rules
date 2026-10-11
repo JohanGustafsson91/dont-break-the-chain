@@ -75,9 +75,10 @@ service cloud.firestore {
       allow delete: if ownsExisting();
     }
 
-    // Daily reminder settings, one document per user (id = uid): the hour and time
-    // zone to remind at, one push token per device, the last day on which every habit
-    // was done (lastMarkedDate), and the last day a reminder was sent. Only the user may touch it; the reminder
+    // Daily reminder settings, one document per user (id = uid): the hours (up to three;
+    // `hour` is the first, for older app versions) and time zone to remind at, one push
+    // token per device, the last day on which every habit was done (lastMarkedDate), and
+    // the day and hour of the last reminder sent. Only the user may touch it; the reminder
     // sender (scripts/send-reminders.mjs) uses server credentials.
     match /reminders/{uid} {
       function isOwner() {
@@ -85,9 +86,13 @@ service cloud.firestore {
       }
 
       function isValidReminder(data) {
-        return data.keys().hasOnly(['hour', 'timeZone', 'tokens', 'lastMarkedDate', 'lastRemindedDate', 'progress', 'language'])
+        return data.keys().hasOnly(['hour', 'hours', 'timeZone', 'tokens', 'lastMarkedDate', 'lastRemindedDate', 'lastRemindedHour', 'progress', 'language'])
           && data.keys().hasAll(['hour', 'timeZone', 'tokens'])
-          && data.hour is int && data.hour >= 0 && data.hour <= 23
+          && isHour(data.hour)
+          // `hour` must stay the first of `hours`: an older app version that changes only
+          // `hour` then gets an error instead of a change the sender would ignore.
+          && (!('hours' in data) || (isValidHours(data.hours) && data.hours[0] == data.hour))
+          && (!('lastRemindedHour' in data) || isHour(data.lastRemindedHour))
           && data.timeZone is string && data.timeZone.size() > 0 && data.timeZone.size() <= 64
           && data.tokens is list && data.tokens.size() <= 10
           && isDateOrMissing(data, 'lastMarkedDate')
@@ -95,6 +100,18 @@ service cloud.firestore {
           && (!('progress' in data) || isValidProgress(data.progress))
           // The language the reminder is written in, as chosen in the app.
           && (!('language' in data) || data.language in ['en', 'sv']);
+      }
+
+      function isHour(h) {
+        return h is int && h >= 0 && h <= 23;
+      }
+
+      // Rules can't loop, so each of the (at most three) entries is checked by index.
+      function isValidHours(hours) {
+        return hours is list && hours.size() >= 1 && hours.size() <= 3
+          && isHour(hours[0])
+          && (hours.size() < 2 || isHour(hours[1]))
+          && (hours.size() < 3 || isHour(hours[2]));
       }
 
       // Counts for the day, never habit names (see ReminderProgress in reminderService).
