@@ -4,6 +4,8 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../services/authService";
 import { AppBar } from "../AppBar/AppBar";
 import { AUTH_STATUS } from "../../shared/constants";
+import { useMessages } from "../../i18n/i18n";
+import { protectedRouteMessages } from "./messages";
 
 export const ProtectedRoute = ({
   redirectPath = "/login",
@@ -12,6 +14,7 @@ export const ProtectedRoute = ({
 }: PropsWithChildren<ProtectedRouteProps>) => {
   const navigate = useNavigate();
   const { user, status } = useAuth();
+  const m = useMessages(protectedRouteMessages);
 
   useEffect(() => {
     if (status === AUTH_STATUS.PENDING) {
@@ -33,7 +36,7 @@ export const ProtectedRoute = ({
   if (status === AUTH_STATUS.PENDING) {
     return (
       <div className="page page-center">
-        <p className="loading">Loading</p>
+        <p className="loading">{m.loading}</p>
       </div>
     );
   }

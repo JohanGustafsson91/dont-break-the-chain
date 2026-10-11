@@ -1,3 +1,4 @@
+import { getLanguage } from "../i18n/i18n";
 import {
   arrayRemove,
   arrayUnion,
@@ -154,7 +155,7 @@ export const turnOnReminders = async (hour: number) => {
   await replaceStoredToken(token);
   await setDoc(
     reminderDoc(),
-    { hour, timeZone: timeZone(), tokens: arrayUnion(token) },
+    { hour, timeZone: timeZone(), tokens: arrayUnion(token), language: getLanguage() },
     { merge: true },
   );
   storage.set(token);
@@ -265,14 +266,16 @@ export const recordTodayProgress = async (habits: Habit[]) => {
   const day = today.toISOString().slice(0, 10);
   const done = isEverythingDoneToday(habits, today);
   const progress = summarizeProgress(habits, today);
-  const key = JSON.stringify({ day, done, progress });
+  // The reminder is written in the app's language, so a change of language is saved too.
+  const language = getLanguage();
+  const key = JSON.stringify({ day, done, progress, language });
   if (lastRecorded === key) return;
 
   // Set before the write: a quick ✓ then undo must not be skipped while the first
   // write is still on its way. One client's writes arrive in order, so the last wins.
   lastRecorded = key;
   try {
-    await updateDoc(reminderDoc(), { lastMarkedDate: done ? day : deleteField(), progress });
+    await updateDoc(reminderDoc(), { lastMarkedDate: done ? day : deleteField(), progress, language });
   } catch (error) {
     if (hasNoReminders(error)) {
       noReminders = true;

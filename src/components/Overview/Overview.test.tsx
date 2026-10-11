@@ -7,6 +7,7 @@ import { Overview } from "./Overview";
 import * as habitService from "../../services/habitService";
 import type { Habit } from "../../domain/Habit";
 import { createDate } from "../../utils/date";
+import { setLanguageSetting } from "../../i18n/i18n";
 
 const mockNavigate = vi.fn();
 vi.mock("react-router-dom", async () => ({
@@ -114,5 +115,22 @@ describe("Overview", () => {
 
     expect(await screen.findByRole("link", { name: "Create one under Today" })).toHaveAttribute("href", "/");
     expect(screen.queryByRole("button", { name: "Earlier" })).not.toBeInTheDocument();
+  });
+
+  it("should speak Swedish", async () => {
+    setLanguageSetting("sv");
+    onTestFinished(() => setLanguageSetting("auto"));
+    vi.mocked(habitService.getAllHabits).mockResolvedValue([
+      habit("run", "Run", { "2026-10-08": "GOOD", "2026-10-09": "BAD", "2026-10-10": "GOOD" }, new Date(2026, 9, 8, 9)),
+    ]);
+
+    renderOverview();
+
+    expect(await screen.findByText(/dagar klara/)).toHaveTextContent("Dagliga vanor: 2 av 3 dagar klara (67 %)");
+    expect(screen.getByRole("heading", { name: "Översikt" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Run: 2 klara, 1 missad, 1 i rad" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Tidigare" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Senare" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "4 veckor" })).toBeInTheDocument();
   });
 });

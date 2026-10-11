@@ -1,6 +1,6 @@
 import "@testing-library/jest-dom";
 import { describe, it, expect, vi, beforeEach, onTestFinished } from "vitest";
-import { render, screen, waitFor, within } from "@testing-library/react";
+import { act, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { HabitsList } from "./HabitsList";
 import { BrowserRouter } from "react-router-dom";
@@ -12,6 +12,7 @@ import { AppBar } from "../AppBar/AppBar";
 import type { User } from "firebase/auth";
 import type { Habit } from "../../domain/Habit";
 import { getToday } from "../../utils/date";
+import { setLanguageSetting } from "../../i18n/i18n";
 
 const mockNavigate = vi.fn();
 
@@ -422,5 +423,36 @@ describe("HabitsList - User workflows", () => {
 
     expect(await screen.findByRole("status")).toHaveTextContent("Couldn't save the new order.");
     expect(titles()).toEqual(["Run", "Read"]);
+  });
+
+  it("should switch to Swedish without a reload, and ask in Swedish before deleting a note", async () => {
+    onTestFinished(() => setLanguageSetting("auto"));
+    vi.mocked(habitService.getAllHabits).mockResolvedValue([
+      {
+        id: "habit-1",
+        name: "Meditation",
+        description: "",
+        goal: { type: "daily" },
+        streak: [{ date: getToday(), status: "GOOD", notes: "Felt calm" }],
+      },
+    ]);
+
+    renderHabitsList();
+    expect(await screen.findByRole("heading", { name: "Your habits" })).toBeInTheDocument();
+
+    act(() => setLanguageSetting("sv"));
+
+    expect(screen.getByRole("heading", { name: "Dina vanor" })).toBeInTheDocument();
+    expect(
+      screen.getByText(new Date().toLocaleDateString("sv-SE", { weekday: "long", day: "numeric", month: "long" })),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Idag" })).toHaveAttribute("aria-current", "page");
+    expect(screen.getByRole("button", { name: "+ Ny vana" })).toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole("radio", { name: "Klar" }));
+    const dialog = screen.getByRole("alertdialog", { name: "Ta bort markeringen?" });
+    expect(within(dialog).getByText("Anteckningen för dagen raderas också: ”Felt calm”")).toBeInTheDocument();
+    expect(within(dialog).getByRole("button", { name: "Avbryt" })).toBeInTheDocument();
+    expect(within(dialog).getByRole("button", { name: "Ta bort" })).toBeInTheDocument();
   });
 });

@@ -1,5 +1,7 @@
 import "./ConfirmDialog.css";
 import { useEffect, useId } from "react";
+import { useMessages } from "../../i18n/i18n";
+import { confirmDialogMessages } from "./messages";
 
 export const ConfirmDialog = ({
   title,
@@ -9,6 +11,7 @@ export const ConfirmDialog = ({
   onCancel,
 }: Props) => {
   const titleId = useId();
+  const m = useMessages(confirmDialogMessages);
 
   useEffect(
     function closeOnEscape() {
@@ -36,7 +39,7 @@ export const ConfirmDialog = ({
         <span className="ConfirmDialog-body">{body}</span>
         <div className="ConfirmDialog-actions">
           <button type="button" className="secondary" onClick={onCancel} autoFocus>
-            Cancel
+            {m.cancel}
           </button>
           <button type="button" className="danger" onClick={onConfirm}>
             {confirmLabel}

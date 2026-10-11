@@ -16,6 +16,8 @@ import { DAILY_GOAL, type Goal, type Habit, type StreakDay } from "../domain/Hab
 import { auth, db } from "./firebaseService";
 import { createDate } from "../utils/date";
 import { sortHabits } from "../domain/habitOrder";
+import { messagesFor } from "../i18n/i18n";
+import { habitMessages } from "./messages";
 import { COLLECTIONS } from "../shared/constants";
 
 export const getHabitById = async (
@@ -86,7 +88,8 @@ export const saveHabitOrder = async (changes: { id: string; order: number }[]) =
 export const addHabit = async () => {
   const habitsRef = collection(db, COLLECTIONS.HABITS);
   const docRef = await addDoc(habitsRef, {
-    name: "New habit",
+    // In the language the habit is created in; renaming it is the user's next step.
+    name: messagesFor(habitMessages).defaultName,
     description: "",
     goal: DAILY_GOAL,
     streak: [],

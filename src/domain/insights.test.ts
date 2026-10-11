@@ -1,4 +1,5 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, afterEach } from "vitest";
+import { setLanguageSetting } from "../i18n/i18n";
 import { getInsights, recoveryInsight } from "./insights";
 import type { Goal, Habit } from "./Habit";
 import { HABIT_STATUS } from "../shared/constants";
@@ -122,5 +123,40 @@ describe("Insights - patterns found in a habit's history", () => {
     expect(getInsights(habit, NOW)).toEqual([
       "5 good days in the last 30 days, down from 9.",
     ]);
+  });
+});
+
+describe("Insights - in Swedish", () => {
+  afterEach(() => setLanguageSetting("auto"));
+
+  it("should write every insight in Swedish, with Swedish weekday names", () => {
+    setLanguageSetting("sv");
+    const weekdayAndTrend = habitWithHistory(63, (daysAgo) =>
+      daysAgo % 7 === 0 || (daysAgo >= 30 && daysAgo % 7 === 3) ? "bad" : "good",
+    );
+    const chainBreaks = habitWithHistory(56, (daysAgo, date) =>
+      date.getUTCDay() === 0 && [0, 7, 21, 35].includes(daysAgo) ? "bad" : "good",
+    );
+    const recovering = habitWithHistory(40, (daysAgo) =>
+      daysAgo === 13 || daysAgo % 4 === 0 ? "bad" : "good",
+    );
+    const weeklyDown = habitWithHistory(
+      60,
+      (daysAgo, date) =>
+        date.getUTCDay() === 0
+          ? "bad"
+          : daysAgo % (daysAgo < 30 ? 7 : 3) === 1
+            ? "good"
+            : undefined,
+      { type: "weekly", times: 3 },
+    );
+
+    expect(getInsights(weekdayAndTrend, NOW)).toEqual([
+      "Du missar oftast på söndagar: 6 av de senaste 6.",
+      "83 % bra dagar de senaste 30 dagarna, upp från 70 %.",
+    ]);
+    expect(getInsights(chainBreaks, NOW)[1]).toBe("Dina kedjor brukar brytas efter 6–13 dagar.");
+    expect(recoveryInsight(recovering)).toBe("Efter en dålig dag blir nästa dag bra i 90 % av fallen.");
+    expect(getInsights(weeklyDown, NOW)).toEqual(["5 bra dagar de senaste 30 dagarna, ner från 9."]);
   });
 });

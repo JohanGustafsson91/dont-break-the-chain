@@ -4,6 +4,8 @@ import { auth } from "./firebaseService";
 import { reauthenticate } from "./authService";
 import { deleteAllHabits, getAllHabits } from "./habitService";
 import { deleteReminders, getReminderSettings, type ReminderSettings } from "./reminderService";
+import { messagesFor } from "../i18n/i18n";
+import { accountDeletionMessages } from "./messages";
 
 const toDateKey = (date: Date) => date.toISOString().slice(0, 10);
 
@@ -102,18 +104,19 @@ export const deletionFailureMessage = (
   result: Extract<DeletionResult, { ok: false }>,
 ) => {
   const code = (result.error as { code?: string } | undefined)?.code;
+  const t = messagesFor(accountDeletionMessages);
 
   if (result.step === "reauthenticate") {
     if (code === "auth/popup-closed-by-user" || code === "auth/cancelled-popup-request") {
-      return "Nothing was deleted.";
+      return t.nothingDeleted;
     }
     if (code === "auth/user-mismatch") {
-      return "Choose the same account you're signed in with. Nothing was deleted.";
+      return t.userMismatch;
     }
-    return "Couldn't confirm it's you. Nothing was deleted.";
+    return t.notConfirmed;
   }
   if (result.step === "habits") {
-    return "Deleting your habits failed. Please try again.";
+    return t.habitsFailed;
   }
-  return "Your habits were deleted, but your account couldn't be removed. Please try again.";
+  return t.accountFailed;
 };

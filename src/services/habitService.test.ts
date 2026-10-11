@@ -1,7 +1,8 @@
-import { afterEach, describe, it, expect, vi } from "vitest";
+import { afterEach, describe, it, expect, vi, onTestFinished } from "vitest";
 import * as firestore from "firebase/firestore";
 import type { DocumentReference, DocumentSnapshot, QuerySnapshot } from "firebase/firestore";
 import { addHabit, getAllHabits, saveHabitOrder } from "./habitService";
+import { setLanguageSetting } from "../i18n/i18n";
 
 vi.mock("firebase/firestore");
 
@@ -48,6 +49,16 @@ describe("habitService - goals stored in Firestore", () => {
 
     const [, savedHabit] = vi.mocked(firestore.addDoc).mock.calls[0];
     expect(savedHabit).toMatchObject({ goal: { type: "daily" }, author: "user-1" });
+  });
+
+  it("should name a new habit in the language the app is in", async () => {
+    vi.mocked(firestore.addDoc).mockClear().mockResolvedValue({ id: "new" } as DocumentReference);
+    setLanguageSetting("sv");
+    onTestFinished(() => setLanguageSetting("auto"));
+
+    await addHabit();
+
+    expect(vi.mocked(firestore.addDoc).mock.calls[0][1]).toMatchObject({ name: "Ny vana" });
   });
 
   it("should refuse to read or create habits without a signed-in user", async () => {

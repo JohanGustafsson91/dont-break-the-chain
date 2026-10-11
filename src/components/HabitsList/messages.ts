@@ -1,0 +1,71 @@
+import { defineMessages } from "../../i18n/i18n";
+
+export const habitsListMessages = defineMessages({
+  en: {
+    title: "Your habits",
+    reorder: "Reorder",
+    done: "Done",
+    emptyTitle: "No habits yet",
+    emptyText: "Pick one thing you want to do every day and create your first habit.",
+    weekSuffix: " wk",
+    current: "Current",
+    longest: "Longest",
+    loading: "Fetching habits",
+    loadFailed: "Couldn't load your habits. Check your connection and reload the page.",
+    createFirst: "+ Create habit",
+    newHabit: "+ New habit",
+    createFailed: "Couldn't create the habit. Please try again.",
+    saveDayFailed: "Couldn't save that day. Please try again.",
+    saveOrderFailed: "Couldn't save the new order. Please try again.",
+    removeTitle: "Remove status?",
+    removeBody: (notes: string) => `The note for this day will be deleted too: “${notes}”`,
+    remove: "Remove",
+  },
+  sv: {
+    title: "Dina vanor",
+    reorder: "Sortera",
+    done: "Klar",
+    emptyTitle: "Inga vanor än",
+    emptyText: "Välj en sak du vill göra varje dag och skapa din första vana.",
+    weekSuffix: " v",
+    current: "Nuvarande",
+    longest: "Längsta",
+    loading: "Hämtar vanor",
+    loadFailed: "Det gick inte att ladda dina vanor. Kontrollera anslutningen och ladda om sidan.",
+    createFirst: "+ Skapa vana",
+    newHabit: "+ Ny vana",
+    createFailed: "Det gick inte att skapa vanan. Försök igen.",
+    saveDayFailed: "Det gick inte att spara dagen. Försök igen.",
+    saveOrderFailed: "Det gick inte att spara den nya ordningen. Försök igen.",
+    removeTitle: "Ta bort markeringen?",
+    removeBody: (notes: string) => `Anteckningen för dagen raderas också: ”${notes}”`,
+    remove: "Ta bort",
+  },
+});
+
+export const reorderListMessages = defineMessages({
+  en: {
+    list: "Habits in order",
+    move: (name: string) => `Move ${name}`,
+    place: (position: number, total: number) => `position ${position} of ${total}`,
+    pickedUp: (name: string, place: string) => `Picked up ${name}, ${place}.`,
+    moved: (name: string, place: string) => `${name} moved to ${place}.`,
+    dropped: (name: string, place: string) => `${name} dropped at ${place}.`,
+    notMoved: (name: string) => `${name} was not moved.`,
+    cancelled: (name: string) => `Moving ${name} was cancelled.`,
+    instructions:
+      "To pick up a habit, press the space bar. While dragging, use the arrow keys to move it. Press space again to drop it in its new position, or press escape to cancel.",
+  },
+  sv: {
+    list: "Vanor i ordning",
+    move: (name: string) => `Flytta ${name}`,
+    place: (position: number, total: number) => `plats ${position} av ${total}`,
+    pickedUp: (name: string, place: string) => `${name} har tagits upp, ${place}.`,
+    moved: (name: string, place: string) => `${name} flyttades till ${place}.`,
+    dropped: (name: string, place: string) => `${name} släpptes på ${place}.`,
+    notMoved: (name: string) => `${name} flyttades inte.`,
+    cancelled: (name: string) => `Flytten av ${name} avbröts.`,
+    instructions:
+      "Tryck på mellanslag för att ta upp en vana. Flytta den sedan med piltangenterna. Tryck på mellanslag igen för att släppa den på sin nya plats, eller på Escape för att avbryta.",
+  },
+});

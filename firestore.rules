@@ -85,14 +85,16 @@ service cloud.firestore {
       }
 
       function isValidReminder(data) {
-        return data.keys().hasOnly(['hour', 'timeZone', 'tokens', 'lastMarkedDate', 'lastRemindedDate', 'progress'])
+        return data.keys().hasOnly(['hour', 'timeZone', 'tokens', 'lastMarkedDate', 'lastRemindedDate', 'progress', 'language'])
           && data.keys().hasAll(['hour', 'timeZone', 'tokens'])
           && data.hour is int && data.hour >= 0 && data.hour <= 23
           && data.timeZone is string && data.timeZone.size() > 0 && data.timeZone.size() <= 64
           && data.tokens is list && data.tokens.size() <= 10
           && isDateOrMissing(data, 'lastMarkedDate')
           && isDateOrMissing(data, 'lastRemindedDate')
-          && (!('progress' in data) || isValidProgress(data.progress));
+          && (!('progress' in data) || isValidProgress(data.progress))
+          // The language the reminder is written in, as chosen in the app.
+          && (!('language' in data) || data.language in ['en', 'sv']);
       }
 
       // Counts for the day, never habit names (see ReminderProgress in reminderService).

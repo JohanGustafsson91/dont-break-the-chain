@@ -10,6 +10,8 @@ import {
 } from "firebase/auth";
 import { forgetThisDevice } from "./reminderService";
 import { AUTH_STATUS, AUTH_PROVIDERS } from "../shared/constants";
+import { messagesFor } from "../i18n/i18n";
+import { signInMessages } from "./messages";
 
 export type AuthProvider = (typeof AUTH_PROVIDERS)[keyof typeof AUTH_PROVIDERS];
 
@@ -96,18 +98,19 @@ export const signInErrorMessage = (
   const other =
     attempted === AUTH_PROVIDERS.GITHUB ? AUTH_PROVIDERS.GOOGLE : AUTH_PROVIDERS.GITHUB;
 
+  const t = messagesFor(signInMessages);
   switch (code) {
     case "auth/popup-closed-by-user":
     case "auth/cancelled-popup-request":
     case "auth/user-cancelled":
       return undefined;
     case "auth/account-exists-with-different-credential":
-      return `An account with this email already exists. Sign in with ${providerName[other]} instead.`;
+      return t.accountExists(providerName[other]);
     case "auth/popup-blocked":
-      return "Your browser blocked the sign-in window. Allow pop-ups for this site and try again.";
+      return t.popupBlocked;
     case "auth/network-request-failed":
-      return "Couldn't reach the sign-in service. Check your connection and try again.";
+      return t.networkFailed;
     default:
-      return "Signing in didn't work. Please try again.";
+      return t.failed;
   }
 };

@@ -13,7 +13,9 @@ import { markAccountDeleted } from "../../shared/accountDeletedNotice";
 import { forgetTermsAccepted } from "../../shared/termsAcceptance";
 import { useToast } from "../Toast/Toast.Context";
 import { ReminderDialog } from "../ReminderDialog/ReminderDialog";
-import { remindersAvailable, syncReminderToken } from "../../services/reminderService";
+import { refreshTodayProgress, remindersAvailable, syncReminderToken } from "../../services/reminderService";
+import { setLanguageSetting, useLanguage, useMessages, type LanguageSetting } from "../../i18n/i18n";
+import { accountMenuMessages, languageNames } from "./messages";
 
 export const AccountMenu = ({ user }: Props) => {
   const [isOpen, setIsOpen] = useState(false);
@@ -23,6 +25,8 @@ export const AccountMenu = ({ user }: Props) => {
   const rootRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const { showToast, hideToast } = useToast();
+  const t = useMessages(accountMenuMessages);
+  const { setting, language } = useLanguage();
 
   // The menu is on every signed-in page, so this runs once when the app opens.
   useEffect(function keepReminderTokenFresh() {
@@ -61,17 +65,17 @@ export const AccountMenu = ({ user }: Props) => {
     close();
     try {
       await downloadMyData();
-      showToast("Your data has been downloaded.");
+      showToast(t.exported);
     } catch (error) {
       console.error("Could not export data", { error });
-      showToast("Couldn't export your data. Please try again.");
+      showToast(t.exportFailed);
     }
   }
 
   async function onDelete() {
     setIsConfirmingDelete(false);
     setIsDeleting(true);
-    showToast("Confirm it's you in the sign-in window to delete your account…");
+    showToast(t.confirmIdentity);
     const result = await deleteAccountAndData();
     setIsDeleting(false);
 
@@ -104,7 +108,7 @@ export const AccountMenu = ({ user }: Props) => {
         ref={triggerRef}
         type="button"
         className="AccountMenu-trigger"
-        aria-label="Account menu"
+        aria-label={t.menu}
         aria-expanded={isOpen}
         aria-controls={isOpen ? "account-menu" : undefined}
         onClick={() => setIsOpen((open) => !open)}
@@ -128,11 +132,11 @@ export const AccountMenu = ({ user }: Props) => {
                 setIsReminderOpen(true);
               }}
             >
-              Daily reminder
+              {t.reminder}
             </button>
           ) : null}
           <button type="button" className="AccountMenu-item" onClick={onExport}>
-            Export my data
+            {t.exportData}
           </button>
           <button
             type="button"
@@ -143,18 +147,34 @@ export const AccountMenu = ({ user }: Props) => {
               setIsConfirmingDelete(true);
             }}
           >
-            Delete my account
+            {t.deleteAccount}
           </button>
           <hr />
           <Link className="AccountMenu-item" to="/privacy" onClick={() => setIsOpen(false)}>
-            Privacy policy
+            {t.privacy}
           </Link>
           <Link className="AccountMenu-item" to="/terms" onClick={() => setIsOpen(false)}>
-            Terms of use
+            {t.terms}
           </Link>
           <button type="button" className="AccountMenu-item" onClick={logout}>
-            Log out
+            {t.logOut}
           </button>
+          <hr />
+          <label className="AccountMenu-language">
+            <span>{t.language}</span>
+            <select
+              value={setting}
+              onChange={(e) => {
+                setLanguageSetting(e.target.value as LanguageSetting);
+                // Reminders are written in the chosen language; save it with them.
+                void refreshTodayProgress();
+              }}
+            >
+              <option value="auto">{t.automatic(languageNames[language])}</option>
+              <option value="en">{languageNames.en}</option>
+              <option value="sv">{languageNames.sv}</option>
+            </select>
+          </label>
         </div>
       ) : null}
 
@@ -169,9 +189,9 @@ export const AccountMenu = ({ user }: Props) => {
 
       {isConfirmingDelete ? (
         <ConfirmDialog
-          title="Delete your account?"
-          body="All your habits, days and notes are deleted for good, and your account is removed. Export your data first if you want a copy. You'll be asked to sign in again to confirm. Access you gave the app in your Google or GitHub account can be removed there."
-          confirmLabel="Delete everything"
+          title={t.deleteTitle}
+          body={t.deleteBody}
+          confirmLabel={t.deleteConfirm}
           onCancel={() => {
             setIsConfirmingDelete(false);
             triggerRef.current?.focus();

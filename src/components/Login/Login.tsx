@@ -15,9 +15,12 @@ import {
   hasAcceptedCurrentTerms,
   rememberTermsAccepted,
 } from "../../shared/termsAcceptance";
+import { useMessages } from "../../i18n/i18n";
+import { loginMessages } from "./messages";
 import "./Login.css";
 
 export const Login = () => {
+  const t = useMessages(loginMessages);
   // Accepted earlier on this device: say so instead of showing a pre-ticked box, which
   // would wrongly tell the next person on a shared device that they ticked it.
   const [acceptedOnThisDevice] = useState(hasAcceptedCurrentTerms);
@@ -54,17 +57,18 @@ export const Login = () => {
       </div>
       {accountDeleted ? (
         <p className="Login-notice" role="status">
-          Your account and all your data have been deleted.
+          {t.accountDeleted}
         </p>
       ) : null}
       <h1 className="Login-title">Don't Break The Chain</h1>
-      <h2 className="Login-subtitle">
-        Build habits, stay consistent, and keep your streak alive!
-      </h2>
+      <h2 className="Login-subtitle">{t.tagline}</h2>
       {acceptedOnThisDevice ? (
         <p className="Login-accepted" id="login-consent">
-          You accepted the <Link to="/terms">terms of use</Link> on this device. See
-          also the <Link to="/privacy">privacy policy</Link>.
+          {t.acceptedBefore}
+          <Link to="/terms">{t.termsLink}</Link>
+          {t.acceptedMiddle}
+          <Link to="/privacy">{t.privacyLink}</Link>
+          {t.acceptedAfter}
         </p>
       ) : (
         <label className="Login-consent" id="login-consent">
@@ -74,8 +78,11 @@ export const Login = () => {
             onChange={(e) => setHasAcceptedTerms(e.target.checked)}
           />
           <span>
-            I accept the <Link to="/terms">terms of use</Link> and have read the{" "}
-            <Link to="/privacy">privacy policy</Link>.
+            {t.consentBefore}
+            <Link to="/terms">{t.termsLink}</Link>
+            {t.consentMiddle}
+            <Link to="/privacy">{t.privacyLink}</Link>
+            {t.consentAfter}
           </span>
         </label>
       )}
@@ -87,7 +94,7 @@ export const Login = () => {
           disabled={!hasAcceptedTerms}
           aria-describedby="login-consent"
         >
-          Continue with Google
+          {t.continueWith("Google")}
         </button>
         <button
           className="Login-button secondary"
@@ -96,7 +103,7 @@ export const Login = () => {
           disabled={!hasAcceptedTerms}
           aria-describedby="login-consent"
         >
-          Continue with GitHub
+          {t.continueWith("GitHub")}
         </button>
       </div>
       {errorMessage ? (

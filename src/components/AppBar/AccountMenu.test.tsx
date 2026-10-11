@@ -8,6 +8,7 @@ import * as accountService from "../../services/accountService";
 import * as authService from "../../services/authService";
 import { AccountMenu } from "./AccountMenu";
 import { ToastProvider } from "../Toast/Toast.Provider";
+import { setLanguageSetting } from "../../i18n/i18n";
 
 // Deliberate exception to "mock only at the edges": deletion order and failures are
 // tested against mocked Firebase in accountService.test; here only the wiring matters.
@@ -131,5 +132,20 @@ describe("AccountMenu - export, delete, legal links and log out", () => {
     expect(await screen.findByRole("status")).toHaveTextContent(
       "Your habits were deleted, but your account couldn't be removed. Please try again.",
     );
+  });
+
+  it("should let the user choose the app's language, following the browser by default", async () => {
+    onTestFinished(() => setLanguageSetting("auto"));
+    renderMenu();
+    await userEvent.click(screen.getByRole("button", { name: "Account menu" }));
+
+    const language = screen.getByRole("combobox", { name: "Language" });
+    expect(language).toHaveDisplayValue("Automatic (English)");
+
+    await userEvent.selectOptions(language, "sv");
+
+    // The menu itself switches at once.
+    expect(screen.getByRole("combobox", { name: "Språk" })).toHaveDisplayValue("Svenska");
+    expect(screen.getByRole("button", { name: "Logga ut" })).toBeInTheDocument();
   });
 });

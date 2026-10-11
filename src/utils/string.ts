@@ -1,3 +1,7 @@
+import { messagesFor } from "../i18n/i18n";
+import { stringMessages } from "./messages";
+
+/** Pass the plural for anything but an English "-s" plural, e.g. pluralize(n, "dag", "dagar"). */
 export const pluralize = (
   count: number,
   singular: string,
@@ -6,10 +10,11 @@ export const pluralize = (
 
 export const formatGoodShare = (goodDays: number, badDays: number) => {
   const total = goodDays + badDays;
+  const t = messagesFor(stringMessages);
   return total === 0
-    ? "No days yet"
-    : `Good ${Math.round((goodDays / total) * 100)} %`;
+    ? t.noDaysYet
+    : t.goodShare(Math.round((goodDays / total) * 100));
 };
 
 export const formatWeekProgress = (goodDaysThisWeek: number, times: number) =>
-  `${goodDaysThisWeek}/${times} this week`;
+  messagesFor(stringMessages).weekProgress(goodDaysThisWeek, times);

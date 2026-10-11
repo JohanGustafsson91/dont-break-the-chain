@@ -1,8 +1,10 @@
 import { LEGAL } from "../../shared/legal";
+import { useLanguage, useMessages } from "../../i18n/i18n";
 import { LegalPage } from "./LegalPage";
+import { legalMessages } from "./messages";
 
-export const PrivacyPolicy = () => (
-  <LegalPage title="Privacy policy">
+const english = (
+  <>
     <p>
       This policy explains what Don't Break The Chain stores about you, why, and what
       you can do about it. It is written to be short and readable.
@@ -33,8 +35,8 @@ export const PrivacyPolicy = () => (
         time zone, the last date on which all your habits were done for the day (so you
         aren't reminded on days you're done), the date of the last reminder (so you get at
         most one a day), how many habits are left that day and the length of your longest
-        current chain (numbers only, so the reminder can be specific), and a push token for
-        each device that gets reminders. Turning
+        current chain (numbers only, so the reminder can be specific), the language the
+        reminder is written in, and a push token for each device that gets reminders. Turning
         reminders off on a device, logging out there, or deleting your account removes
         that device's token.
       </li>
@@ -131,7 +133,8 @@ export const PrivacyPolicy = () => (
       a token in your browser's storage, which the app needs to work. The login page
       also remembers, on this device only, that you accepted the current terms, so
       you don't have to tick the box every time; it contains nothing that identifies
-      you. If you turn on reminders, the browser also keeps this device's push token.
+      you. If you choose a language in the account menu, that choice is remembered on
+      this device. If you turn on reminders, the browser also keeps this device's push token.
       None of this requires consent.
     </p>
 
@@ -149,5 +152,164 @@ export const PrivacyPolicy = () => (
       If this policy changes, the date above is updated, and significant changes are
       announced in advance, in the app or by email.
     </p>
-  </LegalPage>
+  </>
 );
+
+const swedish = (
+  <>
+    <p>
+      Den här policyn förklarar vad Don't Break The Chain sparar om dig, varför, och vad
+      du kan göra åt det. Den är skriven för att vara kort och lätt att läsa.
+    </p>
+
+    <h2>Vem som ansvarar</h2>
+    <p>
+      Personuppgiftsansvarig (operatören) är {LEGAL.controllerName}, en privatperson i
+      Sverige, som driver appen gratis. Kontakt:{" "}
+      <a href={`mailto:${LEGAL.contactEmail}`}>{LEGAL.contactEmail}</a>.
+    </p>
+
+    <h2>Vad som sparas</h2>
+    <ul>
+      <li>
+        <strong>Ditt konto:</strong> namn, e-postadress och länk till profilbild som din
+        inloggningstjänst (Google eller GitHub) delar när du loggar in, samt ett
+        konto-id. Om du först loggade in med GitHub och senare loggar in med Google med
+        samma e-postadress fortsätter ditt konto med Google, och inloggning med GitHub
+        slutar fungera för det. Dina vanor finns kvar.
+      </li>
+      <li>
+        <strong>Dina vanor:</strong> deras namn, beskrivningar och mål, vilka dagar du
+        markerat och de anteckningar du skriver.
+      </li>
+      <li>
+        <strong>Påminnelser, bara om du slår på dem:</strong> tiden du valt, din tidszon,
+        det senaste datum då alla dina vanor var klara för dagen (så att du inte får
+        påminnelser de dagar du är klar), datumet för den senaste påminnelsen (så att du
+        får högst en om dagen), hur många vanor som är kvar den dagen och längden på din
+        längsta pågående kedja (bara siffror, så att påminnelsen kan bli konkret),
+        språket påminnelsen skrivs på, och en push-token för varje enhet som får
+        påminnelser. Om du stänger av påminnelser på en enhet, loggar ut där eller raderar
+        ditt konto tas enhetens token bort.
+      </li>
+    </ul>
+    <p>
+      Namn på vanor och anteckningar kan avslöja saker om din hälsa, som ”ta medicin”
+      eller ”ingen alkohol”. Du bestämmer vad du skriver, och du kan ändra eller radera
+      det när som helst. Det visas aldrig för andra användare. Operatören kan tekniskt
+      komma åt databasen, men tittar inte på ditt innehåll utom för att åtgärda ett
+      problem du rapporterar, utreda missbruk av tjänsten eller när lagen kräver det.
+      Undvik att skriva sådant du inte vill ska sparas.
+    </p>
+
+    <h2>Varför det sparas</h2>
+    <p>
+      För att tillhandahålla appen åt dig: för att logga in dig, visa och spara dina
+      vanor och, om du slår på dem, skicka påminnelser. Den rättsliga grunden är att det
+      är nödvändigt för att tillhandahålla tjänsten du bett om (GDPR artikel 6.1 b).
+      Dina kontouppgifter behövs för att använda appen: utan dem kan du inte logga in.
+      Allt du skriver i vanor och anteckningar är frivilligt.
+    </p>
+    <p>
+      När du besöker webbplatsen behandlas tekniska uppgifter som din IP-adress för att
+      leverera sidorna och hålla tjänsten säker, även för besökare som aldrig loggar in.
+      Uppgifter kan också granskas för att förebygga och utreda missbruk. Den rättsliga
+      grunden för båda är det berättigade intresset av att driva en säker tjänst (GDPR
+      artikel 6.1 f), och du har rätt att invända mot det.
+    </p>
+    <p>
+      Din data säljs aldrig och används aldrig för reklam, och appen delar den aldrig med
+      någon för deras egna syften. Det förekommer inget automatiserat beslutsfattande
+      och ingen profilering.
+    </p>
+
+    <h2>Vilka mer som är inblandade</h2>
+    <ul>
+      <li>
+        <strong>Google (Firebase)</strong> står för inloggning, databas, drift och
+        pushnotiser (Firebase Cloud Messaging), som personuppgiftsbiträde enligt
+        Googles personuppgiftsbiträdesavtal. Dina vanor lagras i Googles europeiska multiregion
+        (eur3).
+      </li>
+      <li>
+        <strong>Google eller GitHub</strong> är den inloggningstjänst du väljer. I den
+        rollen agerar den för egen räkning, enligt sina egna integritetsvillkor, separat
+        från Googles roll som Firebase-biträde ovan. När du loggar in delar den ditt namn,
+        din e-postadress och länken till din profilbild med appen, och får veta att du
+        använder appen. Din profilbild hämtas från tjänstens servrar.
+      </li>
+      <li>
+        <strong>GitHub</strong> kör det schemalagda jobbet som skickar påminnelser, som
+        personuppgiftsbiträde. Jobbet läser bara påminnelseinställningar, aldrig dina
+        vanor eller anteckningar.
+      </li>
+      <li>
+        <strong>Din webbläsares push-tjänst</strong> (till exempel Apples, Googles eller
+        Mozillas) levererar varje påminnelse till din enhet. Påminnelser säger hur många
+        vanor som är kvar och hur lång din kedja är; de innehåller aldrig namn på dina
+        vanor eller anteckningar.
+      </li>
+    </ul>
+
+    <h2>Överföring utanför EU</h2>
+    <p>
+      Firebase Authentication och Cloud Messaging kan behandla kontouppgifter och
+      push-tokens i USA, och GitHub kör påminnelsejobbet där. Sådana överföringar bygger
+      på ramen för dataskydd mellan EU och USA (EU–US Data Privacy Framework) och
+      EU-kommissionens standardavtalsklausuler.
+    </p>
+
+    <h2>Hur länge det sparas</h2>
+    <p>
+      Tills du raderar ditt konto eller ber om att få det raderat. Google sparar tekniska
+      loggar (som IP-adresser) en begränsad tid för säkerhet och drift.
+    </p>
+
+    <h2>Dina rättigheter</h2>
+    <p>
+      Du kan begära en kopia av din data, få den rättad eller raderad, begränsa eller
+      invända mot behandlingen och få ut den i ett flyttbart format. Du kan själv
+      exportera din data och radera ditt konto från kontomenyn (din bild uppe till
+      höger). Radering tar bort dina vanor, dagar, anteckningar och
+      påminnelseinställningar för gott, och sedan ditt konto. Din inloggningstjänst har
+      kvar sin egen uppgift om att du använt appen; du kan ta bort appens åtkomst i
+      inställningarna för ditt Google- eller GitHub-konto. Googles tekniska loggar
+      försvinner av sig själva. Om du inte längre kan logga in, eller för något annat,
+      mejla <a href={`mailto:${LEGAL.contactEmail}`}>{LEGAL.contactEmail}</a> så hanteras
+      det inom en månad. Du kan också klaga hos Integritetsskyddsmyndigheten (IMY),{" "}
+      <a href="https://www.imy.se">imy.se</a>.
+    </p>
+
+    <h2>Cookies och spårning</h2>
+    <p>
+      Det finns inga analysverktyg, ingen reklam och inga spårningscookies. Inloggningen sparar
+      en token i webbläsarens lagring, som appen behöver för att fungera.
+      Inloggningssidan kommer också ihåg, bara på den här enheten, att du godkänt de
+      gällande villkoren, så att du inte behöver kryssa i rutan varje gång; den
+      innehåller inget som identifierar dig. Om du väljer språk i kontomenyn sparas
+      valet på den här enheten. Om du slår på påminnelser sparar webbläsaren också
+      enhetens push-token. Inget av detta kräver samtycke.
+    </p>
+
+    <h2>Säkerhet</h2>
+    <p>
+      Behörighetsregler i databasen ser till att ingen annan användare kan läsa eller
+      ändra dina vanor.
+    </p>
+
+    <h2>Ålder</h2>
+    <p>Appen är inte avsedd för barn under 13 år.</p>
+
+    <h2>Ändringar</h2>
+    <p>
+      Om policyn ändras uppdateras datumet ovan, och väsentliga ändringar meddelas i förväg, i
+      appen eller via mejl.
+    </p>
+  </>
+);
+
+export const PrivacyPolicy = () => {
+  const t = useMessages(legalMessages);
+  const { language } = useLanguage();
+  return <LegalPage title={t.privacyTitle}>{language === "sv" ? swedish : english}</LegalPage>;
+};

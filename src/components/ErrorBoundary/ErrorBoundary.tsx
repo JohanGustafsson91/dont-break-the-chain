@@ -1,5 +1,6 @@
 import "./ErrorBoundary.css";
 import { Component, type ErrorInfo, type ReactNode } from "react";
+import { ErrorMessage } from "./ErrorMessage";
 
 // A class is still the only way to catch render errors in React.
 export class ErrorBoundary extends Component<Props, State> {
@@ -16,15 +17,7 @@ export class ErrorBoundary extends Component<Props, State> {
   render() {
     if (!this.state.hasError) return this.props.children;
 
-    return (
-      <div className="page page-center ErrorBoundary" role="alert">
-        <h1>Something went wrong</h1>
-        <p>Your habits are safe. Reloading the page usually fixes it.</p>
-        <button type="button" onClick={() => window.location.reload()}>
-          Reload
-        </button>
-      </div>
-    );
+    return <ErrorMessage />;
   }
 }
 

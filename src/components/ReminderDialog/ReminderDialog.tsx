@@ -13,11 +13,18 @@ import {
   type ReminderSupport,
 } from "../../services/reminderService";
 import { useToast } from "../Toast/Toast.Context";
+import { getLanguage, getLocale, languageFromBrowser, useMessages } from "../../i18n/i18n";
+import { reminderDialogMessages } from "./messages";
 
 const HOURS = Array.from({ length: 24 }, (_, hour) => hour);
 
+// The browser's own locale when it speaks the app's language, so its 12- or 24-hour
+// clock is kept (en-GB shows 19:00, not 07 PM); otherwise the app language's default.
 const formatHour = (hour: number) =>
-  new Date(2000, 0, 1, hour).toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" });
+  new Date(2000, 0, 1, hour).toLocaleTimeString(
+    languageFromBrowser([navigator.language]) === getLanguage() ? navigator.language : getLocale(),
+    { hour: "2-digit", minute: "2-digit" },
+  );
 
 const deviceTimeZone = () => Intl.DateTimeFormat().resolvedOptions().timeZone;
 
@@ -33,6 +40,7 @@ type State =
     };
 
 export const ReminderDialog = ({ onClose }: Props) => {
+  const t = useMessages(reminderDialogMessages);
   const titleId = useId();
   const hourId = useId();
   const { showToast } = useToast();
@@ -87,10 +95,10 @@ export const ReminderDialog = ({ onClose }: Props) => {
       onClose();
     } catch (error) {
       if (error instanceof NotificationsBlockedError) {
-        showToast("Notifications are blocked. Allow them for this site in your settings.");
+        showToast(t.blockedToast);
       } else {
         console.error(failure, { error });
-        showToast(`${failure} Please try again.`);
+        showToast(t.tryAgain(failure));
       }
       setIsBusy(false);
     }
@@ -100,22 +108,22 @@ export const ReminderDialog = ({ onClose }: Props) => {
   const onTurnOn = () =>
     run(
       () => turnOnReminders(hour),
-      `Reminders are on. You'll get one at ${formatHour(hour)} when some of your habits aren't marked yet.`,
-      "Couldn't turn on reminders.",
+      t.turnedOn(formatHour(hour)),
+      t.turnOnFailed,
     );
 
   const onSave = () =>
-    run(() => updateReminderHour(hour), `Reminder time saved: ${formatHour(hour)}.`, "Couldn't save the reminder time.");
+    run(() => updateReminderHour(hour), t.saved(formatHour(hour)), t.saveFailed);
 
   const onTurnOff = () =>
-    run(turnOffRemindersOnThisDevice, "Reminders are off on this device.", "Couldn't turn off reminders.");
+    run(turnOffRemindersOnThisDevice, t.turnedOff, t.turnOffFailed);
 
   const message = (text: string) => (
     <>
       <span className="ConfirmDialog-body">{text}</span>
       <div className="ConfirmDialog-actions ReminderDialog-single">
         <button type="button" className="secondary" onClick={onClose}>
-          Close
+          {t.close}
         </button>
       </div>
     </>
@@ -123,23 +131,19 @@ export const ReminderDialog = ({ onClose }: Props) => {
 
   const content = () => {
     if (state.status === "loading") {
-      return <span className="ConfirmDialog-body loading">Loading</span>;
+      return <span className="ConfirmDialog-body loading">{t.loading}</span>;
     }
     if (state.status === "failed") {
-      return message("Couldn't load your reminder settings. Check your connection and try again.");
+      return message(t.loadFailed);
     }
     if (state.support === "needs-install") {
-      return message(
-        "On iPhone and iPad, reminders only work in the installed app. Tap Share, then Add to Home Screen, and open the app from there.",
-      );
+      return message(t.needsInstall);
     }
     if (state.support === "unsupported") {
-      return message("This browser can't show notifications from websites.");
+      return message(t.unsupported);
     }
     if (!state.isOn && Notification.permission === "denied") {
-      return message(
-        "Notifications are blocked for this site. Allow them in your browser or system settings to get reminders.",
-      );
+      return message(t.blocked);
     }
 
     const timeZoneChanged =
@@ -147,11 +151,9 @@ export const ReminderDialog = ({ onClose }: Props) => {
 
     return (
       <>
-        <span className="ConfirmDialog-body">
-          Get a notification when some of your habits aren't marked yet that day.
-        </span>
+        <span className="ConfirmDialog-body">{t.intro}</span>
         <div className="ReminderDialog-time">
-          <label htmlFor={hourId}>Remind me at</label>
+          <label htmlFor={hourId}>{t.remindMeAt}</label>
           <select
             id={hourId}
             value={hour}
@@ -167,8 +169,8 @@ export const ReminderDialog = ({ onClose }: Props) => {
         </div>
         <span className="ReminderDialog-note">
           {timeZoneChanged
-            ? `Reminders now follow ${state.savedTimeZone}. Saving switches them to this device's time zone (${deviceTimeZone()}).`
-            : `The time applies to all your devices, in your time zone (${deviceTimeZone()}).`}
+            ? t.timeZoneChanged(state.savedTimeZone ?? "", deviceTimeZone())
+            : t.timeZoneNote(deviceTimeZone())}
         </span>
         {state.isOn ? (
           <button
@@ -177,30 +179,30 @@ export const ReminderDialog = ({ onClose }: Props) => {
             disabled={isBusy}
             onClick={onTurnOff}
           >
-            Turn off reminders on this device
+            {t.turnOffHere}
           </button>
         ) : null}
         <div className="ConfirmDialog-actions">
           {state.isOn ? (
             <>
               <button type="button" className="secondary" disabled={isBusy} onClick={onClose}>
-                Close
+                {t.close}
               </button>
               <button
                 type="button"
                 disabled={isBusy || (hour === state.savedHour && !timeZoneChanged)}
                 onClick={onSave}
               >
-                Save
+                {t.save}
               </button>
             </>
           ) : (
             <>
               <button type="button" className="secondary" disabled={isBusy} onClick={onClose}>
-                Cancel
+                {t.cancel}
               </button>
               <button type="button" disabled={isBusy} onClick={onTurnOn}>
-                Turn on
+                {t.turnOn}
               </button>
             </>
           )}
@@ -220,7 +222,7 @@ export const ReminderDialog = ({ onClose }: Props) => {
         ref={dialogRef}
       >
         <span className="ConfirmDialog-title" id={titleId}>
-          Daily reminder
+          {t.title}
         </span>
         {content()}
       </div>

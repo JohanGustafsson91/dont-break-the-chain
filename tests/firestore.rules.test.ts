@@ -195,6 +195,9 @@ describe("Firestore rules - reminder settings belong to one user", () => {
       });
     });
     await assertSucceeds(updateDoc(own, { hour: 21 }));
+    await assertSucceeds(updateDoc(own, { language: "sv" }));
+    await assertFails(updateDoc(own, { language: "de" }));
+    await assertFails(updateDoc(own, { language: 1 }));
 
     await assertFails(setDoc(doc(db(ALICE), "reminders", BOB), reminder));
     await assertFails(setDoc(doc(db(), "reminders", ALICE), reminder));

@@ -1,4 +1,5 @@
-import { describe, it, expect, beforeAll, afterAll, vi } from "vitest";
+import { describe, it, expect, beforeAll, afterAll, afterEach, vi } from "vitest";
+import { setLanguageSetting } from "../i18n/i18n";
 import { habitStatusLine } from "./statusLine";
 import type { Habit } from "./Habit";
 
@@ -17,11 +18,11 @@ const range = (from: number, to: number, month = 1) =>
 const daily = (...streak: Habit["streak"]): Habit => ({ id: "h", name: "Run", description: "", goal: { type: "daily" }, streak });
 const weekly = (times: number, ...streak: Habit["streak"]): Habit => ({ id: "h", name: "Gym", description: "", goal: { type: "weekly", times }, streak });
 
-const lines: string[] = [];
+// Every habit tested, so the card check below covers each case in every language.
+const habits: Habit[] = [];
 const line = (habit: Habit) => {
-  const text = habitStatusLine(habit);
-  lines.push(text);
-  return text;
+  habits.push(habit);
+  return habitStatusLine(habit);
 };
 
 describe("habitStatusLine - daily habit, not marked yet", () => {
@@ -142,12 +143,48 @@ describe("habitStatusLine - weekly goal", () => {
   });
 });
 
+describe("habitStatusLine - in Swedish", () => {
+  afterEach(() => setLanguageSetting("auto"));
+
+  it("should say the same things in Swedish", () => {
+    setLanguageSetting("sv");
+    expect(line(daily(...range(9, 14)))).toBe("Idag är det dag 7 🎯");
+    expect(line(daily(day(13), day(14, "BAD")))).toBe("Missa inte två i rad 💪");
+    expect(line(daily(...range(1, 3), ...range(12, 15)))).toBe("Nytt rekord: 4 dagar 🏆");
+    expect(line(daily(...range(1, 14), day(15, "BAD")))).toBe("Fortfarande 93 % bra totalt");
+    expect(line(weekly(3, day(10), day(12), day(14)))).toBe("Klart med 1 dag kvar ✅");
+    expect(line(daily(day(1)))).toBe("Senast för 14 dagar sedan");
+  });
+
+  it("should name the weekday that tends to slip in Swedish", () => {
+    setLanguageSetting("sv");
+    expect(line(daily(day(25, "BAD", 0), day(1, "BAD"), day(8, "BAD"), day(13), day(14)))).toBe("Lördagar brukar glippa");
+  });
+
+  it("should fit the longest numbers on the card", () => {
+    setLanguageSetting("sv");
+    const chain = (n: number, endDay: number) =>
+      Array.from({ length: n }, (_, i) => ({ date: new Date(Date.UTC(2025, 1, endDay - (n - 1) + i)), status: "GOOD" as const, notes: "" }));
+    expect(line(daily(...chain(1093, 15)))).toBe("Dag 1093, 2 kvar till 1095 🎯");
+    expect(line(daily(...chain(1092, 14)))).toBe("3 dagar till 1095 i rad 🎯");
+    expect(line(daily(...chain(1, 15 - 1500)))).toBe("Senast för 1500 dagar sedan");
+  });
+});
+
 describe("habitStatusLine - fits the card", () => {
-  it("should keep every line short enough for a phone card with two buttons", () => {
+  afterEach(() => setLanguageSetting("auto"));
+
+  it.each(["en", "sv"] as const)("should keep every line short enough for a phone card with two buttons (%s)", (language) => {
+    setLanguageSetting(language);
+    const lines = habits.map(habitStatusLine);
     expect(lines.length).toBeGreaterThan(20);
-    // Characters, not UTF-16 units, so an emoji counts once.
-    for (const text of lines) expect([...text].length, text).toBeLessThanOrEqual(28);
-    // At most one emoji, at the end.
-    for (const text of lines) expect(text.match(/\p{Extended_Pictographic}/gu)?.length ?? 0, text).toBeLessThanOrEqual(1);
+    for (const text of lines) {
+      // Characters, not UTF-16 units, so an emoji counts once.
+      expect([...text].length, text).toBeLessThanOrEqual(28);
+      // At most one emoji, at the end.
+      const emoji = text.match(/\p{Extended_Pictographic}/gu) ?? [];
+      expect(emoji.length, text).toBeLessThanOrEqual(1);
+      if (emoji.length) expect(text.endsWith(emoji[0]), text).toBe(true);
+    }
   });
 });

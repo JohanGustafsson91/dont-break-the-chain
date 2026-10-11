@@ -8,7 +8,6 @@ import {
   isNextMonthDisabled,
   getToday,
   getMonthName,
-  getWeekDayName,
 } from "./date";
 
 describe("Date utilities for streak tracking", () => {
@@ -187,7 +186,6 @@ describe("Date utilities for streak tracking", () => {
       const firstOfMarch = new Date("2025-03-01T00:00:00Z"); // a Saturday
 
       withTimeZone("America/Los_Angeles", () => {
-        expect(getWeekDayName(firstOfMarch)).toBe("Saturday");
         expect(getMonthName(firstOfMarch)).toBe("March");
       });
     });

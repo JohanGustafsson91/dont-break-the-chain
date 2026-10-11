@@ -1,5 +1,7 @@
 import type { DayInStreak } from "../../shared/Habit";
 import { HABIT_STATUS } from "../../shared/constants";
+import { useMessages } from "../../i18n/i18n";
+import { streakStatusMessages } from "./messages";
 
 type Status = (typeof HABIT_STATUS)[keyof typeof HABIT_STATUS];
 
@@ -18,6 +20,12 @@ export const StreakStatusRadioGroup = ({
   verbose = false,
   allowBad = true,
 }: Props) => {
+  const m = useMessages(streakStatusMessages);
+  const verboseTextByStatus: Record<Status, string> = {
+    [HABIT_STATUS.GOOD]: m.done,
+    [HABIT_STATUS.BAD]: m.missed,
+    [HABIT_STATUS.NOT_SPECIFIED]: "",
+  };
   const statuses = allowBad
     ? [HABIT_STATUS.GOOD, HABIT_STATUS.BAD]
     : [HABIT_STATUS.GOOD];
@@ -76,10 +84,4 @@ const textByStatus: Record<Status, string> = {
   [HABIT_STATUS.GOOD]: "✓",
   [HABIT_STATUS.BAD]: "✗",
   [HABIT_STATUS.NOT_SPECIFIED]: "⏳",
-};
-
-const verboseTextByStatus: Record<Status, string> = {
-  [HABIT_STATUS.GOOD]: "Done",
-  [HABIT_STATUS.BAD]: "Missed",
-  [HABIT_STATUS.NOT_SPECIFIED]: "",
 };
