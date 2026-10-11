@@ -73,6 +73,8 @@ export interface ReminderSettings {
   /** Written by the sender, so each chosen hour's reminder goes out at most once a day. */
   lastRemindedDate?: string;
   lastRemindedHour?: number;
+  /** The language reminders are written in. */
+  language?: "en" | "sv";
 }
 
 /** The chosen hours, whether one (only `hour`) or several. */

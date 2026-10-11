@@ -6,56 +6,58 @@ import { legalMessages } from "./messages";
 
 const email = <a href={`mailto:${LEGAL.contactEmail}`}>{LEGAL.contactEmail}</a>;
 
-// Plain words on purpose: a short, clear limitation of liability that people have read
-// holds better than a long one they haven't. What the law doesn't allow to be limited
-// is named, so the rest of the clause stays valid.
+// Plain words on purpose. The limitation of liability is narrow and names its scope:
+// a court sets aside an unfair term as a whole rather than trimming it, so a blanket
+// "any damage" would risk losing even the data-loss part. What the law doesn't allow
+// to be limited is named, so the rest of the clause stays valid.
 const english = (
   <>
     <p className="LegalPage-summary">
-      In short: Don't Break The Chain is a free hobby project. Use it as you like, at your
-      own risk. By signing in you accept these terms.
+      In short: Don't Break The Chain is a free hobby project that you use at your own
+      risk. By signing in you accept these terms.
     </p>
 
     <h2>The app</h2>
     <p>
-      A free habit tracker, made and run by me, a private individual in Sweden (named in
-      the <Link to="/privacy">privacy policy</Link>). There is no company behind it, no
-      paid plan and no ads.
+      A free habit tracker that I, {LEGAL.controllerName}, made and run myself, as a
+      private individual in Sweden. There is no company behind it, no paid plan and no ads.
     </p>
 
     <h2>Your account</h2>
     <p>
-      You need to be at least 13 and sign in with a supported account (Google or GitHub).
-      Keep that account safe. If you first signed in with GitHub and later sign in with
-      Google using the same Gmail address, your account continues with Google; your habits
-      stay.
+      You need to be at least 13; if you're under 18, ask a parent or guardian first. You
+      sign in with a supported account (Google or GitHub), and you're responsible for
+      keeping that account safe. If you first signed in with GitHub and later sign in with
+      Google using the same Gmail address, your account continues with Google and GitHub
+      sign-in stops working for it; your habits stay.
     </p>
 
     <h2>Your content</h2>
     <p>
-      What you write is yours. The app only stores it to show it to you. Don't use the app
-      for anything illegal, or to store sensitive information about other people.
+      What you write is yours. The app only uses it to run the app for you, as described
+      in the <Link to="/privacy">privacy policy</Link>. Don't use the app for anything
+      illegal, or to store sensitive information about other people.
     </p>
 
     <h2>Play fair</h2>
     <p>
-      Don't try to reach other people's data, overload the app or use it with bots.
-      Accounts that do can be shut down.
+      Don't try to access other people's data, overload the app or run bots against it.
+      Accounts that do can be blocked or deleted.
     </p>
 
     <h2>No guarantees</h2>
     <p>
-      The app is provided as it is. It can have bugs, be down, change or shut down, and
-      data can be lost. Export what matters to you from the account menu. You use the app
-      at your own risk.
+      The app is provided as is. It can have bugs, be down, change or shut down, and data
+      can be lost. Export what matters to you from the account menu. You use the app at
+      your own risk.
     </p>
 
     <h2>Liability</h2>
     <p>
-      As far as the law allows, I'm not liable for lost data or any other damage from
-      using the app. This doesn't limit what the law doesn't let me limit: liability for
-      intent or gross negligence, your rights as a consumer, or your rights under data
-      protection law.
+      The app is free, so as far as the law allows I'm not liable for lost data, indirect
+      damage or other loss from using the app or not being able to use it. This doesn't
+      limit liability for intent or gross negligence or for personal injury, or your
+      rights as a consumer or under data protection law.
     </p>
 
     <h2>Not advice</h2>
@@ -63,10 +65,12 @@ const english = (
 
     <h2>Changes and ending</h2>
     <p>
-      These terms can change; important changes are announced in advance in the app or by
-      email. You can stop using the app and delete your account at any time, from the
-      account menu or by emailing {email}. If the app shuts down, you get at least 30 days
-      to export your data, unless that's impossible for reasons I can't control.
+      These terms can change, for example for new features or new laws. Important changes
+      are announced in advance in the app or by email; if you don't agree, you can delete
+      your account before they apply. You can stop using the app and delete your account
+      at any time, from the account menu or by emailing {email}. If the app shuts down,
+      I'll tell you at least 30 days in advance so you can export your data, unless that's
+      impossible for reasons I can't control.
     </p>
 
     <h2>Law</h2>
@@ -80,35 +84,37 @@ const english = (
 const swedish = (
   <>
     <p className="LegalPage-summary">
-      Kort sagt: Don't Break The Chain är ett gratis hobbyprojekt. Använd det som du vill,
-      på egen risk. Genom att logga in godkänner du de här villkoren.
+      Kort sagt: Don't Break The Chain är ett gratis hobbyprojekt som du använder på egen
+      risk. Genom att logga in godkänner du de här villkoren.
     </p>
 
     <h2>Appen</h2>
     <p>
-      En gratis app för vanor, som görs och drivs av mig, en privatperson i Sverige (namnet
-      står i <Link to="/privacy">integritetspolicyn</Link>). Det finns inget företag bakom,
-      ingen betalversion och ingen reklam.
+      En gratis vaneapp som jag, {LEGAL.controllerName}, har gjort och driver själv, som
+      privatperson i Sverige. Det finns inget företag bakom, ingen betalversion och ingen
+      reklam.
     </p>
 
     <h2>Ditt konto</h2>
     <p>
-      Du måste vara minst 13 år och logga in med ett konto som stöds (Google eller GitHub).
-      Se till att det kontot är säkert. Om du först loggade in med GitHub och senare loggar
-      in med Google med samma Gmail-adress fortsätter ditt konto med Google; dina vanor
-      finns kvar.
+      Du måste vara minst 13 år; är du under 18, fråga en förälder eller vårdnadshavare
+      först. Du loggar in med ett konto som stöds (Google eller GitHub), och du ansvarar för
+      att det kontot är säkert. Om du först loggade in med GitHub och senare loggar in via
+      Google med samma Gmail-adress kopplas ditt konto till Google i stället, och
+      inloggningen med GitHub slutar fungera för det. Dina vanor finns kvar.
     </p>
 
     <h2>Ditt innehåll</h2>
     <p>
-      Det du skriver är ditt. Appen sparar det bara för att kunna visa det för dig. Använd
-      inte appen till något olagligt, eller för att spara känsliga uppgifter om andra.
+      Det du skriver är ditt. Appen använder det bara för att driva appen åt dig, enligt{" "}
+      <Link to="/privacy">integritetspolicyn</Link>. Använd inte appen till något olagligt,
+      eller för att spara känsliga uppgifter om andra.
     </p>
 
     <h2>Schysst användning</h2>
     <p>
-      Försök inte komma åt andras data, överbelasta appen eller använda den med botar.
-      Konton som gör det kan stängas av.
+      Försök inte komma åt andras data, överbelasta appen eller köra botar mot den. Konton
+      som gör det kan stängas av eller raderas.
     </p>
 
     <h2>Inga garantier</h2>
@@ -120,10 +126,11 @@ const swedish = (
 
     <h2>Ansvar</h2>
     <p>
-      I den mån lagen tillåter ansvarar jag inte för förlorad data eller annan skada av att
-      du använder appen. Det begränsar inte det som lagen inte låter mig begränsa: ansvar
-      vid uppsåt eller grov vårdslöshet, dina rättigheter som konsument eller dina
-      rättigheter enligt dataskyddslagstiftningen.
+      Appen är gratis, så i den mån lagen tillåter ansvarar jag inte för förlorad data,
+      indirekt skada eller annan förlust av att du använder appen eller inte kan använda
+      den. Det begränsar inte ansvar vid uppsåt eller grov vårdslöshet eller för
+      personskada, eller dina rättigheter som konsument eller enligt
+      dataskyddslagstiftningen.
     </p>
 
     <h2>Ingen rådgivning</h2>
@@ -131,10 +138,12 @@ const swedish = (
 
     <h2>Ändringar och avslut</h2>
     <p>
-      Villkoren kan ändras; viktiga ändringar meddelas i förväg i appen eller via mejl. Du
-      kan när som helst sluta använda appen och radera ditt konto, från kontomenyn eller
-      genom att mejla {email}. Om appen läggs ner får du minst 30 dagar på dig att
-      exportera din data, om det inte är omöjligt av skäl jag inte kan påverka.
+      Villkoren kan ändras, till exempel vid nya funktioner eller nya lagkrav. Viktiga
+      ändringar meddelas i förväg i appen eller via mejl; håller du inte med kan du radera
+      ditt konto innan de börjar gälla. Du kan när som helst sluta använda appen och radera
+      ditt konto, från kontomenyn eller genom att mejla {email}. Om appen läggs ner
+      meddelar jag det minst 30 dagar i förväg så att du hinner exportera din data, om det
+      inte är omöjligt av skäl jag inte kan påverka.
     </p>
 
     <h2>Lag</h2>
