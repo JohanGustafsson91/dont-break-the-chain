@@ -16,9 +16,8 @@ cleanupOutdatedCaches();
 precacheAndRoute(self.__WB_MANIFEST);
 registerRoute(
   new NavigationRoute(createHandlerBoundToURL("index.html"), {
-    // Firebase's reserved URLs, such as the sign-in handler, must reach the server, and
-    // the promo video opened on its own must load as a video, not as the app.
-    denylist: [/^\/__\//, /^\/promo\//],
+    // Firebase's reserved URLs, such as the sign-in handler, must reach the server.
+    denylist: [/^\/__\//],
   }),
 );
 

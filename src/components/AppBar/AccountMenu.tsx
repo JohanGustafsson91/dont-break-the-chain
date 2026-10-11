@@ -10,7 +10,6 @@ import {
 } from "../../services/accountService";
 import { ConfirmDialog } from "../ConfirmDialog/ConfirmDialog";
 import { markAccountDeleted } from "../../shared/accountDeletedNotice";
-import { forgetTermsAccepted } from "../../shared/termsAcceptance";
 import { useToast } from "../Toast/Toast.Context";
 import { ReminderDialog } from "../ReminderDialog/ReminderDialog";
 import { refreshTodayProgress, remindersAvailable, syncReminderToken } from "../../services/reminderService";
@@ -83,7 +82,6 @@ export const AccountMenu = ({ user }: Props) => {
       // Signing out sends the app to the login page, which shows the notice. The
       // toast lives above the router, so the progress message must go explicitly.
       hideToast();
-      forgetTermsAccepted();
       markAccountDeleted();
       return;
     }
