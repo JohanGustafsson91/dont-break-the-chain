@@ -258,8 +258,13 @@ button.Overview-row {
   color: var(--text-muted-color);
 }
 
+/* Full width like today's list; wider cells get a little taller to keep their shape. */
 @media (min-width: 960px) {
-  .Overview {
-    max-width: 760px;
+  .Overview-cells .Overview-cell {
+    height: 28px;
+  }
+
+  .Overview_weeks-4 .Overview-cells .Overview-cell {
+    height: 22px;
   }
 }
