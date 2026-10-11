@@ -44,7 +44,7 @@ while App Check is off.
 
 Then run `pnpm dev`. Sign-in works on `localhost`, which is an authorized domain in
 the dev project only. Setting up the sign-in providers for a new project is described
-in `docs/production-readiness.md` (PR 3).
+under [Operations](#operations).
 
 ## Scripts
 
@@ -105,11 +105,49 @@ without sending anything.
   devices at the same moment can overwrite one of the edits.
 - **Shared free quotas.** On Spark, all users share about 50k reads and 20k writes a
   day. If they run out, the app stops working until the daily reset; it never costs money.
-  App Check is prepared but turned off (see the plan).
+  App Check is prepared but turned off (see [Operations](#operations)).
 - **No backups.** Users can export their data from the account menu.
-- **English only.**
+- **Two languages.** English and Swedish; the app follows the browser unless the user
+  picks one.
 
-## More
+## Operations
 
-`docs/production-readiness.md` has the launch plan, the decisions behind it, the
-legal content and the open questions.
+**Sign-in providers, per Firebase project** (Authentication → Sign-in method):
+- **Google:** enable it and fill in the OAuth consent screen (app name, support email,
+  privacy policy URL, authorized domains). Don't upload a logo: it triggers Google's
+  brand verification.
+- **GitHub:** a GitHub OAuth app per project, with the callback
+  `https://<authDomain>/__/auth/handler` (one callback per app). Production's
+  `authDomain` is `dontbreakthechain.se`.
+- Keep **one account per email address** (Authentication → Settings), the default.
+  Signing in with the other provider for the same email then shows "Sign in with
+  GitHub/Google instead". One exception, accepted on purpose: Google is trusted for
+  Gmail addresses, so a GitHub account with a Gmail address is taken over by Google
+  sign-in (same account, habits intact, GitHub sign-in stops working). Preventing it
+  needs blocking functions, which need the Blaze plan.
+
+**Daily reminders:**
+- The Cloudflare Worker starts the workflow at :02 every hour with a fine-grained
+  GitHub token (Actions: read and write, this repository only). GitHub's own schedule
+  at :07 is the backup; a second run sends nothing extra. Renew the token before it
+  expires.
+- The workflow signs in to Google Cloud as the keyless service account
+  `reminder-sender` (`roles/datastore.user`, `roles/firebasecloudmessaging.admin`)
+  through the Workload Identity pool `github`, provider `reminders`. Only
+  `.github/workflows/reminders.yml` on `main` of this repository (checked by repository
+  and owner id) may use it. The repository variables `REMINDERS_WIF_PROVIDER` and
+  `REMINDERS_SERVICE_ACCOUNT` point to them.
+- Server credentials bypass the security rules, so anyone who can push to `main` can
+  use the account. Require reviews before adding collaborators.
+- Workflow logs are public: the sender logs counts only.
+- Each run reads every reminders document (shared read quota). In a public repository
+  GitHub turns off scheduled workflows after 60 days without activity; the Worker still
+  starts it.
+- On iPhone, push works only in the app installed on the home screen (iOS 16.4+).
+
+**App Check** is off on purpose: reCAPTCHA sends device data to Google on every visit,
+and the risk (someone exhausting the free quota) can't cost money on Spark. Before
+turning it on: name reCAPTCHA in the privacy policy (recipient, purpose, legal basis,
+US transfer, cookie) and bump its effective date, register a reCAPTCHA v3 key per
+project, set `VITE_APPCHECK_SITE_KEY` (dev env file and the `production` environment's
+secrets), watch the metrics for a release, then enforce it for Firestore and Auth.
