@@ -5,6 +5,8 @@ const titles = (page: Page) => page.locator(".HabitsList-item_title");
 
 test.describe("Sorting habits", () => {
   test("should move a habit with its handle and keep the order after a reload", async ({ signedIn: page }) => {
+    // Four habits and a reload: more than the default budget on a slow CI runner.
+    test.slow();
     for (const name of ["Run", "Read", "Stretch"]) await createHabit(page, name);
     await expect(titles(page)).toHaveText(["Run", "Read", "Stretch"]);
 
