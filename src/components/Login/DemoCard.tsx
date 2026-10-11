@@ -60,7 +60,8 @@ export const DemoCard = () => {
             title={formatDay(date, { weekday: "short" })}
           />
         ))}
-        {done ? null : <span className="Login-demo_hint">{t.demoHint}</span>}
+        {/* After the tap, point at signing in: this was an example, your own chain starts there. */}
+        <span className="Login-demo_hint">{done ? t.demoNext : t.demoHint}</span>
       </div>
     </div>
   );

@@ -16,9 +16,9 @@ import { DemoCard } from "./DemoCard";
 import { loginMessages } from "./messages";
 import "./Login.css";
 
-const LANGUAGES: { code: Language; label: string }[] = [
-  { code: "en", label: "EN" },
-  { code: "sv", label: "SV" },
+const LANGUAGES: { code: Language; label: string; name: string }[] = [
+  { code: "en", label: "EN", name: "English" },
+  { code: "sv", label: "SV", name: "Svenska" },
 ];
 
 export const Login = () => {
@@ -58,11 +58,12 @@ export const Login = () => {
           Don't Break The Chain
         </span>
         <div className="Login-language" role="group" aria-label={t.language}>
-          {LANGUAGES.map(({ code, label }) => (
+          {LANGUAGES.map(({ code, label, name }) => (
             <button
               key={code}
               type="button"
               lang={code}
+              aria-label={name}
               aria-pressed={language === code}
               onClick={() => setLanguageSetting(code)}
             >
@@ -73,51 +74,51 @@ export const Login = () => {
       </header>
 
       <main className="Login-intro">
-      {accountDeleted ? (
-        <p className="Login-notice" role="status">
-          {t.accountDeleted}
+        {accountDeleted ? (
+          <p className="Login-notice" role="status">
+            {t.accountDeleted}
+          </p>
+        ) : null}
+        <h1 className="Login-title">
+          {t.title} <span>{t.titleAccent}</span>
+        </h1>
+        <p className="Login-pitch">{t.pitch}</p>
+        <DemoCard />
+        {/* The same buttons sign up and sign in: a first sign-in creates the account. */}
+        <h2 className="Login-cta" id="login-cta">
+          {t.cta}
+        </h2>
+        <div className="Login-buttons" role="group" aria-labelledby="login-cta">
+          <button className="Login-button" type="button" onClick={() => handleLogin(AUTH_PROVIDERS.GOOGLE)}>
+            {t.continueWith("Google")}
+          </button>
+          <button
+            className="Login-button secondary"
+            type="button"
+            onClick={() => handleLogin(AUTH_PROVIDERS.GITHUB)}
+          >
+            {t.continueWith("GitHub")}
+          </button>
+        </div>
+        {/* Signing in is accepting the terms (see Terms); the data is handled under
+            contract and legitimate interest, not consent, so no box to tick. */}
+        <p className="Login-legal">
+          {t.legalBefore}
+          <Link to="/terms">{t.termsLink}</Link>
+          {t.legalMiddle}
+          <Link to="/privacy">{t.privacyLink}</Link>
+          {t.legalAfter}
         </p>
-      ) : null}
-      <h1 className="Login-title">
-        {t.title} <span>{t.titleAccent}</span>
-      </h1>
-      <p className="Login-pitch">{t.pitch}</p>
-      <DemoCard />
-      {/* The same buttons sign up and sign in: a first sign-in creates the account. */}
-      <h2 className="Login-cta" id="login-cta">
-        {t.cta}
-      </h2>
-      <div className="Login-buttons" role="group" aria-labelledby="login-cta">
-        <button className="Login-button" type="button" onClick={() => handleLogin(AUTH_PROVIDERS.GOOGLE)}>
-          {t.continueWith("Google")}
-        </button>
-        <button
-          className="Login-button secondary"
-          type="button"
-          onClick={() => handleLogin(AUTH_PROVIDERS.GITHUB)}
-        >
-          {t.continueWith("GitHub")}
-        </button>
-      </div>
-      {errorMessage ? (
-        <p className="Login-error" role="alert">
-          {errorMessage}
-        </p>
-      ) : null}
-      {/* Signing in is accepting the terms (see Terms); the data is handled under
-          contract and legitimate interest, not consent, so no box to tick. */}
-      <p className="Login-legal">
-        {t.legalBefore}
-        <Link to="/terms">{t.termsLink}</Link>
-        {t.legalMiddle}
-        <Link to="/privacy">{t.privacyLink}</Link>
-        {t.legalAfter}
-      </p>
-      <ul className="Login-trust">
-        {t.trust.map((item) => (
-          <li key={item}>{item}</li>
-        ))}
-      </ul>
+        {errorMessage ? (
+          <p className="Login-error" role="alert">
+            {errorMessage}
+          </p>
+        ) : null}
+        <ul className="Login-trust">
+          {t.trust.map((item) => (
+            <li key={item}>{item}</li>
+          ))}
+        </ul>
       </main>
     </div>
   );

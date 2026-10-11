@@ -15,7 +15,7 @@ test.describe("Signed out", () => {
     await page.getByRole("button", { name: "Mark today as done" }).click();
     await expect(page.getByText("7 days in a row 🎉")).toBeVisible();
 
-    await page.getByRole("button", { name: "SV" }).click();
+    await page.getByRole("button", { name: "Svenska" }).click();
     await expect(page.getByRole("heading", { level: 1 })).toHaveText("En bock om dagen. Bryt inte kedjan.");
     await expect(page.getByText("7 dagar i rad 🎉")).toBeVisible();
   });

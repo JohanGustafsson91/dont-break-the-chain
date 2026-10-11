@@ -1,5 +1,5 @@
 // The app's language: English or Swedish. "auto" (the default) follows the browser;
-// a choice made in the account menu is remembered on this device.
+// a choice made on the login page or in the account menu is remembered on this device.
 //
 // Texts live next to the code that shows them, in `messages.ts` files made with
 // defineMessages: the Swedish set must have exactly the English set's keys.

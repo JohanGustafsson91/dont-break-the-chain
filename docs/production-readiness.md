@@ -150,8 +150,9 @@ This must be live before Google sign-in, because Google's consent screen needs a
 - **Self-host the fonts** (DM Sans, Victor Mono) instead of loading them from Google Fonts.
 - Add static pages `/privacy` and `/terms`, linked from the login page and, once signed in, from the account menu (PR 4). Until PR 4 they were in a small footer on the home screen.
 - **Accepting the terms at sign-in:**
-  - An **explicit checkbox** next to the sign-in buttons: "I accept the terms of use and have read the privacy policy". The privacy policy is information, not something to accept, because the legal basis is the contract, not consent. A checkbox is stronger than a notice saying that signing in means accepting.
-  - The checkbox is only a gate in the browser: nothing is stored. ❓ If the legal review finds that explicit consent for health-related data (art. 9(2)(a)) is needed, that needs a separate, specific statement, plus a stored record of when it was given and for which policy version.
+  - *Changed 2026-10-11 with the landing page:* a notice right under the sign-in buttons, "By continuing you accept the terms of use. See how your data is handled in the privacy policy." Signing in is accepting the terms, as the terms already say. The privacy policy is information, not something to accept, because the legal basis is the contract and legitimate interest, not consent.
+  - *Before:* an explicit checkbox that disabled the buttons until ticked. It was dropped because disabled buttons with no explanation read as broken on a phone, and the checkbox records no consent that the legal basis needs.
+  - Nothing is stored about the acceptance. ❓ If explicit consent for health-related data (art. 9(2)(a)) is ever found to be needed, that needs a separate, specific statement, plus a stored record of when it was given and for which policy version.
 
 **Done when**
 - The pages are live and linked.
@@ -225,7 +226,7 @@ Confirm the behaviour in dev, with a GitHub account whose email is a Gmail addre
 
 - A top-level error boundary with a friendly message and a reload button.
 - A small toast system, used for every silent failure listed above: fetch, create, mark day, goal, name/description, delete and export.
-- Terms acceptance is remembered per device and per terms version.
+- Terms acceptance was remembered per device and per terms version; removed with the checkbox (see PR 3).
 - Error monitoring (Sentry or similar) is deferred. At launch traffic, the error boundary and the browser console are enough, and leaving it out avoids another data processor.
 
 ### PR 5b: App Check and caching
@@ -372,7 +373,7 @@ What the texts should cover, in plain language. A short review by a lawyer, or a
 - [ ] The live production rules match `firestore.rules`, and the rules tests pass in CI.
 - [ ] CI deploys with a least-privilege account, and Dependabot no longer auto-merges majors or Actions updates. Branch protection is on.
 - [x] Dev and production are separate projects, and `localhost` is removed from production's authorized domains.
-- [ ] The privacy policy and terms are live, and acceptance is an explicit checkbox. The fonts are self-hosted.
+- [ ] The privacy policy and terms are live, and accepting them is the notice by the sign-in buttons. The fonts are self-hosted.
 - [ ] Every cell of the sign-in test matrix passes. The same-email behaviour matches the documentation.
 - [ ] Export and account deletion work, including re-authentication and retry.
 - [ ] The error boundary and failure messages work. App Check is enforced, or consciously deferred (it is, see PR 5b).

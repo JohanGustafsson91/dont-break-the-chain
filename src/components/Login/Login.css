@@ -187,7 +187,8 @@ button.Login-demo_check {
 
 /* Until it's tapped, the button invites a tap. */
 .Login-demo:not(.Login-demo_done) button.Login-demo_check {
-  animation: Login-invite 1.6s ease-in-out infinite;
+  /* A few beats, then still: endless motion would distract from signing in. */
+  animation: Login-invite 1.6s ease-in-out 3;
 }
 
 button.Login-demo_check[aria-pressed="true"] {

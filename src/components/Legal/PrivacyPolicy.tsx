@@ -130,7 +130,7 @@ const english = (
     <h2>Cookies and tracking</h2>
     <p>
       There are no analytics, no advertising and no tracking cookies. Signing in keeps
-      a token in your browser's storage, which the app needs to work. If you choose a language in the account menu, that choice is remembered on
+      a token in your browser's storage, which the app needs to work. If you choose a language, that choice is remembered on
       this device. If you turn on reminders, the browser also keeps this device's push token.
       None of this requires consent.
     </p>
@@ -280,7 +280,7 @@ const swedish = (
     <h2>Cookies och spårning</h2>
     <p>
       Det finns inga analysverktyg, ingen reklam och inga spårningscookies. Inloggningen sparar
-      en token i webbläsarens lagring, som appen behöver för att fungera. Om du väljer språk i kontomenyn sparas
+      en token i webbläsarens lagring, som appen behöver för att fungera. Om du väljer språk sparas
       valet på den här enheten. Om du slår på påminnelser sparar webbläsaren också
       enhetens push-token. Inget av detta kräver samtycke.
     </p>

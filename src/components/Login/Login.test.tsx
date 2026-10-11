@@ -93,7 +93,7 @@ describe("Login - User authentication flow", () => {
     await userEvent.click(check);
     expect(screen.getByText("Today is day 7 🎯")).toBeInTheDocument();
 
-    await userEvent.click(screen.getByRole("button", { name: "SV" }));
+    await userEvent.click(screen.getByRole("button", { name: "Svenska" }));
     expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent("En bock om dagen. Bryt inte kedjan.");
     expect(screen.getByText("Idag är det dag 7 🎯")).toBeInTheDocument();
   });
