@@ -57,14 +57,25 @@ describe("reminderService - daily reminder settings", () => {
     expect(firestore.updateDoc).toHaveBeenLastCalledWith("reminder-doc", {
       lastMarkedDate: "2026-10-09",
       progress: { date: "2026-10-09", left: 0, total: 1, openChain: 0, doneChain: 1 },
+      language: "en",
     });
 
     await recordTodayProgress([habit(true), habit(false)]); // a habit left to do
     expect(firestore.updateDoc).toHaveBeenLastCalledWith("reminder-doc", {
       lastMarkedDate: "delete-field",
       progress: { date: "2026-10-09", left: 1, total: 2, openChain: 0, doneChain: 1 },
+      language: "en",
     });
     expect(firestore.updateDoc).toHaveBeenCalledTimes(2);
+
+    // A new language is saved too, so reminders follow it. (load() reset the modules,
+    // so take the language setter from the same fresh copy.)
+    const { setLanguageSetting } = await import("../i18n/i18n");
+    setLanguageSetting("sv");
+    onTestFinished(() => setLanguageSetting("auto"));
+    await recordTodayProgress([habit(true), habit(false)]);
+    expect(firestore.updateDoc).toHaveBeenCalledTimes(3);
+    expect(firestore.updateDoc).toHaveBeenLastCalledWith("reminder-doc", expect.objectContaining({ language: "sv" }));
   });
 
   it("should keep the last state when a quick ✓ and undo overlap", async () => {
@@ -138,6 +149,7 @@ describe("reminderService - daily reminder settings", () => {
         hour: 7,
         timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
         tokens: { union: ["token-new"] },
+        language: "en",
       },
       { merge: true },
     );

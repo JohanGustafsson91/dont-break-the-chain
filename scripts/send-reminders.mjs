@@ -18,7 +18,32 @@ import { pathToFileURL } from "node:url";
 // A run delayed by GitHub still catches up, but not so late that it surprises anyone.
 const CATCH_UP_HOURS = 2;
 
-const TITLE = "Don't break the chain";
+// In the language the user chose in the app (saved with the reminder), English if none.
+const TEXTS = {
+  en: {
+    title: "Don't break the chain",
+    notMarked: "Today isn't marked yet.",
+    someLeft: "Some habits aren't marked yet.",
+    oneLeft: "One habit left today.",
+    left: (left, total) => `${left} of ${total} habits left today.`,
+    allWaiting: (total) => `All ${total} habits are waiting.`,
+    keepChain: (chain) => `Keep your ${chain}-day chain going 🔗`,
+    finishDay: "Finish the day ✅",
+    keepGoing: "Keep your chain going.",
+  },
+  sv: {
+    title: "Bryt inte kedjan",
+    notMarked: "Dagen är inte markerad än.",
+    someLeft: "Några vanor är inte markerade än.",
+    oneLeft: "En vana kvar idag.",
+    left: (left, total) => `${left} av ${total} vanor kvar idag.`,
+    allWaiting: (total) => `Alla ${total} vanorna väntar.`,
+    keepChain: (chain) => `Håll liv i din kedja på ${chain} dagar 🔗`,
+    finishDay: "Gör klart dagen ✅",
+    keepGoing: "Håll liv i kedjan.",
+  },
+};
+const textsFor = (language) => TEXTS[language] ?? TEXTS.en;
 const DAY_MS = 24 * 60 * 60 * 1000;
 
 const previousDay = (date) => new Date(Date.parse(`${date}T00:00:00Z`) - DAY_MS).toISOString().slice(0, 10);
@@ -30,7 +55,8 @@ const previousDay = (date) => new Date(Date.parse(`${date}T00:00:00Z`) - DAY_MS)
  * habits wait (a weekly goal may already be met), so they only feed the chain nudge.
  * Older counts say nothing reliable, so the text stays general.
  */
-export const reminderBody = (progress, localDate) => {
+export const reminderBody = (progress, localDate, language = "en") => {
+  const t = textsFor(language);
   let left, total, chain;
   if (progress?.date === localDate) {
     ({ left, total } = progress);
@@ -40,16 +66,16 @@ export const reminderBody = (progress, localDate) => {
   }
 
   const day =
-    progress?.date === previousDay(localDate) ? "Today isn't marked yet."
-    : left === undefined || !total ? "Some habits aren't marked yet."
-    : total === 1 ? "Today isn't marked yet."
-    : left === 1 ? "One habit left today."
-    : left < total ? `${left} of ${total} habits left today.`
-    : `All ${total} habits are waiting.`;
+    progress?.date === previousDay(localDate) ? t.notMarked
+    : left === undefined || !total ? t.someLeft
+    : total === 1 ? t.notMarked
+    : left === 1 ? t.oneLeft
+    : left < total ? t.left(left, total)
+    : t.allWaiting(total);
   const nudge =
-    chain >= 3 ? `Keep your ${chain}-day chain going 🔗`
-    : left === 1 ? "Finish the day ✅"
-    : "Keep your chain going.";
+    chain >= 3 ? t.keepChain(chain)
+    : left === 1 ? t.finishDay
+    : t.keepGoing;
   return `${day} ${nudge}`;
 };
 
@@ -109,6 +135,7 @@ const fromFirestore = (fields = {}) => ({
   lastMarkedDate: fields.lastMarkedDate?.stringValue,
   lastRemindedDate: fields.lastRemindedDate?.stringValue,
   progress: fromProgress(fields.progress?.mapValue?.fields),
+  language: fields.language?.stringValue,
 });
 
 function fromProgress(p) {
@@ -146,14 +173,14 @@ const createApi = ({ accessToken, projectId }) => {
       } while (pageToken);
     },
 
-    async send(token, link, body) {
+    async send(token, link, { title, body }) {
       try {
         await call(`https://fcm.googleapis.com/v1/projects/${projectId}/messages:send`, {
           method: "POST",
           body: JSON.stringify({
             message: {
               token,
-              notification: { title: TITLE, body },
+              notification: { title, body },
               webpush: { fcm_options: { link } },
             },
           }),
@@ -209,13 +236,13 @@ export const sendReminders = async ({ api, now, link, dryRun }) => {
       counts.due += 1;
       if (dryRun) continue;
 
-      const body = reminderBody(settings.progress, date);
+      const message = { title: textsFor(settings.language).title, body: reminderBody(settings.progress, date, settings.language) };
       const deadTokens = [];
       let sent = 0;
       // Each device on its own: a temporary error for one must not hold up the others.
       for (const token of settings.tokens.filter((t) => typeof t === "string")) {
         try {
-          if ((await api.send(token, link, body)) === "sent") sent += 1;
+          if ((await api.send(token, link, message)) === "sent") sent += 1;
           else deadTokens.push(token);
         } catch (error) {
           counts.failed += 1;

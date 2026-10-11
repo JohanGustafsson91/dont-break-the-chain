@@ -13,6 +13,7 @@ const firestoreFields = (s: Record<string, unknown>) => ({
   tokens: { arrayValue: { values: (s.tokens as string[]).map((t) => ({ stringValue: t })) } },
   ...(s.lastMarkedDate !== undefined && { lastMarkedDate: { stringValue: s.lastMarkedDate } }),
   ...(s.lastRemindedDate !== undefined && { lastRemindedDate: { stringValue: s.lastRemindedDate } }),
+  ...(s.language !== undefined && { language: { stringValue: s.language } }),
 });
 
 const fakeApi = (docs: ReturnType<typeof doc>[], send = vi.fn().mockResolvedValue("sent")) => ({
@@ -51,17 +52,29 @@ describe("send-reminders - who gets a reminder", () => {
 });
 
 describe("send-reminders - a run", () => {
+  it("should write in the language the user chose in the app", async () => {
+    const send = vi.fn().mockResolvedValue("sent");
+    const api = fakeApi([doc("reminders/u1", firestoreFields({ ...base, language: "sv" }))], send);
+
+    await sendReminders({ api, now: NOW, link: "https://app", dryRun: false });
+
+    expect(send).toHaveBeenCalledWith("device-a", "https://app", {
+      title: "Bryt inte kedjan",
+      body: "Några vanor är inte markerade än. Håll liv i kedjan.",
+    });
+  });
+
   it("should send to every device, remove dead tokens, and remember the day", async () => {
     const send = vi.fn(async (token: string) => (token === "dead" ? "dead" : "sent"));
     const api = fakeApi([doc("reminders/u1", firestoreFields({ ...base, tokens: ["a", "dead", "b"] }))], send);
 
     const counts = await sendReminders({ api, now: NOW, link: "https://app", dryRun: false });
 
-    const body = "Some habits aren't marked yet. Keep your chain going.";
+    const message = { title: "Don't break the chain", body: "Some habits aren't marked yet. Keep your chain going." };
     expect(send.mock.calls).toEqual([
-      ["a", "https://app", body],
-      ["dead", "https://app", body],
-      ["b", "https://app", body],
+      ["a", "https://app", message],
+      ["dead", "https://app", message],
+      ["b", "https://app", message],
     ]);
     expect(api.update).toHaveBeenCalledWith("reminders/u1", {
       remindedDate: "2026-10-09",
@@ -177,6 +190,12 @@ describe("send-reminders - the notification text", () => {
     expect(reminderBody(p(today, 1, 4, 9), today)).toBe("One habit left today. Keep your 9-day chain going 🔗");
     expect(reminderBody(p(today, 3, 3, 2), today)).toBe("All 3 habits are waiting. Keep your chain going.");
     expect(reminderBody(p(today, 1, 1), today)).toBe("Today isn't marked yet. Finish the day ✅");
+
+    expect(reminderBody(p(today, 2, 5, 12), today, "sv")).toBe("2 av 5 vanor kvar idag. Håll liv i din kedja på 12 dagar 🔗");
+    expect(reminderBody(p(today, 1, 4), today, "sv")).toBe("En vana kvar idag. Gör klart dagen ✅");
+    expect(reminderBody(p(today, 3, 3, 2), today, "sv")).toBe("Alla 3 vanorna väntar. Håll liv i kedjan.");
+    // An unknown language falls back to English.
+    expect(reminderBody(p(today, 1, 4), today, "fi")).toBe("One habit left today. Finish the day ✅");
   });
 
   it("should use yesterday's counts only for the chain when the app wasn't opened today", () => {
@@ -206,7 +225,10 @@ describe("send-reminders - the notification text", () => {
     // 18:05 UTC on 9 October 2026 is 20:05 in Stockholm.
     await sendReminders({ api, now: new Date("2026-10-09T18:05:00Z"), link: "https://app", dryRun: false });
 
-    expect(send).toHaveBeenCalledWith("device-a", "https://app", "2 of 5 habits left today. Keep your 12-day chain going 🔗");
+    expect(send).toHaveBeenCalledWith("device-a", "https://app", {
+      title: "Don't break the chain",
+      body: "2 of 5 habits left today. Keep your 12-day chain going 🔗",
+    });
   });
 
   it("should stay general without fresh counts", () => {
