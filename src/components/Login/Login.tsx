@@ -11,20 +11,19 @@ import {
   clearAccountDeleted,
   wasAccountDeleted,
 } from "../../shared/accountDeletedNotice";
-import {
-  hasAcceptedCurrentTerms,
-  rememberTermsAccepted,
-} from "../../shared/termsAcceptance";
-import { useMessages } from "../../i18n/i18n";
+import { setLanguageSetting, useLanguage, useMessages, type Language } from "../../i18n/i18n";
+import { DemoCard } from "./DemoCard";
 import { loginMessages } from "./messages";
 import "./Login.css";
 
+const LANGUAGES: { code: Language; label: string }[] = [
+  { code: "en", label: "EN" },
+  { code: "sv", label: "SV" },
+];
+
 export const Login = () => {
   const t = useMessages(loginMessages);
-  // Accepted earlier on this device: say so instead of showing a pre-ticked box, which
-  // would wrongly tell the next person on a shared device that they ticked it.
-  const [acceptedOnThisDevice] = useState(hasAcceptedCurrentTerms);
-  const [hasAcceptedTerms, setHasAcceptedTerms] = useState(acceptedOnThisDevice);
+  const { language } = useLanguage();
   const [errorMessage, setErrorMessage] = useState<string>();
   const [accountDeleted] = useState(wasAccountDeleted);
 
@@ -37,7 +36,6 @@ export const Login = () => {
 
   const handleLogin = async (provider: AuthProvider) => {
     setErrorMessage(undefined);
-    rememberTermsAccepted();
     try {
       await login({ provider });
     } catch (error) {
@@ -50,96 +48,77 @@ export const Login = () => {
 
   return (
     <div className="page Login-container">
-      <div className="Login-layout">
-        <section className="Login-intro">
-          <div className="Login-logo" aria-hidden="true">
+      <header className="Login-top">
+        <span className="Login-brand">
+          <span className="Login-logo" aria-hidden="true">
             <span />
             <span />
             <span />
-          </div>
-          {accountDeleted ? (
-            <p className="Login-notice" role="status">
-              {t.accountDeleted}
-            </p>
-          ) : null}
-          <h1 className="Login-title">Don't Break The Chain</h1>
-          <p className="Login-subtitle">{t.tagline}</p>
-          <p className="Login-pitch">{t.pitch}</p>
-          {acceptedOnThisDevice ? (
-            <p className="Login-accepted" id="login-consent">
-              {t.acceptedBefore}
-              <Link to="/terms">{t.termsLink}</Link>
-              {t.acceptedMiddle}
-              <Link to="/privacy">{t.privacyLink}</Link>
-              {t.acceptedAfter}
-            </p>
-          ) : (
-            <label className="Login-consent" id="login-consent">
-              <input
-                type="checkbox"
-                checked={hasAcceptedTerms}
-                onChange={(e) => setHasAcceptedTerms(e.target.checked)}
-              />
-              <span>
-                {t.consentBefore}
-                <Link to="/terms">{t.termsLink}</Link>
-                {t.consentMiddle}
-                <Link to="/privacy">{t.privacyLink}</Link>
-                {t.consentAfter}
-              </span>
-            </label>
-          )}
-          <div className="Login-buttons">
+          </span>
+          Don't Break The Chain
+        </span>
+        <div className="Login-language" role="group" aria-label={t.language}>
+          {LANGUAGES.map(({ code, label }) => (
             <button
-              className="Login-button"
+              key={code}
               type="button"
-              onClick={() => handleLogin(AUTH_PROVIDERS.GOOGLE)}
-              disabled={!hasAcceptedTerms}
-              aria-describedby="login-consent"
+              lang={code}
+              aria-pressed={language === code}
+              onClick={() => setLanguageSetting(code)}
             >
-              {t.continueWith("Google")}
+              {label}
             </button>
-            <button
-              className="Login-button secondary"
-              type="button"
-              onClick={() => handleLogin(AUTH_PROVIDERS.GITHUB)}
-              disabled={!hasAcceptedTerms}
-              aria-describedby="login-consent"
-            >
-              {t.continueWith("GitHub")}
-            </button>
-          </div>
-          {errorMessage ? (
-            <p className="Login-error" role="alert">
-              {errorMessage}
-            </p>
-          ) : null}
-        </section>
+          ))}
+        </div>
+      </header>
 
-        <section className="Login-video">
-          {/* Loaded only when played: free hosting allows little traffic a day. */}
-          <video
-            src="/promo/promo-v2.mp4"
-            poster="/promo/promo-v2-poster.jpg"
-            controls
-            playsInline
-            preload="none"
-            aria-label={t.videoLabel}
-          />
-        </section>
-
-        <section className="Login-features" aria-labelledby="login-features">
-          <h2 id="login-features">{t.featuresTitle}</h2>
-          <ul>
-            {t.features.map((feature) => (
-              <li key={feature.title}>
-                <strong>{feature.title}</strong>
-                <span>{feature.text}</span>
-              </li>
-            ))}
-          </ul>
-        </section>
+      <main className="Login-intro">
+      {accountDeleted ? (
+        <p className="Login-notice" role="status">
+          {t.accountDeleted}
+        </p>
+      ) : null}
+      <h1 className="Login-title">
+        {t.title} <span>{t.titleAccent}</span>
+      </h1>
+      <p className="Login-pitch">{t.pitch}</p>
+      <DemoCard />
+      {/* The same buttons sign up and sign in: a first sign-in creates the account. */}
+      <h2 className="Login-cta" id="login-cta">
+        {t.cta}
+      </h2>
+      <div className="Login-buttons" role="group" aria-labelledby="login-cta">
+        <button className="Login-button" type="button" onClick={() => handleLogin(AUTH_PROVIDERS.GOOGLE)}>
+          {t.continueWith("Google")}
+        </button>
+        <button
+          className="Login-button secondary"
+          type="button"
+          onClick={() => handleLogin(AUTH_PROVIDERS.GITHUB)}
+        >
+          {t.continueWith("GitHub")}
+        </button>
       </div>
+      {errorMessage ? (
+        <p className="Login-error" role="alert">
+          {errorMessage}
+        </p>
+      ) : null}
+      {/* Signing in is accepting the terms (see Terms); the data is handled under
+          contract and legitimate interest, not consent, so no box to tick. */}
+      <p className="Login-legal">
+        {t.legalBefore}
+        <Link to="/terms">{t.termsLink}</Link>
+        {t.legalMiddle}
+        <Link to="/privacy">{t.privacyLink}</Link>
+        {t.legalAfter}
+      </p>
+      <ul className="Login-trust">
+        {t.trust.map((item) => (
+          <li key={item}>{item}</li>
+        ))}
+      </ul>
+      </main>
     </div>
   );
 };

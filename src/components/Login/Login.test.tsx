@@ -42,27 +42,16 @@ describe("Login - User authentication flow", () => {
       </MemoryRouter>,
     );
 
-  it("should require accepting the terms before logging in with GitHub", async () => {
+  it("should let a visitor sign in right away, with the terms linked next to the buttons", async () => {
     renderLogin();
 
-    expect(screen.getByText("Don't Break The Chain")).toBeInTheDocument();
-    expect(
-      screen.getByText(
-        "Build habits that stick, one day at a time.",
-      ),
-    ).toBeInTheDocument();
-
-    const loginButton = screen.getByRole("button", {
-      name: "Continue with GitHub",
-    });
-    expect(loginButton).toBeDisabled();
+    expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent("One check a day. Don't break the chain.");
+    // Signing in is accepting the terms: no box to tick first.
+    expect(screen.queryByRole("checkbox")).not.toBeInTheDocument();
     expect(screen.getByRole("link", { name: "terms of use" })).toHaveAttribute("href", "/terms");
     expect(screen.getByRole("link", { name: "privacy policy" })).toHaveAttribute("href", "/privacy");
 
-    await userEvent.click(screen.getByRole("checkbox", { name: /I accept the terms of use/ }));
-    expect(loginButton).toBeEnabled();
-    await userEvent.click(loginButton);
-
+    await userEvent.click(screen.getByRole("button", { name: "Continue with GitHub" }));
     expect(signInWithPopupSpy).toHaveBeenCalled();
   });
 
@@ -75,8 +64,6 @@ describe("Login - User authentication flow", () => {
     renderLogin();
 
     const googleButton = screen.getByRole("button", { name: "Continue with Google" });
-    expect(googleButton).toBeDisabled();
-    await userEvent.click(screen.getByRole("checkbox", { name: /I accept the terms of use/ }));
     await userEvent.click(googleButton);
 
     const [, provider] = signInWithPopupSpy.mock.calls[0];
@@ -93,23 +80,22 @@ describe("Login - User authentication flow", () => {
     expect(screen.queryByRole("alert")).not.toBeInTheDocument();
   });
 
-  it("should remember accepted terms on this device until the terms change", async () => {
-    const { unmount } = renderLogin();
-    await userEvent.click(screen.getByRole("checkbox", { name: /I accept the terms of use/ }));
-    await userEvent.click(screen.getByRole("button", { name: "Continue with GitHub" }));
-    unmount();
-
-    // Next visit: no pre-ticked box (honest on shared devices), just a note.
-    const second = renderLogin();
-    expect(screen.queryByRole("checkbox")).not.toBeInTheDocument();
-    expect(screen.getByText(/on this device/)).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Continue with Google" })).toBeEnabled();
-    second.unmount();
-
-    // New terms (a different effective date): accept again.
-    localStorage.setItem("acceptedTermsVersion", "1 January 2020");
+  it("should let a visitor try a habit and switch language before signing in", async () => {
+    onTestFinished(() => setLanguageSetting("auto"));
     renderLogin();
-    expect(screen.getByRole("checkbox", { name: /I accept the terms of use/ })).not.toBeChecked();
+
+    // The app's real status line: one tap from a milestone, and back again.
+    expect(screen.getByText("Today is day 7 🎯")).toBeInTheDocument();
+    const check = screen.getByRole("button", { name: "Mark today as done" });
+    await userEvent.click(check);
+    expect(check).toHaveAttribute("aria-pressed", "true");
+    expect(screen.getByText("7 days in a row 🎉")).toBeInTheDocument();
+    await userEvent.click(check);
+    expect(screen.getByText("Today is day 7 🎯")).toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole("button", { name: "SV" }));
+    expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent("En bock om dagen. Bryt inte kedjan.");
+    expect(screen.getByText("Idag är det dag 7 🎯")).toBeInTheDocument();
   });
 
   it("should confirm a deleted account once", () => {
@@ -138,7 +124,6 @@ describe("Login - User authentication flow", () => {
     expect(screen.getByText("Don't Break The Chain")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "användarvillkoren" })).toHaveAttribute("href", "/terms");
     expect(screen.getByRole("link", { name: "integritetspolicyn" })).toHaveAttribute("href", "/privacy");
-    await userEvent.click(screen.getByRole("checkbox", { name: /Jag godkänner användarvillkoren/ }));
     await userEvent.click(screen.getByRole("button", { name: "Fortsätt med Google" }));
 
     expect(await screen.findByRole("alert")).toHaveTextContent(
@@ -152,7 +137,6 @@ describe("Login - User authentication flow", () => {
     signInWithPopupSpy.mockRejectedValue(new Error("Authentication failed"));
 
     renderLogin();
-    await userEvent.click(screen.getByRole("checkbox", { name: /I accept the terms of use/ }));
     await userEvent.click(screen.getByRole("button", { name: "Continue with GitHub" }));
 
     const [, provider] = signInWithPopupSpy.mock.calls[0];
