@@ -270,6 +270,11 @@ button.HabitsList-create_first {
     grid-column: 1 / -1;
   }
 
+  /* The grid gap already spaces the date from the view switch above it. */
+  .HabitsList-date {
+    margin-top: 0.125rem;
+  }
+
   /* The grid gap also separates date and title; pull the title back up. */
   .HabitsList-heading {
     margin: -0.625rem 0 0.125rem;

@@ -4,6 +4,7 @@ import { StreakTracker } from "../StreakTracker/StreakTracker";
 import { ProtectedRoute } from "../ProtectedRoute/ProtectedRoute";
 import { Login } from "../Login/Login";
 import { HabitsList } from "../HabitsList/HabitsList";
+import { Overview } from "../Overview/Overview";
 import { AppBarProvider } from "../AppBar/AppBar.Provider";
 import { PrivacyPolicy } from "../Legal/PrivacyPolicy";
 import { Terms } from "../Legal/Terms";
@@ -22,6 +23,14 @@ export const App = () => {
                 element={
                   <ProtectedRoute>
                     <HabitsList />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/overview"
+                element={
+                  <ProtectedRoute>
+                    <Overview />
                   </ProtectedRoute>
                 }
               />

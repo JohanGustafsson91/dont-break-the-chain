@@ -17,6 +17,7 @@ import {
 } from "../../services/habitService";
 import { orderChanges, withOrders } from "../../domain/habitOrder";
 import { ReorderList } from "./ReorderList";
+import { ViewSwitch } from "../ViewSwitch/ViewSwitch";
 import { ProgressBar } from "../StreakTracker/ProgressBar";
 import { HABIT_STATUS, STREAK_ICONS } from "../../shared/constants";
 import { createDate, getToday } from "../../utils/date";
@@ -153,6 +154,7 @@ export const HabitsList = () => {
   return (
     <>
       <div className="page HabitsList">
+        <ViewSwitch />
         <div className="HabitsList-date">{todayLabel()}</div>
         <div className="HabitsList-heading">
           <h1 className="HabitsList-title">Your habits</h1>

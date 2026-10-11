@@ -9,7 +9,9 @@ export const AppBar = ({ user }: Props) => {
   const location = useLocation();
   const navigate = useNavigate();
   const { childrenComponents, renderAppBarItems } = useAppBarContext();
-  const isHome = location.pathname === "/";
+  const isHome = location.pathname === "/" || location.pathname === "/overview";
+  // A habit opened from the overview goes back there.
+  const backTo = (location.state as { from?: string } | null)?.from ?? "/";
 
   useEffect(
     function clearChildrenComponentsOnNewLocation() {
@@ -29,8 +31,8 @@ export const AppBar = ({ user }: Props) => {
           <span>Don't Break The Chain</span>
         </div>
       ) : (
-        <button type="button" className="ghost" onClick={() => navigate("/")}>
-          ‹ Habits
+        <button type="button" className="ghost" onClick={() => navigate(backTo)}>
+          {backTo.startsWith("/overview") ? "‹ Overview" : "‹ Habits"}
         </button>
       )}
 

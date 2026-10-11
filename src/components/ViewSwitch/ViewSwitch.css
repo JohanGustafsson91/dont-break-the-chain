@@ -1,0 +1,43 @@
+.ViewSwitch {
+  display: flex;
+  gap: 0.125rem;
+  margin-top: 1rem;
+  padding: 0.125rem;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  background: var(--surface-muted-color);
+}
+
+.ViewSwitch-link {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  border-radius: var(--radius-sm);
+  color: var(--text-muted-color);
+  font-size: 0.9375rem;
+  font-weight: 500;
+  text-decoration: none;
+}
+
+/* Tabs, not links: no visited color or hover underline. */
+.ViewSwitch-link:visited,
+.ViewSwitch-link:hover {
+  color: var(--text-muted-color);
+  text-decoration: none;
+}
+
+.ViewSwitch-link.active,
+.ViewSwitch-link.active:visited,
+.ViewSwitch-link.active:hover {
+  background: var(--surface-color);
+  color: var(--text-color);
+  font-weight: 600;
+}
+
+@media (min-width: 960px) {
+  .ViewSwitch {
+    max-width: 320px;
+  }
+}

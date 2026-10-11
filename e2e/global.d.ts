@@ -6,5 +6,6 @@ interface Window {
     reset: () => Promise<void>;
     waitForWrites: () => Promise<void>;
     seedReminder: () => Promise<void>;
+    seedHabit: (name: string, marks: string, goal?: { type: "daily" } | { type: "weekly"; times: number }) => Promise<void>;
   };
 }
