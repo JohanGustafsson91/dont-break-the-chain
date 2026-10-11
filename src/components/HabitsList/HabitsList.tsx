@@ -27,6 +27,8 @@ import { ConfirmDialog } from "../ConfirmDialog/ConfirmDialog";
 import { useToast } from "../Toast/Toast.Context";
 import { habitStatusLine } from "../../domain/statusLine";
 import { recordTodayProgress, refreshTodayProgress } from "../../services/reminderService";
+import { getLocale, useMessages } from "../../i18n/i18n";
+import { habitsListMessages } from "./messages";
 
 type Status = (typeof HABIT_STATUS)[keyof typeof HABIT_STATUS];
 
@@ -37,7 +39,7 @@ const itemClassByDayStatus = {
 };
 
 const todayLabel = () =>
-  new Date().toLocaleDateString("en-US", {
+  new Date().toLocaleDateString(getLocale(), {
     weekday: "long",
     day: "numeric",
     month: "long",
@@ -50,6 +52,8 @@ export const HabitsList = () => {
   const [reorderDraft, setReorderDraft] = useState<Habit[]>();
   const navigate = useNavigate();
   const { showToast } = useToast();
+  // Also re-renders the date and the status lines from the domain when the language changes.
+  const m = useMessages(habitsListMessages);
 
   async function onCreateHabit() {
     try {
@@ -59,7 +63,7 @@ export const HabitsList = () => {
       navigate(`/habits/${habitId}`, { state: { isNewHabit: true } });
     } catch (error) {
       console.error("Could not create habit", { error });
-      showToast("Couldn't create the habit. Please try again.");
+      showToast(m.createFailed);
     }
   }
 
@@ -122,7 +126,7 @@ export const HabitsList = () => {
       await updateHabit(habit.id, { streak: updatedHabit.streak });
     } catch (error) {
       console.error("Could not update habit", { error });
-      showToast("Couldn't save that day. Please try again.");
+      showToast(m.saveDayFailed);
       // Rollback
       setHabits((prev) => ({
         ...prev,
@@ -144,7 +148,7 @@ export const HabitsList = () => {
       await saveHabitOrder(changes);
     } catch (error) {
       console.error("Could not save habit order", { error });
-      showToast("Couldn't save the new order. Please try again.");
+      showToast(m.saveOrderFailed);
       setHabits((prev) => ({ ...prev, data: withOrders(prev.data, previousOrders) }));
     }
   }
@@ -157,14 +161,14 @@ export const HabitsList = () => {
         <ViewSwitch />
         <div className="HabitsList-date">{todayLabel()}</div>
         <div className="HabitsList-heading">
-          <h1 className="HabitsList-title">Your habits</h1>
+          <h1 className="HabitsList-title">{m.title}</h1>
           {reorderDraft ? (
             <button type="button" className="HabitsList-reorder_toggle" onClick={() => saveOrder(reorderDraft)}>
-              Done
+              {m.done}
             </button>
           ) : canReorder ? (
             <button type="button" className="HabitsList-reorder_toggle" onClick={() => setReorderDraft(habits.data)}>
-              Reorder
+              {m.reorder}
             </button>
           ) : null}
         </div>
@@ -177,11 +181,8 @@ export const HabitsList = () => {
               habits.data.length === 0 ? (
                 <div className="HabitsList-empty">
                   <div className="HabitsList-empty-icon">🎯</div>
-                  <div className="HabitsList-empty-title">No habits yet</div>
-                  <div className="HabitsList-empty-text">
-                    Pick one thing you want to do every day and create your
-                    first habit.
-                  </div>
+                  <div className="HabitsList-empty-title">{m.emptyTitle}</div>
+                  <div className="HabitsList-empty-text">{m.emptyText}</div>
                 </div>
               ) : (
                 habits.data.map((habit) => {
@@ -192,7 +193,7 @@ export const HabitsList = () => {
                   const today = getToday();
                   const goodDaysThisWeek = countGoodDaysInWeek(habit, today);
                   const streak = getStreakSummary(habit);
-                  const streakSuffix = streak.unit === "week" ? " wk" : "";
+                  const streakSuffix = streak.unit === "week" ? m.weekSuffix : "";
                   const currentStreakDay = habit.streak.find(
                     (s) => createDate(s.date).getTime() === today.getTime(),
                   );
@@ -263,11 +264,11 @@ export const HabitsList = () => {
                           </span>
                           <div className="HabitsList-item_streaks">
                             <span>
-                              <span>{STREAK_ICONS.CURRENT}</span> Current{" "}
+                              <span>{STREAK_ICONS.CURRENT}</span> {m.current}{" "}
                               <b>{streak.current}{streakSuffix}</b>
                             </span>
                             <span>
-                              <span>{STREAK_ICONS.LONGEST}</span> Longest{" "}
+                              <span>{STREAK_ICONS.LONGEST}</span> {m.longest}{" "}
                               <b>{streak.longest}{streakSuffix}</b>
                             </span>
                           </div>
@@ -277,10 +278,10 @@ export const HabitsList = () => {
                   );
                 })
               ),
-            pending: <p className="loading">Fetching habits</p>,
+            pending: <p className="loading">{m.loading}</p>,
             rejected: (
               <p className="HabitsList-error" role="alert">
-                Couldn't load your habits. Check your connection and reload the page.
+                {m.loadFailed}
               </p>
             ),
           }[habits.status]
@@ -289,11 +290,11 @@ export const HabitsList = () => {
         {habits.status === "resolved" && !reorderDraft ? (
           habits.data.length === 0 ? (
             <button type="button" className="HabitsList-create_first" onClick={onCreateHabit}>
-              + Create habit
+              {m.createFirst}
             </button>
           ) : (
             <button type="button" className="HabitsList-create" onClick={onCreateHabit}>
-              + New habit
+              {m.newHabit}
             </button>
           )
         ) : null}
@@ -301,9 +302,9 @@ export const HabitsList = () => {
 
       {pendingRemoval ? (
         <ConfirmDialog
-          title="Remove status?"
-          body={`The note for this day will be deleted too: “${pendingRemoval.notes}”`}
-          confirmLabel="Remove"
+          title={m.removeTitle}
+          body={m.removeBody(pendingRemoval.notes)}
+          confirmLabel={m.remove}
           onCancel={() => setPendingRemoval(undefined)}
           onConfirm={() => {
             setPendingRemoval(undefined);

@@ -1,3 +1,4 @@
+import { formatGoodShare, formatWeekProgress } from "../../utils/string";
 import { useEffect, useMemo, useState } from "react";
 import type { Goal, Habit } from "../../domain/Habit";
 import {
@@ -15,11 +16,6 @@ import {
 } from "../../services/habitService";
 import { Calendar } from "./Calendar";
 import { createDate, formatDay, getToday, isSameDay } from "../../utils/date";
-import {
-  formatGoodShare,
-  formatWeekProgress,
-  pluralize,
-} from "../../utils/string";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { EditableTextField } from "./EditableTextField";
 import "./StreakTracker.css";
@@ -35,6 +31,8 @@ import { useToast } from "../Toast/Toast.Context";
 import { GoalSelect } from "./GoalSelect";
 import { getInsights } from "../../domain/insights";
 import { YearOverview } from "./YearOverview";
+import { useLanguage, useMessages } from "../../i18n/i18n";
+import { streakTrackerMessages } from "./messages";
 
 type Status = (typeof HABIT_STATUS)[keyof typeof HABIT_STATUS];
 
@@ -70,6 +68,8 @@ export const StreakTracker = () => {
   const [confirmation, setConfirmation] = useState<Confirmation>();
   const { renderAppBarItems } = useAppBarContext();
   const { showToast } = useToast();
+  const { language } = useLanguage();
+  const m = useMessages(streakTrackerMessages);
 
   useEffect(
     function fetchAndSetHabit() {
@@ -108,7 +108,7 @@ export const StreakTracker = () => {
           navigate("/");
         } catch (error) {
           console.error("Could not delete habit...", { error });
-          showToast("Couldn't delete the habit. Please try again.");
+          showToast(m.deleteFailed);
         }
       }
 
@@ -118,33 +118,38 @@ export const StreakTracker = () => {
           className="error"
           onClick={() =>
             setConfirmation({
-              title: "Delete habit?",
-              body: `“${habitName}” and its whole history will be removed.`,
-              confirmLabel: "Delete",
+              title: m.deleteTitle,
+              body: m.deleteBody(habitName ?? ""),
+              confirmLabel: m.delete,
               onConfirm: onDelete,
             })
           }
         >
-          Delete
+          {m.delete}
         </button>,
       );
     },
-    [habitId, habitName, renderAppBarItems, navigate, showToast],
+    [habitId, habitName, renderAppBarItems, navigate, showToast, m],
   );
 
-  // Only recompute when the habit changes, not when the sheet or a dialog opens.
-  const insights = useMemo(() => (habit ? getInsights(habit) : []), [habit]);
+  // Only recompute when the habit or language changes, not when the sheet or a dialog opens.
+  const insights = useMemo(
+    () => (habit ? getInsights(habit) : []),
+    // getInsights reads the active language itself, so it's a real dependency.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [habit, language],
+  );
 
   if (loadError) {
     return (
       <div className="page page-center StreakTracker-notFound">
         <p>
           {loadError === "notFound"
-            ? "This habit doesn't exist, or it isn't yours."
-            : "Couldn't load this habit. Check your connection and try again."}
+            ? m.notFound
+            : m.loadFailed}
         </p>
         <button type="button" onClick={() => navigate("/")}>
-          Back to your habits
+          {m.backToHabits}
         </button>
       </div>
     );
@@ -161,7 +166,7 @@ export const StreakTracker = () => {
       setHabit((prev) => (prev ? { ...prev, name } : prev));
     } catch (error) {
       console.error("Could not update habit name", { error });
-      showToast("Couldn't save the name. Please try again.");
+      showToast(m.saveNameFailed);
     }
   }
 
@@ -172,7 +177,7 @@ export const StreakTracker = () => {
       setHabit((prev) => (prev ? { ...prev, description } : prev));
     } catch (error) {
       console.error("Could not update habit description", { error });
-      showToast("Couldn't save the description. Please try again.");
+      showToast(m.saveDescriptionFailed);
     }
   }
 
@@ -187,7 +192,7 @@ export const StreakTracker = () => {
       void refreshTodayProgress();
     } catch (error) {
       console.error("Could not update habit goal", { error });
-      showToast("Couldn't save the goal. Please try again.");
+      showToast(m.saveGoalFailed);
       // Only undo our own goal: days marked meanwhile and newer goals stay.
       setHabit((prev) =>
         prev && prev.goal === goal ? { ...prev, goal: previousGoal } : prev,
@@ -211,7 +216,7 @@ export const StreakTracker = () => {
       if (affectsToday) void refreshTodayProgress();
     } catch (error) {
       console.error("Could not update habit", { error });
-      showToast("Couldn't save that day. Please try again.");
+      showToast(m.saveDayFailed);
       setHabit(previousHabit);
     }
   }
@@ -225,9 +230,9 @@ export const StreakTracker = () => {
     }
 
     setConfirmation({
-      title: "Remove status?",
-      body: `The note for this day will be deleted too: “${notes}”`,
-      confirmLabel: "Remove",
+      title: m.removeStatusTitle,
+      body: m.removeStatusBody(notes),
+      confirmLabel: m.remove,
       onConfirm: () => saveDay(date, status, notes),
     });
   }
@@ -244,8 +249,8 @@ export const StreakTracker = () => {
   const hint =
     goal.type === "weekly"
       ? goodDaysThisWeek < goal.times &&
-        `${goal.times - goodDaysThisWeek} more to reach this week's goal.`
-      : !findDay(getToday()) && "Today isn't marked yet. Tap today to log it.";
+        m.weeklyHint(goal.times - goodDaysThisWeek)
+      : !findDay(getToday()) && m.dailyHint;
 
   return (
     <div className="page StreakTracker">
@@ -263,7 +268,7 @@ export const StreakTracker = () => {
             value={habit.description}
             type="textarea"
             onUpdate={onUpdateDescription}
-            placeholder="Add a description"
+            placeholder={m.descriptionPlaceholder}
             maxLength={2000}
           />
           <GoalSelect goal={goal} onChange={onUpdateGoal} />
@@ -272,15 +277,15 @@ export const StreakTracker = () => {
         <div className="StreakTracker-stats">
           <StreakStat
             icon={STREAK_ICONS.CURRENT}
-            label="Current"
+            label={m.current}
             value={streak.current}
-            unit={pluralize(streak.current, `${streak.unit} in a row`, `${streak.unit}s in a row`)}
+            unit={m.currentUnit(streak.current, streak.unit)}
           />
           <StreakStat
             icon={STREAK_ICONS.LONGEST}
-            label="Longest"
+            label={m.longest}
             value={streak.longest}
-            unit={pluralize(streak.longest, `${streak.unit}, best chain`, `${streak.unit}s, best chain`)}
+            unit={m.longestUnit(streak.longest, streak.unit)}
           />
           <div className="StreakTracker-share">
             <div className="StreakTracker-share_header">
@@ -291,8 +296,8 @@ export const StreakTracker = () => {
               </span>
               <span className="StreakTracker-share_counts">
                 {goal.type === "weekly"
-                  ? `${goodDays} good days in total`
-                  : `${goodDays} good · ${badDays} bad`}
+                  ? m.goodDaysInTotal(goodDays)
+                  : m.goodAndBad(goodDays, badDays)}
               </span>
             </div>
             {goal.type === "weekly" ? (
@@ -328,7 +333,7 @@ export const StreakTracker = () => {
 
       {insights.length > 0 ? (
         <section className="StreakTracker-insights" aria-labelledby="insights-title">
-          <h3 id="insights-title">Patterns</h3>
+          <h3 id="insights-title">{m.patterns}</h3>
           <ul>
             {insights.map((insight) => (
               <li key={insight}>{insight}</li>
@@ -364,16 +369,16 @@ export const StreakTracker = () => {
               </div>
 
               <label className="StreakTracker-sheet_note">
-                <span>Note</span>
+                <span>{m.note}</span>
                 <EditableTextField
                   key={activeStreakDay?.date?.toISOString()}
                   type="textarea"
                   placeholder={
                     activeStreakDay
-                      ? "e.g. Ran 5 km"
+                      ? m.notePlaceholder
                       : goal.type === "daily"
-                        ? "Mark the day ✓ or ✗ to add a note"
-                        : "Mark the day ✓ to add a note"
+                        ? m.markToAddNoteDaily
+                        : m.markToAddNoteWeekly
                   }
                   value={activeStreakDay?.notes ?? ""}
                   onUpdate={(notes) =>
@@ -389,7 +394,7 @@ export const StreakTracker = () => {
               </label>
 
               <button type="button" onClick={close}>
-                Done
+                {m.done}
               </button>
             </div>
           )}

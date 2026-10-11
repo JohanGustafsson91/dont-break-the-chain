@@ -9,6 +9,7 @@ import * as firebaseFirestore from "firebase/firestore";
 import type { User, Auth } from "firebase/auth";
 import type { Firestore } from "firebase/firestore";
 import React from "react";
+import { setLanguageSetting } from "../../i18n/i18n";
 
 vi.mock("firebase/auth");
 vi.mock("firebase/firestore");
@@ -122,6 +123,27 @@ describe("Login - User authentication flow", () => {
 
     renderLogin();
     expect(screen.queryByRole("status")).not.toBeInTheDocument();
+  });
+
+  it("should speak Swedish, sign-in errors included", async () => {
+    setLanguageSetting("sv");
+    onTestFinished(() => setLanguageSetting("auto"));
+    const consoleErrorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+    onTestFinished(() => consoleErrorSpy.mockRestore());
+    signInWithPopupSpy.mockRejectedValue(
+      Object.assign(new Error("exists"), { code: "auth/account-exists-with-different-credential" }),
+    );
+    renderLogin();
+
+    expect(screen.getByText("Don't Break The Chain")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "användarvillkoren" })).toHaveAttribute("href", "/terms");
+    expect(screen.getByRole("link", { name: "integritetspolicyn" })).toHaveAttribute("href", "/privacy");
+    await userEvent.click(screen.getByRole("checkbox", { name: /Jag godkänner användarvillkoren/ }));
+    await userEvent.click(screen.getByRole("button", { name: "Fortsätt med Google" }));
+
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "Det finns redan ett konto med den här e-postadressen. Logga in med GitHub i stället.",
+    );
   });
 
   it("should tell the user when signing in with GitHub fails", async () => {

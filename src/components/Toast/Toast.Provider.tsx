@@ -1,6 +1,8 @@
 import "./Toast.css";
 import { ReactNode, useCallback, useEffect, useMemo, useState } from "react";
 import { ToastContext } from "./Toast.Context";
+import { useMessages } from "../../i18n/i18n";
+import { toastMessages } from "./messages";
 
 const AUTO_DISMISS_MS = 8000;
 
@@ -12,6 +14,7 @@ interface Toast {
 /** One message at a time; a new one replaces the old. */
 export const ToastProvider = ({ children }: { children: ReactNode }) => {
   const [toast, setToast] = useState<Toast>();
+  const m = useMessages(toastMessages);
 
   // A fresh id per call restarts the timer and re-announces a repeated message.
   const showToast = useCallback(
@@ -39,7 +42,7 @@ export const ToastProvider = ({ children }: { children: ReactNode }) => {
         {toast ? (
           <>
             <span key={toast.id}>{toast.text}</span>
-            <button type="button" aria-label="Dismiss" onClick={hideToast}>
+            <button type="button" aria-label={m.dismiss} onClick={hideToast}>
               ×
             </button>
           </>

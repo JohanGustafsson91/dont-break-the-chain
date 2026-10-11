@@ -11,6 +11,7 @@ import { ToastProvider } from "../Toast/Toast.Provider";
 import { AppBar } from "../AppBar/AppBar";
 import type { Habit } from "../../domain/Habit";
 import type { User } from "firebase/auth";
+import { setLanguageSetting } from "../../i18n/i18n";
 
 const mockNavigate = vi.fn();
 
@@ -684,5 +685,37 @@ describe("StreakTracker - Complete user journey", () => {
     renderStreakTracker();
 
     expect(await screen.findByDisplayValue("Gym")).not.toHaveFocus();
+  });
+
+  it("should switch to Swedish while the page is open", async () => {
+    onTestFinished(() => setLanguageSetting("auto"));
+    vi.mocked(habitService.getHabitById).mockResolvedValue({
+      id: "new-2",
+      name: "New habit",
+      description: "",
+      goal: { type: "daily" },
+      streak: [
+        { date: new Date("2025-02-13T00:00:00.000Z"), status: "GOOD", notes: "" },
+        { date: new Date("2025-02-14T00:00:00.000Z"), status: "BAD", notes: "" },
+      ],
+    });
+    window.history.pushState({}, "", "/habits/new-2");
+    renderStreakTracker();
+    await screen.findByDisplayValue("New habit");
+
+    act(() => setLanguageSetting("sv"));
+
+    // The stored default name is shown translated.
+    // A name is the user's own text, so it stays as saved.
+    expect(screen.getByDisplayValue("New habit")).toBeInTheDocument();
+    expect(screen.getByText("50 % bra")).toBeInTheDocument();
+    expect(screen.getByText("1 bra · 1 dålig")).toBeInTheDocument();
+    expect(screen.getByRole("option", { name: "3 gånger i veckan" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Föregående månad" })).toBeInTheDocument();
+    // Weekday headers start on Monday, and 1 February 2025 (a Saturday) lines up under L.
+    const headers = [...document.querySelectorAll(".Calendar-day_week-name")].map((el) => el.textContent);
+    expect(headers).toEqual(["M", "T", "O", "T", "F", "L", "S"]);
+    const firstWeek = screen.getByTitle("Dag 1").parentElement!;
+    expect(firstWeek.querySelectorAll(".Calendar-day_empty")).toHaveLength(5);
   });
 });

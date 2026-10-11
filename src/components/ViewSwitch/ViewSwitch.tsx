@@ -1,10 +1,13 @@
 import "./ViewSwitch.css";
 import { useEffect, useRef } from "react";
 import { NavLink, useLocation } from "react-router-dom";
+import { useMessages } from "../../i18n/i18n";
+import { viewSwitchMessages } from "./messages";
 
 /** Switches between today's list and the overview, one tap apart. */
 export const ViewSwitch = () => {
   const location = useLocation();
+  const m = useMessages(viewSwitchMessages);
   const nav = useRef<HTMLElement>(null);
   const switched = (location.state as { viaSwitch?: boolean } | null)?.viaSwitch;
 
@@ -15,12 +18,12 @@ export const ViewSwitch = () => {
   }, [switched]);
 
   return (
-    <nav className="ViewSwitch" aria-label="Views" ref={nav}>
+    <nav className="ViewSwitch" aria-label={m.views} ref={nav}>
       <NavLink to="/" end state={{ viaSwitch: true }} className="ViewSwitch-link">
-        Today
+        {m.today}
       </NavLink>
       <NavLink to="/overview" state={{ viaSwitch: true }} className="ViewSwitch-link">
-        Overview
+        {m.overview}
       </NavLink>
     </nav>
   );

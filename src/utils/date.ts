@@ -1,3 +1,5 @@
+import { getLocale } from "../i18n/i18n";
+
 // Calendar days are stored as UTC midnight. "Today" is the user's *local* date in
 // that same representation, and calendar days are always read and formatted in UTC.
 
@@ -7,12 +9,10 @@ export const getToday = (now: Date = new Date()): Date =>
 export const formatDay = (
   date: Date,
   options: Intl.DateTimeFormatOptions,
-): string => date.toLocaleDateString("en-US", { ...options, timeZone: "UTC" });
+): string => date.toLocaleDateString(getLocale(), { ...options, timeZone: "UTC" });
 
 export const getMonthName = (date: Date) => formatDay(date, { month: "long" });
 
-export const getWeekDayName = (date: Date) =>
-  formatDay(date, { weekday: "long" });
 
 export function createDate(
   input: Date | string | { year: number; month: number; day: number },

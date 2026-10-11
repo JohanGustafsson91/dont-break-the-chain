@@ -7,10 +7,11 @@
 // The same situation always gives the same line. At most one emoji, at the end, with
 // one meaning each (🏆 record, 🎉 milestone, 🎯 near goal, 🔗 chain, 💪 comeback,
 // 🌱 fresh start, ✅ weekly goal met); plain facts get none. Lines stay short so they
-// fit a 360 px phone card that also shows the ✓ and ✗ buttons.
+// fit a 360 px phone card that also shows the ✓ and ✗ buttons. The wording, in every
+// language, lives in messages.ts.
+import { messagesFor } from "../i18n/i18n";
 import { HABIT_STATUS } from "../shared/constants";
 import { createDate, getToday, isSameDay } from "../utils/date";
-import { pluralize } from "../utils/string";
 import {
   calculateCurrentStreak,
   calculateLongestStreak,
@@ -21,16 +22,15 @@ import {
   type Habit,
 } from "./Habit";
 import { hardestWeekday } from "./insights";
+import { statusLineMessages } from "./messages";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 // Milestones never run out: these, then every full year (730, 1095, …).
 const MILESTONES = [7, 14, 21, 30, 50, 100, 200, 365, 500, 1000];
 const YEAR = 365;
 const isMilestone = (n: number) => MILESTONES.includes(n) || (n > 0 && n % YEAR === 0);
-const days = (n: number) => `${n} ${pluralize(n, "day")}`;
 const nextMilestone = (n: number) =>
   Math.min(MILESTONES.find((m) => m > n) ?? Infinity, (Math.floor(n / YEAR) + 1) * YEAR);
-const years = (n: number) => `${n / YEAR} ${pluralize(n / YEAR, "year")}`;
 
 type Status = Habit["streak"][number]["status"];
 const statusOn = (habit: Habit, date: Date): Status | undefined =>
@@ -60,22 +60,24 @@ const comebackRate = (habit: Habit, today: Date) => {
 };
 
 const weeklyLine = (habit: Habit, today: Date, markedToday: boolean, times: number) => {
+  const t = messagesFor(statusLineMessages);
   const left = times - countGoodDaysInWeek(habit, today);
   // Days left in the week, today included (weeks start on Monday).
   const daysLeft = 7 - ((today.getUTCDay() + 6) % 7);
   if (left <= 0) {
     const weeks = getStreakSummary(habit).current;
-    if (weeks >= 2) return `Goal met ${weeks} weeks in a row 🏆`;
-    return daysLeft > 1 ? `Done, ${days(daysLeft - 1)} to spare ✅` : "This week's goal is done ✅";
+    if (weeks >= 2) return t.weeksGoalMet(weeks);
+    return daysLeft > 1 ? t.doneWithDaysToSpare(daysLeft - 1) : t.weekGoalDone;
   }
-  if (markedToday) return `Nice, ${left} more this week 💪`;
+  if (markedToday) return t.niceMoreThisWeek(left);
   // Out of reach this week, but every day still adds up.
-  if (left > daysLeft) return "Every extra day counts";
-  if (left === daysLeft) return `${left} more, every day counts 🎯`;
-  return `${left} more this week`;
+  if (left > daysLeft) return t.everyExtraDayCounts;
+  if (left === daysLeft) return t.moreEveryDayCounts(left);
+  return t.moreThisWeek(left);
 };
 
 export const habitStatusLine = (habit: Habit): string => {
+  const t = messagesFor(statusLineMessages);
   const today = getToday();
   const yesterday = new Date(today.getTime() - DAY_MS);
   const todayStatus = statusOn(habit, today);
@@ -91,47 +93,47 @@ export const habitStatusLine = (habit: Habit): string => {
   if (todayStatus === HABIT_STATUS.GOOD) {
     const milestone = nextMilestone(current);
     if (isMilestone(current)) {
-      return current % YEAR === 0 ? `${years(current)} in a row 🎉` : `${current} days in a row 🎉`;
+      return current % YEAR === 0 ? t.yearsInARow(current / YEAR) : t.daysInARow(current);
     }
     // Only on the day the record falls; after that it's just a long chain.
-    if (best >= 2 && current === best + 1) return `New best: ${days(current)} 🏆`;
-    if (current >= 2 && best > current && best - current <= 3) return `Day ${current}, ${best - current} to your best 🎯`;
-    if (current >= 2 && milestone && milestone - current <= 5) return `Day ${current}, ${milestone - current} to ${milestone} 🎯`;
-    if (missedYesterday) return "Back on track 💪";
-    return current <= 1 ? "Day 1 of a new chain 🌱" : `Day ${current} in a row 🔗`;
+    if (best >= 2 && current === best + 1) return t.newBest(current);
+    if (current >= 2 && best > current && best - current <= 3) return t.toYourBest(current, best - current);
+    if (current >= 2 && milestone && milestone - current <= 5) return t.toMilestone(current, milestone - current, milestone);
+    if (missedYesterday) return t.backOnTrack;
+    return current <= 1 ? t.newChain : t.dayInARow(current);
   }
 
   if (todayStatus === HABIT_STATUS.BAD) {
     const comeback = comebackRate(habit, today);
-    if (comeback.samples >= 5 && comeback.rate >= 0.95) return "You always bounce back";
-    if (comeback.samples >= 5 && comeback.rate >= 0.6) return `You recover ${Math.round(comeback.rate * 10)} in 10 times`;
+    if (comeback.samples >= 5 && comeback.rate >= 0.95) return t.alwaysBounceBack;
+    if (comeback.samples >= 5 && comeback.rate >= 0.6) return t.recoverInTen(Math.round(comeback.rate * 10));
     const [good, bad] = [getGoodDays(habit).length, getBadDays(habit).length];
     const share = Math.round((good / (good + bad)) * 100);
     // Reassure today; "Don't miss twice" comes tomorrow if it's still unmarked.
-    return share >= 70 ? `Still ${share} % good overall` : "One miss is fine 🌱";
+    return share >= 70 ? t.stillGoodOverall(share) : t.oneMissIsFine;
   }
 
   // Not marked yet. `current` is the chain up to yesterday, still alive.
   if (current > 0 && isMilestone(current + 1)) {
-    return (current + 1) % YEAR === 0 ? `Today makes ${years(current + 1)} 🎯` : `Today is day ${current + 1} 🎯`;
+    return (current + 1) % YEAR === 0 ? t.todayMakesYears((current + 1) / YEAR) : t.todayIsDay(current + 1);
   }
-  if (current >= 2 && best >= 2 && current === best) return "Beat your best today 🏆";
-  if (missedYesterday) return "Don't miss twice 💪";
+  if (current >= 2 && best >= 2 && current === best) return t.beatYourBest;
+  if (missedYesterday) return t.dontMissTwice;
   const hardest = hardestWeekday(habit, today);
-  if (hardest && hardest.weekday === today.getUTCDay()) return `${hardest.name} tend to slip`;
+  if (hardest && hardest.weekday === today.getUTCDay()) return t.weekdayTendsToSlip(hardest.weekday);
   const milestone = nextMilestone(current);
-  if (current >= 3 && milestone && milestone - current <= 3) return `${days(milestone - current)} to ${milestone} in a row 🎯`;
-  if (current >= 2 && best >= 2 && current > best) return "On a record run 🏆";
+  if (current >= 3 && milestone && milestone - current <= 3) return t.daysToMilestone(milestone - current, milestone);
+  if (current >= 2 && best >= 2 && current > best) return t.recordRun;
   if (habit.createdAt) {
     const age = Math.floor((today.getTime() - createDate(habit.createdAt).getTime()) / DAY_MS);
     if (age >= 1 && age < 7) {
       const done = getGoodDays(habit).filter((d) => createDate(d.date).getTime() >= createDate(habit.createdAt!).getTime()).length;
-      return `First week: ${done} of 7 done 🌱`;
+      return t.firstWeek(done);
     }
   }
-  if (current > 0) return `${days(current)}, keep going 🔗`;
+  if (current > 0) return t.keepGoing(current);
   // A plain fact rather than the same nudge every day; the user decides what's next.
   const lastDone = Math.max(...getGoodDays(habit).map((d) => createDate(d.date).getTime()));
-  if (Number.isFinite(lastDone)) return `Last done ${days(Math.round((today.getTime() - lastDone) / DAY_MS))} ago`;
-  return "Start your first day 🌱";
+  if (Number.isFinite(lastDone)) return t.lastDone(Math.round((today.getTime() - lastDone) / DAY_MS));
+  return t.startFirstDay;
 };

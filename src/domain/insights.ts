@@ -1,22 +1,15 @@
-// Pure functions that turn a habit's history into short, actionable sentences.
+// Functions that turn a habit's history into short, actionable sentences, in the
+// app's current language (see messages.ts).
 
+import { messagesFor } from "../i18n/i18n";
 import { HABIT_STATUS } from "../shared/constants";
 import { createDate, getToday } from "../utils/date";
 import type { Habit } from "./Habit";
+import { insightsMessages } from "./messages";
 
 const ONE_DAY_IN_MS = 24 * 60 * 60 * 1000;
 const MIN_HISTORY_IN_DAYS = 28;
 const MAX_INSIGHTS = 2;
-
-const WEEKDAYS = [
-  "Sundays",
-  "Mondays",
-  "Tuesdays",
-  "Wednesdays",
-  "Thursdays",
-  "Fridays",
-  "Saturdays",
-];
 
 type Status = Habit["streak"][number]["status"];
 
@@ -44,8 +37,9 @@ const daysInRange = (from: number, to: number) =>
 const WEEKDAY_LOOKBACK = 6;
 
 /**
- * The weekday the user clearly misses most often (as "Sundays"), counted over the last
- * six of each weekday, or undefined when no weekday stands out. `today` is a day number.
+ * The weekday the user clearly misses most often (0 = Sunday, as in Date.getUTCDay()),
+ * counted over the last six of each weekday, or undefined when no weekday stands out.
+ * `today` is a day number.
  */
 const hardestWeekdayOn = (habit: Habit, today: number) => {
   const days = statusByDay(habit);
@@ -53,7 +47,7 @@ const hardestWeekdayOn = (habit: Habit, today: number) => {
   // Must clearly beat every other weekday, or it's just noise (or misses everywhere).
   const MIN_LEAD = 2;
 
-  const misses = WEEKDAYS.map((name, weekday) => {
+  const misses = Array.from({ length: 7 }, (_, weekday) => {
     // Day 0 (1970-01-01) was a Thursday, hence the +4.
     const lastOccurrence = today - ((today + 4 - weekday + 7) % 7);
     const occurrences = Array.from(
@@ -63,7 +57,7 @@ const hardestWeekdayOn = (habit: Habit, today: number) => {
     const count = occurrences.filter(
       (day) => days.get(day) === HABIT_STATUS.BAD,
     ).length;
-    return { name, weekday, count };
+    return { weekday, count };
   });
 
   const [worst, runnerUp] = [...misses].sort((a, b) => b.count - a.count);
@@ -72,7 +66,7 @@ const hardestWeekdayOn = (habit: Habit, today: number) => {
     : undefined;
 };
 
-/** The weekday the user clearly misses most often, as in "Sundays", if any. */
+/** The weekday the user clearly misses most often (0 = Sunday), if any. */
 export const hardestWeekday = (habit: Habit, now: Date = getToday()) =>
   hardestWeekdayOn(habit, toDayNumber(now));
 
@@ -80,7 +74,7 @@ export const hardestWeekday = (habit: Habit, now: Date = getToday()) =>
 const weekdayInsight = (habit: Habit, today: number) => {
   const worst = hardestWeekdayOn(habit, today);
   return worst
-    ? `You miss most often on ${worst.name}: ${worst.count} of the last ${WEEKDAY_LOOKBACK}.`
+    ? messagesFor(insightsMessages).weekday(worst.weekday, worst.count, WEEKDAY_LOOKBACK)
     : undefined;
 };
 
@@ -102,7 +96,7 @@ export const recoveryInsight = (habit: Habit) => {
   const recovery = percent(good, nextDays.length);
 
   return recovery >= MIN_RECOVERY
-    ? `After a bad day, the next day is good ${recovery} % of the time.`
+    ? messagesFor(insightsMessages).recovery(recovery)
     : undefined;
 };
 
@@ -147,7 +141,7 @@ const chainBreakInsight = (habit: Habit, today: number) => {
   const [low, high] = [quartile(0.25), quartile(0.75)];
   const range = low === high ? `${low}` : `${low}–${high}`;
 
-  return `Your chains usually break after ${range} ${high === 1 ? "day" : "days"}.`;
+  return messagesFor(insightsMessages).chainBreak(range, high);
 };
 
 /** "78 % good days in the last 30 days, up from 61 %." */
@@ -171,7 +165,7 @@ const trendInsight = (habit: Habit, today: number) => {
     );
     return before >= MIN_GOOD_DAYS_WEEKLY &&
       Math.abs(now - before) >= MIN_CHANGE_WEEKLY
-      ? `${now} good days in the last ${WINDOW} days, ${now > before ? "up" : "down"} from ${before}.`
+      ? messagesFor(insightsMessages).trendCount(now, WINDOW, now > before, before)
       : undefined;
   }
 
@@ -183,7 +177,7 @@ const trendInsight = (habit: Habit, today: number) => {
     percent(before.good, before.marked),
   ];
   return Math.abs(nowPct - beforePct) >= MIN_CHANGE
-    ? `${nowPct} % good days in the last ${WINDOW} days, ${nowPct > beforePct ? "up" : "down"} from ${beforePct} %.`
+    ? messagesFor(insightsMessages).trendShare(nowPct, WINDOW, nowPct > beforePct, beforePct)
     : undefined;
 };
 

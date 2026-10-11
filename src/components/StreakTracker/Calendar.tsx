@@ -2,9 +2,9 @@ import "./Calendar.css";
 import type { DayInStreak } from "../../shared/Habit";
 import {
   createDate,
+  formatDay,
   getMonthName,
   getToday,
-  getWeekDayName,
   isBeforeOrSameDay,
   isNextMonthDisabled,
   isSameDay,
@@ -14,6 +14,8 @@ import { PrevMonthIcon } from "./PrevMonthIcon";
 import { useState } from "react";
 import { HABIT_STATUS } from "../../shared/constants";
 import { countGoodDaysInWeek, type Goal } from "../../domain/Habit";
+import { useMessages } from "../../i18n/i18n";
+import { calendarMessages } from "./messages";
 
 interface Props {
   streak: DayInStreak[];
@@ -32,6 +34,7 @@ export const Calendar = ({
   onSelectDate,
   onUpdateDate,
 }: Props) => {
+  const m = useMessages(calendarMessages);
   const nextStatus =
     goal.type === "weekly" ? nextWeeklyStatusMap : newStatusMap;
 
@@ -62,7 +65,6 @@ export const Calendar = ({
       return {
         number: day,
         date,
-        name: getWeekDayName(date),
         status,
         notes,
       } as const;
@@ -70,9 +72,9 @@ export const Calendar = ({
   );
 
   const [firstDayInMonth] = daysInMonthWithStreakData;
-  const padNumberOfDaysToAlignWithWeekDays = dayNamesInWeek.indexOf(
-    firstDayInMonth.name,
-  );
+  // Weeks start on Monday: getUTCDay() counts from Sunday.
+  const padNumberOfDaysToAlignWithWeekDays =
+    (firstDayInMonth.date.getUTCDay() + 6) % 7;
 
   const today = getToday();
 
@@ -87,7 +89,7 @@ export const Calendar = ({
         <button
           className="icon-button"
           type="button"
-          aria-label="Previous month"
+          aria-label={m.previousMonth}
           onClick={() =>
             setVisibleMonth(createDate({ year, month: month - 1, day: 1 }))
           }
@@ -100,7 +102,7 @@ export const Calendar = ({
         <button
           className="icon-button"
           type="button"
-          aria-label="Next month"
+          aria-label={m.nextMonth}
           disabled={isNextMonthDisabled(visibleMonth)}
           onClick={() =>
             setVisibleMonth(createDate({ year, month: month + 1, day: 1 }))
@@ -111,9 +113,9 @@ export const Calendar = ({
       </div>
 
       <div>
-        {dayNamesInWeek.map((name) => (
-          <div className="Calendar-day Calendar-day_week-name" key={name}>
-            {name.charAt(0)}
+        {aWeekFromMonday.map((date) => (
+          <div className="Calendar-day Calendar-day_week-name" key={date.toISOString()}>
+            {formatDay(date, { weekday: "narrow" })}
           </div>
         ))}
       </div>
@@ -157,7 +159,7 @@ export const Calendar = ({
               <div
                 className={`Calendar-day ${classNameByStatus[day.status]} ${todayClassName} ${futureClassName} ${linkedClassName} ${hintAboutTodayClassName}`}
                 key={day.date.toISOString()}
-                title={`Day ${day.number}`}
+                title={m.day(day.number)}
                 {...(isBeforeOrSameDay(day.date, today) &&
                   clickHelpers({
                     onLongClick: () => onSelectDate(day.date),
@@ -178,10 +180,10 @@ export const Calendar = ({
       ))}
 
       <div className="Calendar-legend">
-        <span>Tap to cycle status</span>
-        <span>Hold to add a note</span>
-        <span>* has a note</span>
-        {goal.type === "weekly" ? <span>Lit week = goal reached</span> : null}
+        <span>{m.tapToCycle}</span>
+        <span>{m.holdToAddNote}</span>
+        <span>{m.hasNote}</span>
+        {goal.type === "weekly" ? <span>{m.litWeek}</span> : null}
       </div>
     </div>
   );
@@ -220,15 +222,10 @@ function isWeekGoalReached(
   );
 }
 
-const dayNamesInWeek = [
-  "Monday",
-  "Tuesday",
-  "Wednesday",
-  "Thursday",
-  "Friday",
-  "Saturday",
-  "Sunday",
-];
+// Any Monday-to-Sunday week (1 January 2024 was a Monday), for the weekday headers.
+const aWeekFromMonday = Array.from({ length: 7 }, (_, i) =>
+  createDate({ year: 2024, month: 0, day: 1 + i }),
+);
 
 function splitIntoChunks<T>(arr: T[], size: number = 7): T[][] {
   return arr.reduce<T[][]>(

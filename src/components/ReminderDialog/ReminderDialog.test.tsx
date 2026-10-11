@@ -5,6 +5,7 @@ import userEvent from "@testing-library/user-event";
 import * as reminderService from "../../services/reminderService";
 import { ReminderDialog } from "./ReminderDialog";
 import { ToastProvider } from "../Toast/Toast.Provider";
+import { setLanguageSetting } from "../../i18n/i18n";
 
 vi.mock("../../services/reminderService", async (importOriginal) => ({
   ...(await importOriginal<typeof reminderService>()),
@@ -150,5 +151,20 @@ describe("ReminderDialog - daily reminder on this device", () => {
     expect(await screen.findByRole("status")).toHaveTextContent("Notifications are blocked.");
     expect(onClose).not.toHaveBeenCalled();
     expect(screen.getByRole("button", { name: "Turn on" })).toBeEnabled();
+  });
+
+  it("should speak Swedish, with Swedish times", async () => {
+    setLanguageSetting("sv");
+    onTestFinished(() => setLanguageSetting("auto"));
+    vi.mocked(reminderService.turnOnReminders).mockResolvedValue(undefined);
+    renderDialog();
+
+    expect(screen.getByRole("dialog", { name: "Daglig påminnelse" })).toBeInTheDocument();
+    const time = await screen.findByLabelText("Påminn mig kl.");
+    expect(screen.getByRole("option", { name: "07:00" })).toBeInTheDocument();
+    await userEvent.selectOptions(time, "7");
+    await userEvent.click(screen.getByRole("button", { name: "Slå på" }));
+
+    expect(await screen.findByRole("status")).toHaveTextContent("Påminnelser är på. Du får en kl. 07:00");
   });
 });

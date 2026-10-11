@@ -38,6 +38,8 @@ export default defineConfig({
     // password, session tokens), and a public repo's artifacts are downloadable by anyone.
     trace: process.env.CI ? "off" : "retain-on-failure",
     screenshot: "only-on-failure",
+    // The app follows the browser's language; the tests assert English texts.
+    locale: "en-US",
   },
   // Each browser signs in once in its setup project; its tests reuse that session.
   projects: Object.entries(BROWSERS).flatMap(([name, device]) => [
