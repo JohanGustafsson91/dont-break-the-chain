@@ -3,7 +3,7 @@ import { defineMessages } from "../../i18n/i18n";
 export const accountMenuMessages = defineMessages({
   en: {
     menu: "Account menu",
-    reminder: "Daily reminder",
+    reminder: "Daily reminders",
     exportData: "Export my data",
     deleteAccount: "Delete my account",
     privacy: "Privacy policy",
@@ -23,7 +23,7 @@ export const accountMenuMessages = defineMessages({
   },
   sv: {
     menu: "Kontomeny",
-    reminder: "Daglig påminnelse",
+    reminder: "Dagliga påminnelser",
     exportData: "Exportera min data",
     deleteAccount: "Radera mitt konto",
     privacy: "Integritetspolicy",

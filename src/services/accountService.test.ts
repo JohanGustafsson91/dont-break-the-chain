@@ -89,7 +89,7 @@ describe("accountService - export and account deletion", () => {
       ],
       // Push tokens are device secrets, so only how many devices get reminders.
       reminders: {
-        hour: 20,
+        hours: [20],
         timeZone: "Europe/Stockholm",
         lastMarkedDate: "2025-02-14",
         lastRemindedDate: "2025-02-13",

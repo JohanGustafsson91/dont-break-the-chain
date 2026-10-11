@@ -6,10 +6,12 @@ import {
   getReminderSettings,
   getReminderSupport,
   isOnForThisDevice,
+  MAX_REMINDER_HOURS,
   NotificationsBlockedError,
+  reminderHours,
   turnOffRemindersOnThisDevice,
   turnOnReminders,
-  updateReminderHour,
+  updateReminderHours,
   type ReminderSupport,
 } from "../../services/reminderService";
 import { useToast } from "../Toast/Toast.Context";
@@ -28,6 +30,20 @@ const formatHour = (hour: number) =>
 
 const deviceTimeZone = () => Intl.DateTimeFormat().resolvedOptions().timeZone;
 
+const sorted = (hours: number[]) => [...hours].sort((a, b) => a - b);
+const sameHours = (a: number[], b: number[] = []) => sorted(a).join() === sorted(b).join();
+
+// What a new row suggests, never the middle of the night. With at most two rows taken,
+// one of these is always free.
+const SUGGESTED_HOURS = [12, 18, 21];
+const nextFreeHour = (hours: number[]) => SUGGESTED_HOURS.find((h) => !hours.includes(h)) ?? 12;
+
+/** "12:00, 18:00 and 21:00", with the language's "and". */
+const formatHours = (hours: number[], and: string) => {
+  const times = sorted(hours).map(formatHour);
+  return times.length < 2 ? times.join("") : `${times.slice(0, -1).join(", ")} ${and} ${times[times.length - 1]}`;
+};
+
 type State =
   | { status: "loading" }
   | { status: "failed" }
@@ -35,17 +51,20 @@ type State =
       status: "loaded";
       support: ReminderSupport;
       isOn: boolean;
-      savedHour?: number;
+      savedHours?: number[];
       savedTimeZone?: string;
     };
 
 export const ReminderDialog = ({ onClose }: Props) => {
   const t = useMessages(reminderDialogMessages);
   const titleId = useId();
-  const hourId = useId();
+  const timesId = useId();
   const { showToast } = useToast();
   const [state, setState] = useState<State>({ status: "loading" });
-  const [hour, setHour] = useState(DEFAULT_REMINDER_HOUR);
+  const [hours, setHours] = useState([DEFAULT_REMINDER_HOUR]);
+  // The row to focus after adding or removing one: the button that was pressed may be gone.
+  const [focusRow, setFocusRow] = useState<number>();
+  const timesRef = useRef<HTMLDivElement>(null);
   const [isBusy, setIsBusy] = useState(false);
   const dialogRef = useRef<HTMLDivElement>(null);
 
@@ -61,12 +80,12 @@ export const ReminderDialog = ({ onClose }: Props) => {
           getReminderSupport(),
           getReminderSettings(),
         ]);
-        setHour(settings?.hour ?? DEFAULT_REMINDER_HOUR);
+        setHours(settings ? reminderHours(settings) : [DEFAULT_REMINDER_HOUR]);
         setState({
           status: "loaded",
           support,
           isOn: isOnForThisDevice(settings),
-          savedHour: settings?.hour,
+          savedHours: settings ? reminderHours(settings) : undefined,
           savedTimeZone: settings?.timeZone,
         });
       } catch (error) {
@@ -75,6 +94,15 @@ export const ReminderDialog = ({ onClose }: Props) => {
       }
     })();
   }, []);
+
+  useEffect(
+    function focusRowAfterChange() {
+      if (focusRow === undefined) return;
+      timesRef.current?.querySelectorAll("select")[focusRow]?.focus();
+      setFocusRow(undefined);
+    },
+    [focusRow],
+  );
 
   useEffect(
     function closeOnEscape() {
@@ -107,13 +135,13 @@ export const ReminderDialog = ({ onClose }: Props) => {
   // Called straight from the tap, because Safari only shows the permission prompt then.
   const onTurnOn = () =>
     run(
-      () => turnOnReminders(hour),
-      t.turnedOn(formatHour(hour)),
+      () => turnOnReminders(hours),
+      t.turnedOn(formatHours(hours, t.and), hours.length),
       t.turnOnFailed,
     );
 
   const onSave = () =>
-    run(() => updateReminderHour(hour), t.saved(formatHour(hour)), t.saveFailed);
+    run(() => updateReminderHours(hours), t.saved(formatHours(hours, t.and), hours.length), t.saveFailed);
 
   const onTurnOff = () =>
     run(turnOffRemindersOnThisDevice, t.turnedOff, t.turnOffFailed);
@@ -152,20 +180,55 @@ export const ReminderDialog = ({ onClose }: Props) => {
     return (
       <>
         <span className="ConfirmDialog-body">{t.intro}</span>
-        <div className="ReminderDialog-time">
-          <label htmlFor={hourId}>{t.remindMeAt}</label>
-          <select
-            id={hourId}
-            value={hour}
-            disabled={isBusy}
-            onChange={(e) => setHour(Number(e.target.value))}
-          >
-            {HOURS.map((h) => (
-              <option key={h} value={h}>
-                {formatHour(h)}
-              </option>
-            ))}
-          </select>
+        <div className="ReminderDialog-times" role="group" aria-labelledby={timesId} ref={timesRef}>
+          <span id={timesId}>{t.remindMeAt}</span>
+          {hours.map((hour, i) => (
+            <div className="ReminderDialog-time" key={i}>
+              <select
+                aria-label={t.reminderTime(i + 1)}
+                value={hour}
+                disabled={isBusy}
+                onChange={(e) => setHours(hours.map((h, j) => (j === i ? Number(e.target.value) : h)))}
+              >
+                {HOURS.map((h) => (
+                  // An hour can only be chosen once.
+                  <option key={h} value={h} disabled={h !== hour && hours.includes(h)}>
+                    {formatHour(h)}
+                  </option>
+                ))}
+              </select>
+              {hours.length > 1 ? (
+                <button
+                  type="button"
+                  className="icon-button ReminderDialog-remove"
+                  aria-label={t.removeTime(formatHour(hour))}
+                  disabled={isBusy}
+                  onClick={() => {
+                    setHours(hours.filter((_, j) => j !== i));
+                    setFocusRow(Math.min(i, hours.length - 2));
+                  }}
+                >
+                  <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M6 6l12 12M18 6L6 18" />
+                  </svg>
+                </button>
+              ) : null}
+            </div>
+          ))}
+          {hours.length < MAX_REMINDER_HOURS ? (
+            <button
+              type="button"
+              className="ghost ReminderDialog-add"
+              disabled={isBusy}
+              onClick={() => {
+                setHours([...hours, nextFreeHour(hours)]);
+                setFocusRow(hours.length);
+              }}
+            >
+              <span aria-hidden="true">+ </span>
+              {t.addTime}
+            </button>
+          ) : null}
         </div>
         <span className="ReminderDialog-note">
           {timeZoneChanged
@@ -190,7 +253,7 @@ export const ReminderDialog = ({ onClose }: Props) => {
               </button>
               <button
                 type="button"
-                disabled={isBusy || (hour === state.savedHour && !timeZoneChanged)}
+                disabled={isBusy || (sameHours(hours, state.savedHours) && !timeZoneChanged)}
                 onClick={onSave}
               >
                 {t.save}

@@ -97,9 +97,9 @@ describe("AccountMenu - export, delete, legal links and log out", () => {
     const trigger = screen.getByRole("button", { name: "Account menu" });
 
     await userEvent.click(trigger);
-    await userEvent.click(screen.getByRole("button", { name: "Daily reminder" }));
+    await userEvent.click(screen.getByRole("button", { name: "Daily reminders" }));
 
-    const dialog = screen.getByRole("dialog", { name: "Daily reminder" });
+    const dialog = screen.getByRole("dialog", { name: "Daily reminders" });
     expect(await within(dialog).findByText(/Add to Home Screen/)).toBeInTheDocument();
     await userEvent.click(within(dialog).getByRole("button", { name: "Close" }));
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();

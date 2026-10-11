@@ -1,8 +1,8 @@
 // Sends the daily reminders. Run every hour by .github/workflows/reminders.yml.
 //
-// For each reminders/{uid} document it sends one notification per device when the
-// user's chosen hour has started in their time zone, some habit is still left to do
-// there today, and no reminder went out today. The app works out "left to do" and
+// For each reminders/{uid} document it sends one notification per device when one of
+// the user's chosen hours (up to three) has started in their time zone, some habit is
+// still left to do there today, and that hour's reminder hasn't gone out yet. The app works out "left to do" and
 // saves the day everything was done as lastMarkedDate, so this script never reads
 // habits. It talks to the Firestore and FCM REST APIs with a
 // short-lived access token, so it needs no dependencies and no stored key.
@@ -96,20 +96,30 @@ export const localTime = (now, timeZone) => {
   return { date: `${parts.year}-${parts.month}-${parts.day}`, hour: Number(parts.hour) };
 };
 
-/** Whether a reminder is due now, and for which local date. */
+// The chosen hours. Settings saved before there could be several have only `hour`.
+const chosenHours = ({ hours, hour }) => {
+  const list = Array.isArray(hours) && hours.length > 0 ? hours : [hour];
+  return list.filter((h) => Number.isInteger(h) && h >= 0 && h <= 23);
+};
+
+/**
+ * Whether a reminder is due now: for which local date, and for which of the chosen
+ * hours (the latest one that has started, within the catch-up window).
+ */
 export const reminderDue = (settings, now) => {
-  const { hour, timeZone, tokens, lastMarkedDate, lastRemindedDate } = settings;
-  if (!Number.isInteger(hour) || typeof timeZone !== "string") return { due: false };
+  const { timeZone, tokens, lastMarkedDate, lastRemindedDate, lastRemindedHour } = settings;
+  const hours = chosenHours(settings);
+  if (hours.length === 0 || typeof timeZone !== "string") return { due: false };
   if (!Array.isArray(tokens) || !tokens.some((t) => typeof t === "string")) return { due: false };
 
   const local = localTime(now, timeZone);
-  const hoursLate = local.hour - hour;
-  const due =
-    hoursLate >= 0 &&
-    hoursLate <= CATCH_UP_HOURS &&
-    lastMarkedDate !== local.date &&
-    lastRemindedDate !== local.date;
-  return { due, date: local.date };
+  const started = hours.filter((h) => local.hour - h >= 0 && local.hour - h <= CATCH_UP_HOURS);
+  if (started.length === 0) return { due: false, date: local.date };
+  const hour = Math.max(...started);
+  // A day reminded before the hour was saved counts as fully reminded.
+  const remindedUpTo = lastRemindedDate === local.date ? (lastRemindedHour ?? 23) : -1;
+  const due = lastMarkedDate !== local.date && remindedUpTo < hour;
+  return { due, date: local.date, hour };
 };
 
 /**
@@ -134,6 +144,9 @@ const fromFirestore = (fields = {}) => ({
   tokens: (fields.tokens?.arrayValue?.values ?? []).map((v) => v.stringValue),
   lastMarkedDate: fields.lastMarkedDate?.stringValue,
   lastRemindedDate: fields.lastRemindedDate?.stringValue,
+  lastRemindedHour:
+    fields.lastRemindedHour?.integerValue !== undefined ? Number(fields.lastRemindedHour.integerValue) : undefined,
+  hours: fields.hours?.arrayValue?.values?.map((v) => Number(v.integerValue)),
   progress: fromProgress(fields.progress?.mapValue?.fields),
   language: fields.language?.stringValue,
 });
@@ -194,14 +207,19 @@ const createApi = ({ accessToken, projectId }) => {
 
     // Only these fields change, and only if the document still exists: the user may
     // have turned reminders off while this run was going.
-    async update(name, { remindedDate, deadTokens }) {
+    async update(name, { remindedDate, remindedHour, deadTokens }) {
       const writes = [
         {
           update: {
             name,
-            fields: remindedDate ? { lastRemindedDate: { stringValue: remindedDate } } : {},
+            fields: remindedDate
+              ? {
+                  lastRemindedDate: { stringValue: remindedDate },
+                  lastRemindedHour: { integerValue: String(remindedHour) },
+                }
+              : {},
           },
-          updateMask: { fieldPaths: remindedDate ? ["lastRemindedDate"] : [] },
+          updateMask: { fieldPaths: remindedDate ? ["lastRemindedDate", "lastRemindedHour"] : [] },
           currentDocument: { exists: true },
           ...(deadTokens.length > 0 && {
             updateTransforms: [
@@ -231,7 +249,7 @@ export const sendReminders = async ({ api, now, link, dryRun }) => {
     // One bad document (an invalid time zone, a junk token) must not stop the run.
     try {
       const settings = fromFirestore(doc.fields);
-      const { due, date } = reminderDue(settings, now);
+      const { due, date, hour } = reminderDue(settings, now);
       if (!due) continue;
       counts.due += 1;
       if (dryRun) continue;
@@ -254,7 +272,11 @@ export const sendReminders = async ({ api, now, link, dryRun }) => {
       // When every send failed for a temporary reason, the day stays open so the next
       // run can retry within the catch-up window.
       if (sent > 0 || deadTokens.length > 0) {
-        await api.update(doc.name, { remindedDate: sent > 0 ? date : undefined, deadTokens });
+        await api.update(doc.name, {
+          remindedDate: sent > 0 ? date : undefined,
+          remindedHour: sent > 0 ? hour : undefined,
+          deadTokens,
+        });
       }
     } catch (error) {
       counts.failed += 1;

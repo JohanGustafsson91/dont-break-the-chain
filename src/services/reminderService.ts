@@ -22,6 +22,7 @@ const DEVICE_TOKEN_KEY = "reminderToken";
 const VAPID_KEY = import.meta.env.VITE_FCM_VAPID_KEY;
 
 export const DEFAULT_REMINDER_HOUR = 20;
+export const MAX_REMINDER_HOURS = 3;
 
 export interface ReminderProgress {
   /** The local day these counts are for. */
@@ -59,16 +60,31 @@ let noReminders = false;
 export const remindersAvailable = Boolean(VAPID_KEY);
 
 export interface ReminderSettings {
+  /** The first of `hours`, kept for older app versions that know only one hour. */
   hour: number;
+  /** Two or three hours, sorted; a single hour is only in `hour`. */
+  hours?: number[];
   timeZone: string;
   tokens: string[];
   /** The last day on which every habit was done (see isEverythingDoneToday). */
   lastMarkedDate?: string;
   /** Counts only, never names, so the reminder can be specific. */
   progress?: ReminderProgress;
-  /** Written by the sender, so a reminder goes out at most once a day. */
+  /** Written by the sender, so each chosen hour's reminder goes out at most once a day. */
   lastRemindedDate?: string;
+  lastRemindedHour?: number;
 }
+
+/** The chosen hours, whether one (only `hour`) or several. */
+export const reminderHours = (settings: ReminderSettings): number[] =>
+  settings.hours?.length ? settings.hours : [settings.hour];
+
+// Sorted and without repeats. One hour is stored as `hour` alone, exactly as older app
+// versions store it, so they keep working for everyone who has a single reminder.
+const hourFields = (hours: number[]) => {
+  const sorted = [...new Set(hours)].sort((a, b) => a - b).slice(0, MAX_REMINDER_HOURS);
+  return { hour: sorted[0], hours: sorted.length > 1 ? sorted : deleteField() };
+};
 
 const reminderDoc = () => {
   const uid = auth.currentUser?.uid;
@@ -143,9 +159,9 @@ export class NotificationsBlockedError extends Error {}
 
 /**
  * Asks for permission (call it straight from a tap: Safari requires that), then saves
- * this device's push token together with the hour and the current time zone.
+ * this device's push token together with the hours and the current time zone.
  */
-export const turnOnReminders = async (hour: number) => {
+export const turnOnReminders = async (hours: number[]) => {
   if (Notification.permission !== "granted") {
     const permission = await Notification.requestPermission();
     if (permission !== "granted") throw new NotificationsBlockedError();
@@ -155,7 +171,7 @@ export const turnOnReminders = async (hour: number) => {
   await replaceStoredToken(token);
   await setDoc(
     reminderDoc(),
-    { hour, timeZone: timeZone(), tokens: arrayUnion(token), language: getLanguage() },
+    { ...hourFields(hours), timeZone: timeZone(), tokens: arrayUnion(token), language: getLanguage() },
     { merge: true },
   );
   storage.set(token);
@@ -205,9 +221,9 @@ export const syncReminderToken = async () => {
   }
 };
 
-/** The hour applies to every device; the time zone follows the device that saved it. */
-export const updateReminderHour = (hour: number) =>
-  updateDoc(reminderDoc(), { hour, timeZone: timeZone() });
+/** The hours apply to every device; the time zone follows the device that saved them. */
+export const updateReminderHours = (hours: number[]) =>
+  updateDoc(reminderDoc(), { ...hourFields(hours), timeZone: timeZone() });
 
 /**
  * Stops reminders on this device only. When no device is left, the settings go too,

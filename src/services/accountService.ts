@@ -3,7 +3,7 @@ import type { Habit } from "../domain/Habit";
 import { auth } from "./firebaseService";
 import { reauthenticate } from "./authService";
 import { deleteAllHabits, getAllHabits } from "./habitService";
-import { deleteReminders, getReminderSettings, type ReminderSettings } from "./reminderService";
+import { deleteReminders, getReminderSettings, reminderHours, type ReminderSettings } from "./reminderService";
 import { messagesFor } from "../i18n/i18n";
 import { accountDeletionMessages } from "./messages";
 
@@ -39,7 +39,8 @@ export const buildExport = (
     })),
   })),
   reminders: reminders && {
-    hour: reminders.hour,
+    hours: reminderHours(reminders),
+    lastRemindedHour: reminders.lastRemindedHour,
     timeZone: reminders.timeZone,
     lastMarkedDate: reminders.lastMarkedDate,
     lastRemindedDate: reminders.lastRemindedDate,
