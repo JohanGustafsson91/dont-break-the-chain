@@ -14,6 +14,8 @@ export interface Habit {
   goal: Goal;
   streak: StreakDay[];
   createdAt?: Date;
+  /** Place in the list once the user has sorted it by hand. */
+  order?: number;
 }
 
 export interface StreakDay {

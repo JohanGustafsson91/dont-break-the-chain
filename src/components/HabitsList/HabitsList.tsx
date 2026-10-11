@@ -12,8 +12,11 @@ import {
 import {
   addHabit,
   getAllHabits,
+  saveHabitOrder,
   updateHabit,
 } from "../../services/habitService";
+import { orderChanges, withOrders } from "../../domain/habitOrder";
+import { ReorderList } from "./ReorderList";
 import { ProgressBar } from "../StreakTracker/ProgressBar";
 import { HABIT_STATUS, STREAK_ICONS } from "../../shared/constants";
 import { createDate, getToday } from "../../utils/date";
@@ -42,6 +45,8 @@ const todayLabel = () =>
 export const HabitsList = () => {
   const [habits, setHabits] = useState<State>({ data: [], status: "pending" });
   const [pendingRemoval, setPendingRemoval] = useState<PendingRemoval>();
+  // The order being edited; set while sorting, saved on Done.
+  const [reorderDraft, setReorderDraft] = useState<Habit[]>();
   const navigate = useNavigate();
   const { showToast } = useToast();
 
@@ -125,13 +130,46 @@ export const HabitsList = () => {
     }
   }
 
+  async function saveOrder(sorted: Habit[]) {
+    setReorderDraft(undefined);
+    // Unsorted habits have no `order` yet; only write them when something actually moved.
+    if (sorted.every((h, i) => h.id === habits.data[i]?.id)) return;
+    const changes = orderChanges(sorted);
+
+    const newOrders = new Map(sorted.map((h, order) => [h.id, order]));
+    const previousOrders = new Map(habits.data.map((h) => [h.id, h.order]));
+    setHabits((prev) => ({ ...prev, data: withOrders(prev.data, newOrders) }));
+    try {
+      await saveHabitOrder(changes);
+    } catch (error) {
+      console.error("Could not save habit order", { error });
+      showToast("Couldn't save the new order. Please try again.");
+      setHabits((prev) => ({ ...prev, data: withOrders(prev.data, previousOrders) }));
+    }
+  }
+
+  const canReorder = habits.status === "resolved" && habits.data.length >= 2;
+
   return (
     <>
       <div className="page HabitsList">
         <div className="HabitsList-date">{todayLabel()}</div>
-        <h1 className="HabitsList-title">Your habits</h1>
+        <div className="HabitsList-heading">
+          <h1 className="HabitsList-title">Your habits</h1>
+          {reorderDraft ? (
+            <button type="button" className="HabitsList-reorder_toggle" onClick={() => saveOrder(reorderDraft)}>
+              Done
+            </button>
+          ) : canReorder ? (
+            <button type="button" className="HabitsList-reorder_toggle" onClick={() => setReorderDraft(habits.data)}>
+              Reorder
+            </button>
+          ) : null}
+        </div>
 
-        {
+        {reorderDraft ? (
+          <ReorderList habits={reorderDraft} onChange={setReorderDraft} />
+        ) : (
           {
             resolved:
               habits.data.length === 0 ? (
@@ -244,9 +282,9 @@ export const HabitsList = () => {
               </p>
             ),
           }[habits.status]
-        }
+        )}
 
-        {habits.status === "resolved" ? (
+        {habits.status === "resolved" && !reorderDraft ? (
           habits.data.length === 0 ? (
             <button type="button" className="HabitsList-create_first" onClick={onCreateHabit}>
               + Create habit

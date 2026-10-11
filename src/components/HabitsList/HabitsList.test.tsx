@@ -27,6 +27,20 @@ vi.mock("../../services/habitService", () => ({
   getAllHabits: vi.fn(),
   addHabit: vi.fn(),
   updateHabit: vi.fn(),
+  saveHabitOrder: vi.fn(),
+}));
+
+// jsdom has no layout, so dnd-kit can't drag here; this stand-in makes the move a person
+// would. Dragging itself is covered by e2e/reorder.spec.ts.
+vi.mock("./ReorderList", () => ({
+  ReorderList: ({ habits, onChange }: { habits: Habit[]; onChange: (habits: Habit[]) => void }) => (
+    <ul aria-label="Habits in order">
+      {habits.map((h) => <li key={h.id}>{h.name}</li>)}
+      <button type="button" onClick={() => onChange([habits[1], habits[0], ...habits.slice(2)])}>
+        Swap first two
+      </button>
+    </ul>
+  ),
 }));
 
 vi.mock("../../utils/logger", () => ({
@@ -321,5 +335,92 @@ describe("HabitsList - User workflows", () => {
       expect(screen.getByRole("alert")).toHaveTextContent("Couldn't load your habits.");
     });
     expect(screen.queryByRole("button", { name: /habit/ })).not.toBeInTheDocument();
+  });
+
+  it("should go back without saving when nothing moved", async () => {
+    const habit = (id: string, name: string): Habit => ({
+      id,
+      name,
+      description: "",
+      goal: { type: "daily" },
+      streak: [],
+    });
+    vi.mocked(habitService.getAllHabits).mockResolvedValue([
+      habit("habit-1", "Run"),
+      habit("habit-2", "Read"),
+    ]);
+
+    renderHabitsList();
+    await userEvent.click(await screen.findByRole("button", { name: "Reorder" }));
+
+    // While sorting there is no marking or creating.
+    expect(screen.getByRole("list", { name: "Habits in order" })).toBeInTheDocument();
+    expect(screen.queryByRole("radio")).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "+ New habit" })).not.toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole("button", { name: "Done" }));
+
+    expect(habitService.saveHabitOrder).not.toHaveBeenCalled();
+    expect(screen.getAllByRole("radio", { name: "Done" })).toHaveLength(2);
+    expect(screen.getByRole("button", { name: "Reorder" })).toBeInTheDocument();
+  });
+
+  it("should not offer sorting with fewer than two habits", async () => {
+    vi.mocked(habitService.getAllHabits).mockResolvedValue([
+      { id: "habit-1", name: "Run", description: "", goal: { type: "daily" }, streak: [] },
+    ]);
+
+    renderHabitsList();
+
+    await screen.findByText("Run");
+    expect(screen.queryByRole("button", { name: "Reorder" })).not.toBeInTheDocument();
+  });
+
+  const sortable = (id: string, name: string, order?: number): Habit => ({
+    id,
+    name,
+    description: "",
+    goal: { type: "daily" },
+    streak: [],
+    order,
+  });
+  const titles = () => screen.getAllByText(/^(Run|Read|Stretch)$/).map((el) => el.textContent);
+
+  it("should save only the habits that changed place", async () => {
+    vi.mocked(habitService.getAllHabits).mockResolvedValue([
+      sortable("habit-1", "Run", 0),
+      sortable("habit-2", "Read", 1),
+      sortable("habit-3", "Stretch", 2),
+    ]);
+    vi.mocked(habitService.saveHabitOrder).mockResolvedValue();
+
+    renderHabitsList();
+    await userEvent.click(await screen.findByRole("button", { name: "Reorder" }));
+    await userEvent.click(screen.getByRole("button", { name: "Swap first two" }));
+    await userEvent.click(screen.getByRole("button", { name: "Done" }));
+
+    expect(habitService.saveHabitOrder).toHaveBeenCalledExactlyOnceWith([
+      { id: "habit-2", order: 0 },
+      { id: "habit-1", order: 1 },
+    ]);
+    expect(titles()).toEqual(["Read", "Run", "Stretch"]);
+  });
+
+  it("should put the old order back and tell the user when saving the order fails", async () => {
+    const consoleErrorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+    onTestFinished(() => consoleErrorSpy.mockRestore());
+    vi.mocked(habitService.getAllHabits).mockResolvedValue([
+      sortable("habit-1", "Run"),
+      sortable("habit-2", "Read"),
+    ]);
+    vi.mocked(habitService.saveHabitOrder).mockRejectedValue(new Error("offline"));
+
+    renderHabitsList();
+    await userEvent.click(await screen.findByRole("button", { name: "Reorder" }));
+    await userEvent.click(screen.getByRole("button", { name: "Swap first two" }));
+    await userEvent.click(screen.getByRole("button", { name: "Done" }));
+
+    expect(await screen.findByRole("status")).toHaveTextContent("Couldn't save the new order.");
+    expect(titles()).toEqual(["Run", "Read"]);
   });
 });

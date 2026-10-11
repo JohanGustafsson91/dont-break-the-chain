@@ -121,6 +121,7 @@ describe("Firestore rules - habits belong to one user", () => {
     await assertSucceeds(updateDoc(aliceHabit(ALICE), { streak: [today] }));
     await assertSucceeds(updateDoc(aliceHabit(ALICE), { name: "Evening run", description: "5 km" }));
     await assertSucceeds(updateDoc(aliceHabit(ALICE), { goal: { type: "weekly", times: 3 } }));
+    await assertSucceeds(updateDoc(aliceHabit(ALICE), { order: 0 }));
 
     await assertFails(updateDoc(aliceHabit(BOB), { name: "Hacked" }));
     await assertFails(updateDoc(aliceHabit(), { name: "Hacked" }));
@@ -130,6 +131,11 @@ describe("Firestore rules - habits belong to one user", () => {
     await assertFails(updateDoc(aliceHabit(ALICE), { name: "" }));
     await assertFails(updateDoc(aliceHabit(ALICE), { goal: { type: "weekly", times: 0 } }));
     await assertFails(updateDoc(aliceHabit(ALICE), { streak: "not a list" }));
+    await assertFails(updateDoc(aliceHabit(BOB), { order: 1 }));
+    await assertFails(updateDoc(aliceHabit(ALICE), { order: -1 }));
+    await assertFails(updateDoc(aliceHabit(ALICE), { order: 1.5 }));
+    await assertFails(updateDoc(aliceHabit(ALICE), { order: 10001 }));
+    await assertFails(updateDoc(aliceHabit(ALICE), { order: "first" }));
   });
 
   it("should keep habits from older app versions editable", async () => {
