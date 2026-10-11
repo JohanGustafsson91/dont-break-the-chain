@@ -48,7 +48,7 @@ describe("Login - User authentication flow", () => {
     expect(screen.getByText("Don't Break The Chain")).toBeInTheDocument();
     expect(
       screen.getByText(
-        "Build habits, stay consistent, and keep your streak alive!",
+        "Build habits that stick, one day at a time.",
       ),
     ).toBeInTheDocument();
 

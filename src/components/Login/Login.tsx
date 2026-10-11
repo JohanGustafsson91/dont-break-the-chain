@@ -50,67 +50,96 @@ export const Login = () => {
 
   return (
     <div className="page Login-container">
-      <div className="Login-logo" aria-hidden="true">
-        <span />
-        <span />
-        <span />
-      </div>
-      {accountDeleted ? (
-        <p className="Login-notice" role="status">
-          {t.accountDeleted}
-        </p>
-      ) : null}
-      <h1 className="Login-title">Don't Break The Chain</h1>
-      <h2 className="Login-subtitle">{t.tagline}</h2>
-      {acceptedOnThisDevice ? (
-        <p className="Login-accepted" id="login-consent">
-          {t.acceptedBefore}
-          <Link to="/terms">{t.termsLink}</Link>
-          {t.acceptedMiddle}
-          <Link to="/privacy">{t.privacyLink}</Link>
-          {t.acceptedAfter}
-        </p>
-      ) : (
-        <label className="Login-consent" id="login-consent">
-          <input
-            type="checkbox"
-            checked={hasAcceptedTerms}
-            onChange={(e) => setHasAcceptedTerms(e.target.checked)}
+      <div className="Login-layout">
+        <section className="Login-intro">
+          <div className="Login-logo" aria-hidden="true">
+            <span />
+            <span />
+            <span />
+          </div>
+          {accountDeleted ? (
+            <p className="Login-notice" role="status">
+              {t.accountDeleted}
+            </p>
+          ) : null}
+          <h1 className="Login-title">Don't Break The Chain</h1>
+          <p className="Login-subtitle">{t.tagline}</p>
+          <p className="Login-pitch">{t.pitch}</p>
+          {acceptedOnThisDevice ? (
+            <p className="Login-accepted" id="login-consent">
+              {t.acceptedBefore}
+              <Link to="/terms">{t.termsLink}</Link>
+              {t.acceptedMiddle}
+              <Link to="/privacy">{t.privacyLink}</Link>
+              {t.acceptedAfter}
+            </p>
+          ) : (
+            <label className="Login-consent" id="login-consent">
+              <input
+                type="checkbox"
+                checked={hasAcceptedTerms}
+                onChange={(e) => setHasAcceptedTerms(e.target.checked)}
+              />
+              <span>
+                {t.consentBefore}
+                <Link to="/terms">{t.termsLink}</Link>
+                {t.consentMiddle}
+                <Link to="/privacy">{t.privacyLink}</Link>
+                {t.consentAfter}
+              </span>
+            </label>
+          )}
+          <div className="Login-buttons">
+            <button
+              className="Login-button"
+              type="button"
+              onClick={() => handleLogin(AUTH_PROVIDERS.GOOGLE)}
+              disabled={!hasAcceptedTerms}
+              aria-describedby="login-consent"
+            >
+              {t.continueWith("Google")}
+            </button>
+            <button
+              className="Login-button secondary"
+              type="button"
+              onClick={() => handleLogin(AUTH_PROVIDERS.GITHUB)}
+              disabled={!hasAcceptedTerms}
+              aria-describedby="login-consent"
+            >
+              {t.continueWith("GitHub")}
+            </button>
+          </div>
+          {errorMessage ? (
+            <p className="Login-error" role="alert">
+              {errorMessage}
+            </p>
+          ) : null}
+        </section>
+
+        <section className="Login-video">
+          {/* Loaded only when played: free hosting allows little traffic a day. */}
+          <video
+            src="/promo/promo-v2.mp4"
+            poster="/promo/promo-v2-poster.jpg"
+            controls
+            playsInline
+            preload="none"
+            aria-label={t.videoLabel}
           />
-          <span>
-            {t.consentBefore}
-            <Link to="/terms">{t.termsLink}</Link>
-            {t.consentMiddle}
-            <Link to="/privacy">{t.privacyLink}</Link>
-            {t.consentAfter}
-          </span>
-        </label>
-      )}
-      <div className="Login-buttons">
-        <button
-          className="Login-button"
-          type="button"
-          onClick={() => handleLogin(AUTH_PROVIDERS.GOOGLE)}
-          disabled={!hasAcceptedTerms}
-          aria-describedby="login-consent"
-        >
-          {t.continueWith("Google")}
-        </button>
-        <button
-          className="Login-button secondary"
-          type="button"
-          onClick={() => handleLogin(AUTH_PROVIDERS.GITHUB)}
-          disabled={!hasAcceptedTerms}
-          aria-describedby="login-consent"
-        >
-          {t.continueWith("GitHub")}
-        </button>
+        </section>
+
+        <section className="Login-features" aria-labelledby="login-features">
+          <h2 id="login-features">{t.featuresTitle}</h2>
+          <ul>
+            {t.features.map((feature) => (
+              <li key={feature.title}>
+                <strong>{feature.title}</strong>
+                <span>{feature.text}</span>
+              </li>
+            ))}
+          </ul>
+        </section>
       </div>
-      {errorMessage ? (
-        <p className="Login-error" role="alert">
-          {errorMessage}
-        </p>
-      ) : null}
     </div>
   );
 };
