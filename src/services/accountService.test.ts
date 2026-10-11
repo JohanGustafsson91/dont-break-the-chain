@@ -62,6 +62,7 @@ describe("accountService - export and account deletion", () => {
         tokens: ["a", "b"],
         lastMarkedDate: "2025-02-14",
         lastRemindedDate: "2025-02-13",
+        language: "sv",
       },
       new Date("2025-02-15T10:00:00Z"),
     );
@@ -93,6 +94,7 @@ describe("accountService - export and account deletion", () => {
         timeZone: "Europe/Stockholm",
         lastMarkedDate: "2025-02-14",
         lastRemindedDate: "2025-02-13",
+        language: "sv",
         devices: 2,
       },
     });

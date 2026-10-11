@@ -43,3 +43,21 @@
   max-width: 720px;
   margin: 0 auto;
 }
+
+/* The short version, before the details. */
+.LegalPage .LegalPage-summary {
+  margin: 1.25rem 0 0.5rem;
+  padding: 1rem 1.25rem;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  background: var(--surface-color);
+  color: var(--text-color);
+}
+
+.LegalPage-summary ul {
+  margin: 0.5rem 0 0;
+}
+
+.LegalPage-summary li {
+  color: var(--text-color);
+}

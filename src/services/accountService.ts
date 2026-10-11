@@ -41,6 +41,7 @@ export const buildExport = (
   reminders: reminders && {
     hours: reminderHours(reminders),
     lastRemindedHour: reminders.lastRemindedHour,
+    language: reminders.language,
     timeZone: reminders.timeZone,
     lastMarkedDate: reminders.lastMarkedDate,
     lastRemindedDate: reminders.lastRemindedDate,
