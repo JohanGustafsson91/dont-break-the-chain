@@ -102,6 +102,9 @@ export const login = ({ provider }: { provider: AuthProvider }) => {
   return signInWithPopup(auth, authProvider);
 };
 
+// After verifying on Firebase's page, its "Continue" button leads back to the app.
+const backToApp = () => ({ url: `${window.location.origin}/` });
+
 // Emails from Firebase (verification, password reset) in the app's language.
 const setEmailLanguage = () => {
   auth.languageCode = getLanguage();
@@ -118,7 +121,7 @@ export const signInWithEmail = (email: string, password: string) =>
 export const signUpWithEmail = async (email: string, password: string) => {
   const { user } = await createUserWithEmailAndPassword(auth, email.trim(), password);
   setEmailLanguage();
-  await sendEmailVerification(user).catch((error) => {
+  await sendEmailVerification(user, backToApp()).catch((error) => {
     console.warn("Could not send the verification email", { error });
   });
   return user;
@@ -128,7 +131,7 @@ export const resendVerification = () => {
   const user = auth.currentUser;
   if (!user) throw new Error("Not signed in");
   setEmailLanguage();
-  return sendEmailVerification(user);
+  return sendEmailVerification(user, backToApp());
 };
 
 /** After the link was opened elsewhere: reloads the user and gets a token that says so. */

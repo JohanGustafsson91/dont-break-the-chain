@@ -4,7 +4,7 @@ export const verifyEmailMessages = defineMessages({
   en: {
     title: "Check your inbox",
     body: (email: string) =>
-      `I sent a link to ${email}. Open it to verify your address, then come back here. Can't find it? Look in your spam folder.`,
+      `I sent a link to ${email}. Open it to verify your address, and this page moves on by itself. Can't find it? Look in your spam folder.`,
     verified: "I've verified it",
     notYet: "Not verified yet. Open the link in the email, then try again.",
     resend: "Send the email again",
@@ -15,7 +15,7 @@ export const verifyEmailMessages = defineMessages({
   sv: {
     title: "Kolla din inkorg",
     body: (email: string) =>
-      `Jag har skickat en länk till ${email}. Öppna den för att verifiera adressen och kom sedan tillbaka hit. Hittar du den inte? Titta i skräpposten.`,
+      `Jag har skickat en länk till ${email}. Öppna den för att verifiera adressen, så går den här sidan vidare av sig själv. Hittar du den inte? Titta i skräpposten.`,
     verified: "Jag har verifierat",
     notYet: "Inte verifierad än. Öppna länken i mejlet och försök igen.",
     resend: "Skicka mejlet igen",

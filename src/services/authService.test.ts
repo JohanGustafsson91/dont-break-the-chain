@@ -278,7 +278,8 @@ describe("authService - Authentication workflows", () => {
       await signUpWithEmail(" ada@example.com ", "long enough");
 
       expect(firebaseAuth.createUserWithEmailAndPassword).toHaveBeenCalledWith(firebaseService.auth, "ada@example.com", "long enough");
-      expect(firebaseAuth.sendEmailVerification).toHaveBeenCalledWith(user);
+      // Its "Continue" button leads back to the app.
+      expect(firebaseAuth.sendEmailVerification).toHaveBeenCalledWith(user, { url: `${window.location.origin}/` });
       expect((firebaseService.auth as unknown as { languageCode: string }).languageCode).toBe("sv");
     });
 
