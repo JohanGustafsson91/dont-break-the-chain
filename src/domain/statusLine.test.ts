@@ -28,6 +28,8 @@ const line = (habit: Habit) => {
 describe("habitStatusLine - rest days", () => {
   it("should say the chain is kept on a rest day, and count on after it", () => {
     expect(line(daily(...range(10, 14), day(15, "REST")))).toBe("Rest day, chain kept");
+    // No chain to keep: an unmarked day already broke it.
+    expect(line(daily(...range(10, 12), day(15, "REST")))).toBe("Rest day");
     // Rested yesterday: the 5-day chain is still open today, 2 days from 7.
     expect(line(daily(...range(9, 13), day(14, "REST")))).toBe("2 days to 7 in a row 🎯");
   });

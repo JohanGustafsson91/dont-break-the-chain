@@ -25,8 +25,9 @@ const statusByDay = (habit: Habit) =>
     habit.streak.map((d) => [toDayNumber(d.date), d.status]),
   );
 
+// Rest days are neither done nor missed, so only ✓ and ✗ count.
 const goodShare = (statuses: Status[]) => {
-  const marked = statuses.filter((s) => s !== HABIT_STATUS.NOT_SPECIFIED);
+  const marked = statuses.filter((s) => s === HABIT_STATUS.GOOD || s === HABIT_STATUS.BAD);
   const good = marked.filter((s) => s === HABIT_STATUS.GOOD).length;
   return { marked: marked.length, good };
 };
@@ -88,7 +89,7 @@ export const recoveryInsight = (habit: Habit) => {
   const nextDays = [...days]
     .filter(([, status]) => status === HABIT_STATUS.BAD)
     .map(([day]) => days.get(day + 1))
-    .filter((status) => status !== undefined);
+    .filter((status) => status === HABIT_STATUS.GOOD || status === HABIT_STATUS.BAD);
 
   if (nextDays.length < MIN_SAMPLES) return undefined;
 
@@ -129,7 +130,8 @@ const chainBreakInsight = (habit: Habit, today: number) => {
     [],
   );
 
-  // A chain ending yesterday is still alive, unless today is already a miss.
+  // A chain ending yesterday, or followed only by rest days, is still alive, unless
+  // today is already a miss.
   const isOngoing = (end: number) =>
     end === today || (onlyRestBetween(end, today) && days.get(today) !== HABIT_STATUS.BAD);
 

@@ -105,7 +105,9 @@ test.describe("Habits", () => {
     await holdDay(page, new Date().getDate());
     await tap(page.getByRole("radio", { name: "Rest day" }));
     await page.getByRole("button", { name: "Done", exact: true }).click();
-    await page.evaluate(() => window.__e2e!.waitForWrites());
+    // Saved, not just shown: it's still there after a reload.
+    await reloadWhenSaved(page);
+    await expect(page.locator('input[type="text"]')).toHaveValue("Run");
 
     await page.getByRole("button", { name: "‹ Habits" }).click();
     await expect(card(page, "Run")).toContainText("Rest day, chain kept");

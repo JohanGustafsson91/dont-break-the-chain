@@ -65,10 +65,21 @@
   color: var(--on-accent-color);
 }
 
-/* Neither done nor missed: a calm tint that keeps the chain. */
+/* Neither done nor missed: a calm tint that keeps the chain, and a moon, so it doesn't
+   rely on colour alone to tell it from an unmarked day. */
 .Calendar-day.Calendar-day_rest {
-  background: color-mix(in srgb, var(--primary-color) 28%, var(--surface-color));
+  position: relative;
+  background: color-mix(in srgb, var(--primary-color) 40%, var(--surface-color));
   color: var(--text-color);
+}
+
+.Calendar-day.Calendar-day_rest::after {
+  content: "☾";
+  position: absolute;
+  top: 2px;
+  right: 4px;
+  font-size: 0.625rem;
+  line-height: 1;
 }
 
 .Calendar-day.Calendar-day_future {

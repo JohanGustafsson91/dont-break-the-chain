@@ -193,7 +193,9 @@ button.Overview-row {
 
 /* Neither done nor missed: a calm tint, as in the calendar. */
 .Overview-cell_rest {
-  background: color-mix(in srgb, var(--primary-color) 40%, var(--surface-color));
+  background: color-mix(in srgb, var(--primary-color) 25%, var(--surface-muted-color));
+  /* An outline too, so it differs from a missed day by more than hue. */
+  box-shadow: inset 0 0 0 1.5px var(--primary-color);
 }
 
 .Overview-cell_future {

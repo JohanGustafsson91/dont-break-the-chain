@@ -46,11 +46,16 @@ describe("buildOverview", () => {
     });
     const read = habit("read", [day("2026-10-09", HABIT_STATUS.GOOD)], { createdAt: new Date(2026, 9, 9, 8, 0) });
     const gym = habit("gym", [day("2026-10-09", HABIT_STATUS.GOOD)], { goal: { type: "weekly", times: 3 } });
+    // A rest day is neither done nor missed, so it doesn't count at all.
+    const rested = habit("rested", [day("2026-10-08", HABIT_STATUS.REST), day("2026-10-09", HABIT_STATUS.GOOD)], {
+      createdAt: new Date(2026, 9, 8, 8, 0),
+    });
 
-    const overview = buildOverview([run, read, gym], 2, 0, TODAY);
+    const overview = buildOverview([run, read, gym, rested], 2, 0, TODAY);
 
     // run: Wed–Sat = 4 days (2 done); read: Fri only, today unmarked = 1 day (1 done); gym is weekly.
-    expect({ done: overview.done, counted: overview.counted }).toEqual({ done: 3, counted: 5 });
+    // rested: Thursday is a rest day, Friday done, today unmarked = 1 day (1 done).
+    expect({ done: overview.done, counted: overview.counted }).toEqual({ done: 4, counted: 6 });
     expect(overview.rows[0].weeks[1].map((c) => c.isBeforeStart)).toEqual([true, true, false, false, false, false, false]);
   });
 
