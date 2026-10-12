@@ -89,7 +89,12 @@ export const buildOverview = (
     .filter((row) => row.habit.goal.type === "daily")
     .flatMap((row) => row.weeks.flat())
     .filter(
-      (c) => !c.isFuture && !c.isBeforeStart && !(c.isToday && c.status === HABIT_STATUS.NOT_SPECIFIED),
+      // Rest days are neither done nor missed, so they don't count either way.
+      (c) =>
+        !c.isFuture &&
+        !c.isBeforeStart &&
+        c.status !== HABIT_STATUS.REST &&
+        !(c.isToday && c.status === HABIT_STATUS.NOT_SPECIFIED),
     );
 
   const earliest = Math.min(...habits.map(startOf).filter(Number.isFinite));

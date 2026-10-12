@@ -116,6 +116,35 @@ describe("Domain - Habit tracking complete workflows", () => {
       expect(longestStreak.to).toEqual(new Date("2025-02-12"));
     });
 
+    it("should keep a chain across rest days without counting them", () => {
+      // Today is 2025-02-15.
+      const habit = createHabit([
+        { date: "2025-02-08T00:00:00Z", status: "GOOD" },
+        { date: "2025-02-09T00:00:00Z", status: "GOOD" },
+        { date: "2025-02-10T00:00:00Z", status: "REST" },
+        { date: "2025-02-11T00:00:00Z", status: "REST" },
+        { date: "2025-02-12T00:00:00Z", status: "GOOD" },
+        { date: "2025-02-13T00:00:00Z", status: "GOOD" },
+        { date: "2025-02-14T00:00:00Z", status: "REST" },
+      ]);
+
+      // Four ✓ days in one chain, still alive: only a rest day since the last ✓.
+      expect(calculateCurrentStreak(habit).count).toBe(4);
+      expect(calculateLongestStreak(habit).count).toBe(4);
+
+      // An unmarked day in between breaks it, as before.
+      const gap = createHabit([
+        { date: "2025-02-11T00:00:00Z", status: "GOOD" },
+        { date: "2025-02-12T00:00:00Z", status: "REST" },
+        { date: "2025-02-14T00:00:00Z", status: "GOOD" },
+      ]);
+      expect(calculateCurrentStreak(gap).count).toBe(1);
+
+      // A rest day counts as today being taken care of.
+      const restToday = createHabit([{ date: "2025-02-15T00:00:00Z", status: "REST" }]);
+      expect(isEverythingDoneToday([restToday])).toBe(true);
+    });
+
     it("should handle yesterday's streak as still active (grace period)", () => {
       // User has streak until yesterday
       const habit = createHabit([

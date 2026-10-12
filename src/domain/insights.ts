@@ -110,11 +110,15 @@ const chainBreakInsight = (habit: Habit, today: number) => {
     .map((d) => toDayNumber(d.date))
     .sort((a, b) => a - b);
 
-  // Like the calendar's chain links, any day that isn't ✓ ends a chain.
+  // Any day that isn't ✓ ends a chain, except rest days, which keep it (not counted).
+  const onlyRestBetween = (from: number, to: number) => {
+    for (let d = from + 1; d < to; d += 1) if (days.get(d) !== HABIT_STATUS.REST) return false;
+    return true;
+  };
   const chains = goodDays.reduce<{ end: number; length: number }[]>(
     (acc, day) => {
       const last = acc[acc.length - 1];
-      if (last && day === last.end + 1) {
+      if (last && onlyRestBetween(last.end, day)) {
         last.end = day;
         last.length += 1;
       } else {
@@ -127,8 +131,7 @@ const chainBreakInsight = (habit: Habit, today: number) => {
 
   // A chain ending yesterday is still alive, unless today is already a miss.
   const isOngoing = (end: number) =>
-    end === today ||
-    (end === today - 1 && days.get(today) !== HABIT_STATUS.BAD);
+    end === today || (onlyRestBetween(end, today) && days.get(today) !== HABIT_STATUS.BAD);
 
   const broken = chains
     .filter((chain) => !isOngoing(chain.end))

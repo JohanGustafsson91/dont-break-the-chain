@@ -103,6 +103,8 @@ export const habitStatusLine = (habit: Habit): string => {
     return current <= 1 ? t.newChain : t.dayInARow(current);
   }
 
+  if (todayStatus === HABIT_STATUS.REST) return messagesFor(statusLineMessages).restDay;
+
   if (todayStatus === HABIT_STATUS.BAD) {
     const comeback = comebackRate(habit, today);
     if (comeback.samples >= 5 && comeback.rate >= 0.95) return t.alwaysBounceBack;

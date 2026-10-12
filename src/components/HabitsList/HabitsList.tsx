@@ -35,6 +35,7 @@ type Status = (typeof HABIT_STATUS)[keyof typeof HABIT_STATUS];
 const itemClassByDayStatus = {
   [HABIT_STATUS.GOOD]: "HabitsList-item_success",
   [HABIT_STATUS.BAD]: "HabitsList-item_bad",
+  [HABIT_STATUS.REST]: "",
   [HABIT_STATUS.NOT_SPECIFIED]: "",
 };
 

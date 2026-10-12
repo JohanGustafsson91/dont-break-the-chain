@@ -65,6 +65,12 @@
   color: var(--on-accent-color);
 }
 
+/* Neither done nor missed: a calm tint that keeps the chain. */
+.Calendar-day.Calendar-day_rest {
+  background: color-mix(in srgb, var(--primary-color) 28%, var(--surface-color));
+  color: var(--text-color);
+}
+
 .Calendar-day.Calendar-day_future {
   background: transparent;
   color: var(--text-disabled-color);

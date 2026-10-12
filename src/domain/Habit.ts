@@ -59,6 +59,21 @@ export const markDay = (
   };
 };
 
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+/** Whether every day strictly between two days is a rest day (true for neighbours). */
+const onlyRestBetween = (habit: Habit, from: Date, to: Date) => {
+  const restDays = new Set(
+    habit.streak.filter((d) => d.status === HABIT_STATUS.REST).map((d) => createDate(d.date).getTime()),
+  );
+  for (let t = createDate(from).getTime() + DAY_MS; t < createDate(to).getTime(); t += DAY_MS) {
+    if (!restDays.has(t)) return false;
+  }
+  return true;
+};
+
+// Chains of ✓ days. Rest days between two ✓ days keep them in one chain, but only the
+// ✓ days count.
 function buildStreaks(habit: Habit): Date[][] {
   const goodDays = habit.streak
     .filter((d) => d.status === HABIT_STATUS.GOOD)
@@ -73,7 +88,7 @@ function buildStreaks(habit: Habit): Date[][] {
     const lastStreak = acc[acc.length - 1];
     const lastDate = lastStreak[lastStreak.length - 1];
 
-    if (isNextDay(lastDate, curr)) {
+    if (isNextDay(lastDate, curr) || onlyRestBetween(habit, lastDate, curr)) {
       lastStreak.push(curr);
       return acc;
     }
@@ -95,8 +110,11 @@ export const calculateCurrentStreak = (
   const lastDate = lastStreak[lastStreak.length - 1];
   const today = getToday();
 
+  // Still going if the last ✓ is today or yesterday, or only rest days followed it.
   const isActive =
-    createDate(lastDate).getTime() === today.getTime() || isYesterday(lastDate);
+    createDate(lastDate).getTime() === today.getTime() ||
+    isYesterday(lastDate) ||
+    onlyRestBetween(habit, lastDate, today);
 
   const badDays = habit.streak
     .filter((d) => d.status === HABIT_STATUS.BAD)

@@ -192,13 +192,16 @@ export const Calendar = ({
 const classNameByStatus = {
   GOOD: "Calendar-day_success",
   BAD: "Calendar-day_error",
+  REST: "Calendar-day_rest",
   NOT_SPECIFIED: "",
 };
 
+// A tap cycles ✓ and ✗; a rest day is chosen in the day's sheet (hold), and a tap clears it.
 const newStatusMap = {
   NOT_SPECIFIED: "GOOD",
   GOOD: "BAD",
   BAD: "NOT_SPECIFIED",
+  REST: "NOT_SPECIFIED",
 } as const;
 
 // Unmarked days are neutral for weekly goals, so there's no ✗ in the cycle.
@@ -206,6 +209,7 @@ const nextWeeklyStatusMap = {
   NOT_SPECIFIED: "GOOD",
   GOOD: "NOT_SPECIFIED",
   BAD: "NOT_SPECIFIED",
+  REST: "NOT_SPECIFIED",
 } as const;
 
 function isWeekGoalReached(

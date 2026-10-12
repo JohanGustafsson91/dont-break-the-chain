@@ -9,6 +9,7 @@ import { yearOverviewMessages } from "./messages";
 const classNameByStatus = {
   GOOD: "YearOverview-day_success",
   BAD: "YearOverview-day_error",
+  REST: "YearOverview-day_rest",
   NOT_SPECIFIED: "",
 };
 

@@ -8,7 +8,7 @@ import type { Habit } from "./Habit";
 beforeAll(() => vi.setSystemTime(new Date(2025, 1, 15, 12)));
 afterAll(() => vi.useRealTimers());
 
-const day = (d: number, status: "GOOD" | "BAD" = "GOOD", month = 1) => ({
+const day = (d: number, status: "GOOD" | "BAD" | "REST" = "GOOD", month = 1) => ({
   date: new Date(Date.UTC(2025, month, d)),
   status,
   notes: "",
@@ -24,6 +24,14 @@ const line = (habit: Habit) => {
   habits.push(habit);
   return habitStatusLine(habit);
 };
+
+describe("habitStatusLine - rest days", () => {
+  it("should say the chain is kept on a rest day, and count on after it", () => {
+    expect(line(daily(...range(10, 14), day(15, "REST")))).toBe("Rest day, chain kept");
+    // Rested yesterday: the 5-day chain is still open today, 2 days from 7.
+    expect(line(daily(...range(9, 13), day(14, "REST")))).toBe("2 days to 7 in a row 🎯");
+  });
+});
 
 describe("habitStatusLine - daily habit, not marked yet", () => {
   it("should point out a record within reach", () => {
