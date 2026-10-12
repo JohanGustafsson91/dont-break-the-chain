@@ -250,13 +250,17 @@ const forgetLocalToken = async () => {
   }
 };
 
-/** Best effort, so logging out still works offline or without permission. */
+/**
+ * Best effort, so logging out still works offline or without permission. Only this
+ * device's token goes: the chosen times stay, ready for the next log in.
+ */
 export const forgetThisDevice = async () => {
   lastRecorded = undefined;
   noReminders = false;
-  if (!storage.get()) return;
+  const token = storage.get();
+  if (!token) return;
 
-  await withTimeout(turnOffRemindersOnThisDevice(), 3000).catch((error) => {
+  await withTimeout(removeToken(token), 3000).catch((error) => {
     console.warn("Could not remove this device from reminders", { error });
   });
   await forgetLocalToken();

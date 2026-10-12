@@ -233,6 +233,19 @@ describe("reminderService - daily reminder settings", () => {
     expect(localStorage.getItem("reminderToken")).toBe("token-new");
   });
 
+  it("should keep the chosen times when logging out on the last device", async () => {
+    localStorage.setItem("reminderToken", "token-a");
+    vi.mocked(firestore.getDoc).mockResolvedValue(snapshot({ hour: 20, timeZone: "Europe/Stockholm", tokens: [] }));
+    const { forgetThisDevice } = await load();
+
+    await forgetThisDevice();
+
+    expect(firestore.updateDoc).toHaveBeenCalledWith("reminder-doc", { tokens: { remove: ["token-a"] } });
+    expect(firestore.deleteDoc).not.toHaveBeenCalled();
+    expect(localStorage.getItem("reminderToken")).toBeNull();
+    expect(messaging.deleteToken).toHaveBeenCalled();
+  });
+
   it("should not hold up logging out when the device can't be removed", async () => {
     localStorage.setItem("reminderToken", "token-a");
     const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
