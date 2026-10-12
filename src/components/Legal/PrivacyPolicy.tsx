@@ -31,8 +31,9 @@ const english = (
         <strong>Your account:</strong> the name, email address, profile picture link and
         account ID that Google or GitHub shares when you sign in, or your email address if
         you sign up with a password. An email account is verified through a link before it
-        can be used. Firebase stores the password hashed (turned into something that can't
-        be turned back), so no one can read it, not even me.
+        can be used, and deleted if it isn't verified within 7 days of signing up. Firebase
+        stores the password hashed (turned into something that can't be turned back), so
+        no one can read it, not even me.
       </li>
       <li>
         <strong>Your habits:</strong> names, descriptions, goals, the days you mark and
@@ -79,8 +80,8 @@ const english = (
         it.
       </li>
       <li>
-        <strong>GitHub</strong> runs the scheduled jobs that send reminders and back up
-        the database, as a processor. The backups are encrypted before they're stored, and
+        <strong>GitHub</strong> runs the scheduled jobs that send reminders, back up
+        the database and delete unverified email accounts, as a processor. The backups are encrypted before they're stored, and
         only I can open them.
       </li>
       <li>
@@ -97,7 +98,8 @@ const english = (
 
     <h2>How long</h2>
     <p>
-      Until you delete your account. Reminder settings are deleted when you turn reminders
+      Until you delete your account, or 7 days after signing up for an email account that
+      is never verified. Reminder settings are deleted when you turn reminders
       off, and a device's push token when you log out there. The database is backed up
       every day, encrypted, and each backup is kept for 30 days and then deleted. Google keeps technical logs (such as IP addresses) for a limited time.
     </p>
@@ -154,8 +156,9 @@ const swedish = (
         <strong>Ditt konto:</strong> namn, e-postadress, länk till profilbild och konto-id
         som Google eller GitHub delar när du loggar in, eller din e-postadress om du
         registrerar dig med lösenord. Ett e-postkonto verifieras med en länk innan det kan
-        användas. Firebase lagrar lösenordet hashat (omvandlat så att det inte går att läsa
-        ut), så ingen kan läsa det, inte ens jag.
+        användas, och tas bort om det inte verifieras inom 7 dagar efter registreringen.
+        Firebase lagrar lösenordet hashat (omvandlat så att det inte går att läsa ut), så
+        ingen kan läsa det, inte ens jag.
       </li>
       <li>
         <strong>Dina vanor:</strong> namn, beskrivningar, mål, dagarna du markerar och dina
@@ -203,8 +206,9 @@ const swedish = (
         därifrån.
       </li>
       <li>
-        <strong>GitHub</strong> kör de schemalagda jobben som skickar påminnelser och
-        säkerhetskopierar databasen, som personuppgiftsbiträde. Säkerhetskopiorna krypteras
+        <strong>GitHub</strong> kör de schemalagda jobben som skickar påminnelser,
+        säkerhetskopierar databasen och tar bort overifierade e-postkonton, som
+        personuppgiftsbiträde. Säkerhetskopiorna krypteras
         innan de sparas, och bara jag kan öppna dem.
       </li>
       <li>
@@ -221,7 +225,8 @@ const swedish = (
 
     <h2>Hur länge</h2>
     <p>
-      Tills du raderar ditt konto. Påminnelseinställningarna raderas när du stänger av
+      Tills du raderar ditt konto, eller 7 dagar efter registreringen för ett e-postkonto
+      som aldrig verifieras. Påminnelseinställningarna raderas när du stänger av
       påminnelser, och en enhets push-token när du loggar ut där. Databasen
       säkerhetskopieras krypterat varje dygn, och varje säkerhetskopia sparas i 30 dagar
       och raderas sedan. Google sparar tekniska loggar

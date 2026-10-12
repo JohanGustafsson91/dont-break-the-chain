@@ -155,6 +155,21 @@ without sending anything.
   starts it.
 - On iPhone, push works only in the app installed on the home screen (iOS 16.4+).
 
+**Unverified accounts** are deleted once a day by `scripts/delete-unverified.mjs`
+("Delete unverified accounts" workflow): email-and-password accounts whose address
+wasn't verified within 7 days. They can't hold any data (the security rules require a
+verified address), so only the account goes. Google, GitHub, verified and linked
+accounts are never touched, and a run stops without deleting anything if it finds more
+than 50 (the run then fails, so GitHub emails the owner; raise `MAX_PER_RUN` if it's
+real). A manual run is a dry run by default.
+
+- It signs in as the keyless service account `account-cleaner` through the Workload
+  Identity pool `github`, provider `cleanup`; only `cleanup.yml` on `main` of this
+  repository may use it. Its custom role `accountCleaner` can only read and delete Auth
+  users (`firebaseauth.users.get`, `firebaseauth.users.delete`). Set up once by the
+  owner with `node scripts/setup/account-cleaner-identity.cjs`; the repository variables
+  `CLEANUP_WIF_PROVIDER` and `CLEANUP_SERVICE_ACCOUNT` point to them.
+
 **Backups** run in the private repository
 [`dont-break-the-chain-backups`](https://github.com/JohanGustafsson91/dont-break-the-chain-backups),
 private so not even the encrypted files are public. Once a day it reads the app's Firestore
