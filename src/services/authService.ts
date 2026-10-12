@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { useAuthState } from "react-firebase-hooks/auth";
 import { auth } from "./firebaseService";
 import {
@@ -64,10 +65,39 @@ export const providerName: Record<AuthProvider, string> = {
   [AUTH_PROVIDERS.GOOGLE]: "Google",
 };
 
+// The ID token the rules read is only renewed hourly. After the link was opened in
+// another tab or app, Firebase reports the address as verified on the next start while
+// the stored token still says it isn't, so every read would be denied until then.
+let checkedTokenUid: string | undefined;
+
+const mayHaveStaleToken = (user: User) =>
+  usesPassword(user) && user.emailVerified && checkedTokenUid !== user.uid;
+
+const refreshStaleToken = async (user: User) => {
+  try {
+    const { claims } = await user.getIdTokenResult();
+    if (claims.email_verified !== true) await user.getIdToken(true);
+  } catch (error) {
+    // Offline: let the app show its own load error rather than wait forever.
+    console.warn("Could not refresh the sign-in token", { error });
+  }
+  checkedTokenUid = user.uid;
+};
+
 export const useAuth = () => {
   const [user, loading, error] = useAuthState(auth);
+  const [, setCheckedUid] = useState<string>();
+  const isCheckingToken = Boolean(user && mayHaveStaleToken(user));
 
-  if (loading) {
+  useEffect(
+    function refreshTokenAfterVerification() {
+      if (!user || !isCheckingToken) return;
+      void refreshStaleToken(user).then(() => setCheckedUid(user.uid));
+    },
+    [user, isCheckingToken],
+  );
+
+  if (loading || isCheckingToken) {
     return {
       status: AUTH_STATUS.PENDING,
       user: undefined,
