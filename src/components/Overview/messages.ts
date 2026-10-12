@@ -22,7 +22,7 @@ export const overviewMessages = defineMessages({
     legendDone: "Done",
     legendDoneWeekly: "Done, weekly goal",
     legendMissed: "Missed",
-    legendRest: "Rest day",
+    legendRest: "Day off",
     legendNotMarked: "Not marked",
   },
   sv: {
@@ -46,7 +46,7 @@ export const overviewMessages = defineMessages({
     legendDone: "Klar",
     legendDoneWeekly: "Klar, veckomål",
     legendMissed: "Missad",
-    legendRest: "Vilodag",
+    legendRest: "Fridag",
     legendNotMarked: "Inte markerad",
   },
 });
