@@ -21,6 +21,7 @@ export const AccountMenu = ({ user }: Props) => {
   const [isConfirmingDelete, setIsConfirmingDelete] = useState(false);
   // Email accounts confirm with their password instead of a sign-in window.
   const [password, setPassword] = useState("");
+  const [passwordError, setPasswordError] = useState<string>();
   const needsPassword = usesPassword(user);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isReminderOpen, setIsReminderOpen] = useState(false);
@@ -75,12 +76,22 @@ export const AccountMenu = ({ user }: Props) => {
   }
 
   async function onDelete() {
-    setIsConfirmingDelete(false);
+    // An email account stays in the dialog while it checks the password, so a typo can
+    // be fixed there; the others confirm in Google's or GitHub's window.
+    if (!needsPassword) setIsConfirmingDelete(false);
     setIsDeleting(true);
+    setPasswordError(undefined);
     if (!needsPassword) showToast(t.confirmIdentity);
     const result = await deleteAccountAndData(needsPassword ? password : undefined);
-    setPassword("");
     setIsDeleting(false);
+
+    if (!result.ok && needsPassword && result.step === "reauthenticate") {
+      hideToast();
+      setPasswordError(deletionFailureMessage(result));
+      return;
+    }
+    setIsConfirmingDelete(false);
+    setPassword("");
 
     if (result.ok) {
       // Signing out sends the app to the login page, which shows the notice. The
@@ -194,24 +205,41 @@ export const AccountMenu = ({ user }: Props) => {
           title={t.deleteTitle}
           body={needsPassword ? t.deleteBodyPassword : t.deleteBody}
           confirmLabel={t.deleteConfirm}
-          confirmDisabled={needsPassword && password === ""}
+          confirmDisabled={isDeleting || (needsPassword && password === "")}
+          focusCancel={!needsPassword}
           onCancel={() => {
             setIsConfirmingDelete(false);
             setPassword("");
+            setPasswordError(undefined);
             triggerRef.current?.focus();
           }}
           onConfirm={onDelete}
         >
           {needsPassword ? (
-            <label className="AccountMenu-password">
-              <span>{t.password}</span>
-              <input
-                type="password"
-                autoComplete="current-password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-              />
-            </label>
+            <form className="AccountMenu-password" onSubmit={(e) => e.preventDefault()}>
+              {/* Lets password managers tell which saved login this is. */}
+              <input type="email" autoComplete="username" value={user.email ?? ""} readOnly hidden />
+              <label>
+                <span>{t.password}</span>
+                <input
+                  type="password"
+                  autoComplete="current-password"
+                  autoFocus
+                  aria-invalid={passwordError ? true : undefined}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  // Two fields and no submit button, so Enter doesn't submit by itself.
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && password && !isDeleting) void onDelete();
+                  }}
+                />
+              </label>
+              {passwordError ? (
+                <span className="AccountMenu-password_error" role="alert">
+                  {passwordError}
+                </span>
+              ) : null}
+            </form>
           ) : null}
         </ConfirmDialog>
       ) : null}

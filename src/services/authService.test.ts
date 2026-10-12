@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, onTestFinished } from "vitest";
 import { renderHook } from "@testing-library/react";
 import * as firebaseAuth from "firebase/auth";
 import * as firebaseFirestore from "firebase/firestore";
@@ -270,6 +270,7 @@ describe("authService - Authentication workflows", () => {
 
     it("should create the account, signed in, and send a verification email in the app's language", async () => {
       setLanguageSetting("sv");
+      onTestFinished(() => setLanguageSetting("auto"));
       const user = { uid: "new" } as User;
       vi.mocked(firebaseAuth.createUserWithEmailAndPassword).mockResolvedValue({ user } as firebaseAuth.UserCredential);
       vi.mocked(firebaseAuth.sendEmailVerification).mockResolvedValue();
@@ -279,7 +280,6 @@ describe("authService - Authentication workflows", () => {
       expect(firebaseAuth.createUserWithEmailAndPassword).toHaveBeenCalledWith(firebaseService.auth, "ada@example.com", "long enough");
       expect(firebaseAuth.sendEmailVerification).toHaveBeenCalledWith(user);
       expect((firebaseService.auth as unknown as { languageCode: string }).languageCode).toBe("sv");
-      setLanguageSetting("auto");
     });
 
     it("should still sign up when the verification email can't be sent", async () => {
@@ -290,10 +290,14 @@ describe("authService - Authentication workflows", () => {
       await expect(signUpWithEmail("ada@example.com", "long enough")).resolves.toEqual({ uid: "u" });
     });
 
-    it("should send a password reset email", async () => {
+    it("should send a password reset email, saying the same whether or not the account exists", async () => {
       vi.mocked(firebaseAuth.sendPasswordResetEmail).mockResolvedValue();
       await sendPasswordReset("ada@example.com ");
       expect(firebaseAuth.sendPasswordResetEmail).toHaveBeenCalledWith(firebaseService.auth, "ada@example.com");
+
+      // Only reported when enumeration protection is off; treated like a sent email.
+      vi.mocked(firebaseAuth.sendPasswordResetEmail).mockRejectedValueOnce(err("auth/user-not-found"));
+      await expect(sendPasswordReset("nobody@example.com")).resolves.toBeUndefined();
     });
 
     it("should explain what went wrong, without saying whether an email has an account", () => {

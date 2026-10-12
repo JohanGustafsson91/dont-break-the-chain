@@ -33,13 +33,11 @@ test.describe("Signed out", () => {
     const { email, password } = credentials(testInfo.project.name);
     await page.goto("/login");
 
+    // One sign-in only: Firebase limits password attempts on the shared test accounts
+    // (wrong passwords are covered by the unit tests).
     await page.getByRole("button", { name: "Continue with email" }).click();
-    await page.getByLabel("Email").fill(email);
-    await page.getByLabel("Password").fill("not the password");
-    await page.getByRole("button", { name: "Sign in", exact: true }).click();
-    await expect(page.getByRole("alert")).toContainText("Wrong email or password.");
-
-    await page.getByLabel("Password").fill(password);
+    await page.getByRole("textbox", { name: "Email" }).fill(email);
+    await page.getByLabel("Password", { exact: true }).fill(password);
     await page.getByRole("button", { name: "Sign in", exact: true }).click();
     await expect(page.getByRole("heading", { name: "Your habits" })).toBeVisible({ timeout: 20_000 });
   });

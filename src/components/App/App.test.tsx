@@ -5,6 +5,7 @@ vi.mock("../../services/authService.ts", () => ({
   useAuth: vi.fn(),
   logout: vi.fn(),
   usesPassword: vi.fn(() => false),
+  needsVerification: vi.fn(() => false),
 }));
 
 vi.mock("../../services/habitService.ts", () => ({

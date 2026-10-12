@@ -152,10 +152,23 @@ describe("AccountMenu - export, delete, legal links and log out", () => {
     const confirm = within(dialog).getByRole("button", { name: "Delete everything" });
     expect(confirm).toBeDisabled();
 
-    await userEvent.type(within(dialog).getByLabelText("Password"), "my password");
-    await userEvent.click(confirm);
+    const field = within(dialog).getByLabelText("Password");
+    expect(field).toHaveFocus();
 
-    expect(accountService.deleteAccountAndData).toHaveBeenCalledWith("my password");
+    // A typo keeps the dialog open, with the error right there.
+    vi.mocked(accountService.deleteAccountAndData).mockResolvedValueOnce({
+      ok: false,
+      step: "reauthenticate",
+      error: Object.assign(new Error("wrong"), { code: "auth/invalid-credential" }),
+    });
+    await userEvent.type(field, "typo");
+    await userEvent.click(confirm);
+    expect(within(dialog).getByRole("alert")).toHaveTextContent("Wrong password. Nothing was deleted.");
+
+    // Enter confirms.
+    await userEvent.clear(field);
+    await userEvent.type(field, "my password{Enter}");
+    expect(accountService.deleteAccountAndData).toHaveBeenLastCalledWith("my password");
   });
 
   it("should let the user choose the app's language, following the browser by default", async () => {

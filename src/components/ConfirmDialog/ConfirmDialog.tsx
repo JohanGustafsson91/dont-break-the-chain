@@ -10,6 +10,7 @@ export const ConfirmDialog = ({
   onConfirm,
   onCancel,
   confirmDisabled = false,
+  focusCancel = true,
   children,
 }: Props) => {
   const titleId = useId();
@@ -41,7 +42,7 @@ export const ConfirmDialog = ({
         <span className="ConfirmDialog-body">{body}</span>
         {children}
         <div className="ConfirmDialog-actions">
-          <button type="button" className="secondary" onClick={onCancel} autoFocus>
+          <button type="button" className="secondary" onClick={onCancel} autoFocus={focusCancel}>
             {m.cancel}
           </button>
           <button type="button" className="danger" onClick={onConfirm} disabled={confirmDisabled}>
@@ -62,4 +63,6 @@ interface Props {
   /** Extra content between the text and the buttons, e.g. a field to confirm with. */
   children?: ReactNode;
   confirmDisabled?: boolean;
+  /** Off when the content has a field to fill in first, which takes focus itself. */
+  focusCancel?: boolean;
 }

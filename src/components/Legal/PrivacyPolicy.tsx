@@ -30,8 +30,9 @@ const english = (
       <li>
         <strong>Your account:</strong> the name, email address, profile picture link and
         account ID that Google or GitHub shares when you sign in, or your email address if
-        you sign up with a password. Firebase stores the password scrambled (hashed), so
-        no one can read it, not even me.
+        you sign up with a password. An email account is verified through a link before it
+        can be used. Firebase stores the password hashed (turned into something that can't
+        be turned back), so no one can read it, not even me.
       </li>
       <li>
         <strong>Your habits:</strong> names, descriptions, goals, the days you mark and
@@ -104,7 +105,7 @@ const english = (
     <p>
       You can get a copy of your data, have it corrected or deleted, restrict or object to
       its use, and take it with you. You can export your data and delete your account
-      yourself from the account menu (your picture, top right). Deleting removes your habits, days, notes and reminder
+      yourself from the account menu (top right). Deleting removes your habits, days, notes and reminder
       settings for good, and then your account. Google or GitHub keeps its own record that
       you used the app; you can remove the app's access in your account settings there.
       For anything else, email {email}. You get an answer within a month. You can also
@@ -149,8 +150,9 @@ const swedish = (
       <li>
         <strong>Ditt konto:</strong> namn, e-postadress, länk till profilbild och konto-id
         som Google eller GitHub delar när du loggar in, eller din e-postadress om du
-        registrerar dig med lösenord. Firebase lagrar lösenordet krypterat (hashat), så
-        ingen kan läsa det, inte ens jag.
+        registrerar dig med lösenord. Ett e-postkonto verifieras med en länk innan det kan
+        användas. Firebase lagrar lösenordet hashat (omvandlat så att det inte går att läsa
+        ut), så ingen kan läsa det, inte ens jag.
       </li>
       <li>
         <strong>Dina vanor:</strong> namn, beskrivningar, mål, dagarna du markerar och dina
@@ -224,7 +226,7 @@ const swedish = (
     <p>
       Du kan få en kopia av din data, få den rättad eller raderad, begränsa eller invända
       mot hur den används och ta den med dig. Du kan själv exportera din data och radera
-      ditt konto från kontomenyn (din bild uppe till höger). Radering tar bort dina vanor, dagar, anteckningar och
+      ditt konto från kontomenyn (uppe till höger). Radering tar bort dina vanor, dagar, anteckningar och
       påminnelseinställningar för gott, och sedan ditt konto. Google eller GitHub har kvar
       sin egen uppgift om att du använt appen; du kan ta bort appens åtkomst i dina
       kontoinställningar där. Mejla {email} om du vill något annat. Du får svar inom en månad. Du

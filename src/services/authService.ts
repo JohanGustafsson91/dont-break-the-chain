@@ -110,7 +110,11 @@ const setEmailLanguage = () => {
 export const signInWithEmail = (email: string, password: string) =>
   signInWithEmailAndPassword(auth, email.trim(), password);
 
-/** Signs the new account in; the verification email is a courtesy, not a gate. */
+/**
+ * Signs the new account in and sends the verification email. Until the address is
+ * verified the rules keep the account out of all data, so the app asks to verify first
+ * (a failed send can be retried from there).
+ */
 export const signUpWithEmail = async (email: string, password: string) => {
   const { user } = await createUserWithEmailAndPassword(auth, email.trim(), password);
   setEmailLanguage();
@@ -120,10 +124,34 @@ export const signUpWithEmail = async (email: string, password: string) => {
   return user;
 };
 
-/** With email enumeration protection on, this succeeds whether or not the account exists. */
-export const sendPasswordReset = (email: string) => {
+export const resendVerification = () => {
+  const user = auth.currentUser;
+  if (!user) throw new Error("Not signed in");
   setEmailLanguage();
-  return sendPasswordResetEmail(auth, email.trim());
+  return sendEmailVerification(user);
+};
+
+/** After the link was opened elsewhere: reloads the user and gets a token that says so. */
+export const checkVerified = async () => {
+  const user = auth.currentUser;
+  if (!user) return false;
+  await user.reload();
+  if (user.emailVerified) await user.getIdToken(true);
+  return user.emailVerified;
+};
+
+/** An email account whose address isn't verified yet, which the rules keep out of all data. */
+export const needsVerification = (user: User) => usesPassword(user) && !user.emailVerified;
+
+/** Succeeds whether or not the account exists, so it never tells which emails have one. */
+export const sendPasswordReset = async (email: string) => {
+  setEmailLanguage();
+  try {
+    await sendPasswordResetEmail(auth, email.trim());
+  } catch (error) {
+    // Only reported when enumeration protection is off; say the same as for a real account.
+    if ((error as { code?: string })?.code !== "auth/user-not-found") throw error;
+  }
 };
 
 export type EmailAction = "signIn" | "signUp" | "reset";

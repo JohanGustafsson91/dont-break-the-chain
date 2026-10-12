@@ -1,7 +1,8 @@
 import type { PropsWithChildren } from "react";
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "../../services/authService";
+import { needsVerification, useAuth } from "../../services/authService";
+import { VerifyEmail } from "../VerifyEmail/VerifyEmail";
 import { AppBar } from "../AppBar/AppBar";
 import { AUTH_STATUS } from "../../shared/constants";
 import { useMessages } from "../../i18n/i18n";
@@ -49,6 +50,11 @@ export const ProtectedRoute = ({
   const isAuthenticatedOnLoginPage = user && isLoginPage;
   if (isAuthenticatedOnLoginPage) {
     return null;
+  }
+
+  // The rules keep an unverified email account out of all data, so ask to verify first.
+  if (user && !isLoginPage && needsVerification(user)) {
+    return <VerifyEmail user={user} />;
   }
 
   return (

@@ -150,5 +150,8 @@ describe("accountService - export and account deletion", () => {
     expect(
       deletionFailureMessage({ ok: false, step: "reauthenticate", error: failure("auth/user-mismatch") }),
     ).toBe("Choose the same account you're signed in with. Nothing was deleted.");
+    expect(
+      deletionFailureMessage({ ok: false, step: "reauthenticate", error: failure("auth/invalid-credential") }),
+    ).toBe("Wrong password. Nothing was deleted.");
   });
 });

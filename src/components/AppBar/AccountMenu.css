@@ -97,12 +97,18 @@
   border-top: 1px solid var(--border-color);
 }
 
-.AccountMenu-password {
+.AccountMenu-password,
+.AccountMenu-password label {
   display: flex;
   flex-direction: column;
   gap: 0.375rem;
   font-size: 0.875rem;
   font-weight: 600;
+}
+
+.AccountMenu-password_error {
+  font-weight: 400;
+  color: var(--error-color);
 }
 
 .AccountMenu-password input {

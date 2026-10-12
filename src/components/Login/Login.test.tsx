@@ -1,6 +1,6 @@
 import "@testing-library/jest-dom";
 import { describe, it, expect, vi, beforeEach, onTestFinished } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
 import { Login } from "./Login";
@@ -104,6 +104,8 @@ describe("Login - User authentication flow", () => {
     onTestFinished(() => consoleErrorSpy.mockRestore());
     renderLogin();
     await userEvent.click(screen.getByRole("button", { name: "Continue with email" }));
+    // The form opens with the email field ready to type in.
+    expect(screen.getByLabelText("Email")).toHaveFocus();
 
     // A wrong password says so, without telling whether the email has an account.
     vi.mocked(firebaseAuth.signInWithEmailAndPassword).mockRejectedValueOnce(
@@ -121,8 +123,19 @@ describe("Login - User authentication flow", () => {
 
     await userEvent.click(screen.getByRole("button", { name: "New here? Create an account" }));
     expect(screen.getByText("At least 8 characters.")).toBeInTheDocument();
-    vi.mocked(firebaseAuth.createUserWithEmailAndPassword).mockResolvedValueOnce({ user: { uid: "new" } } as firebaseAuth.UserCredential);
+    await userEvent.clear(screen.getByLabelText("Password"));
+    await userEvent.type(screen.getByLabelText("Password"), "short");
     await userEvent.click(screen.getByRole("button", { name: "Create account" }));
+    expect(screen.getByRole("alert")).toHaveTextContent("Choose a password with at least 8 characters.");
+    expect(firebaseAuth.createUserWithEmailAndPassword).not.toHaveBeenCalled();
+    await userEvent.clear(screen.getByLabelText("Password"));
+    await userEvent.type(screen.getByLabelText("Password"), "wrong password");
+    vi.mocked(firebaseAuth.createUserWithEmailAndPassword).mockResolvedValueOnce({ user: { uid: "new" } } as firebaseAuth.UserCredential);
+    vi.mocked(firebaseAuth.sendEmailVerification).mockResolvedValueOnce();
+    expect(screen.getByRole("heading", { name: "Create an account" })).toBeInTheDocument();
+    await userEvent.click(screen.getByRole("button", { name: "Create account" }));
+    await waitFor(() => expect(firebaseAuth.sendEmailVerification).toHaveBeenCalled());
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
     expect(vi.mocked(firebaseAuth.createUserWithEmailAndPassword).mock.calls[0].slice(1)).toEqual(["ada@example.com", "wrong password"]);
   });
 
