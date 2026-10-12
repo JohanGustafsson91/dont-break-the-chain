@@ -1,6 +1,6 @@
 /* The page for visitors who aren't signed in: what the app is, a habit to try, and
    signing in first, for those who already know it. */
-/* One column, like signing in to an app: the same on a phone and a desktop. */
+/* One column on a phone; on a desktop, the pitch and the sign-in side by side. */
 .Login-container {
   gap: 2.5rem;
   width: 100%;
@@ -62,7 +62,8 @@
   color: var(--text-color);
 }
 
-.Login-intro {
+.Login-intro,
+.Login-column {
   display: flex;
   flex-direction: column;
   gap: 1.25rem;
@@ -366,9 +367,33 @@ button.Login-demo_check[aria-pressed="true"] {
   font-size: 0.875rem;
 }
 
-/* A little air above it on a big screen, so it doesn't hug the top. */
+/* The full width of the app on a big screen: the pitch and the habit to try on the
+   left, signing in on the right, with a little air above so it doesn't hug the top. */
 @media (min-width: 960px) {
   .Login-container {
+    max-width: none;
     padding-top: 6vh;
+  }
+
+  .Login-intro {
+    display: grid;
+    grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
+    gap: 1.25rem 4.5rem;
+    /* Top-aligned, so opening the email form doesn't move the pitch. */
+    align-items: start;
+  }
+
+  /* The notice after deleting an account spans both columns. */
+  .Login-intro > .Login-notice {
+    grid-column: 1 / -1;
+  }
+
+  /* Half the screen now, so it scales with that to keep each sentence on one line. */
+  .Login-title {
+    font-size: min(3.5rem, 4.2vw);
+  }
+
+  .Login-pitch {
+    font-size: 1.1875rem;
   }
 }
