@@ -155,6 +155,22 @@ without sending anything.
   starts it.
 - On iPhone, push works only in the app installed on the home screen (iOS 16.4+).
 
+**Backups** run in the private repository
+[`dont-break-the-chain-backups`](https://github.com/JohanGustafsson91/dont-break-the-chain-backups),
+private so not even the encrypted files are public. Once a day it reads the app's Firestore
+collections (`habits`, `reminders`), encrypts them with `age` and keeps it as a workflow artifact for 30 days (the
+retention the privacy policy promises). Firestore's own exports and backups need the
+Blaze plan.
+
+- It signs in as the keyless, read-only service account `backup-reader`
+  (`roles/datastore.viewer`) through the Workload Identity pool `github`, provider
+  `backups`; only `backup.yml` on `main` of that repository may use it.
+- The public key is the repository variable `BACKUP_AGE_RECIPIENT`. The private key is
+  kept only by the owner, outside both repositories: without it the backups can't be read.
+- `restore.mjs` there writes a backup back, one user's data or everyone's, as a dry run
+  unless `--apply` is given, and always skips users who have deleted their account since,
+  as the privacy policy promises. See its README.
+
 **App Check** is off on purpose: reCAPTCHA sends device data to Google on every visit,
 and the risk (someone exhausting the free quota, including the daily verification and
 password reset emails) can't cost money on Spark. Before
