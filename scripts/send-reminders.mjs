@@ -194,7 +194,14 @@ const createApi = ({ accessToken, projectId }) => {
             message: {
               token,
               notification: { title, body },
-              webpush: { fcm_options: { link } },
+              webpush: {
+                // High urgency wakes a sleeping phone (Android Doze, Samsung's battery
+                // saving); "normal" waits for the next maintenance window, often hours.
+                // Two hours to live, like the catch-up window: a reminder that late only
+                // nags, and the next chosen time sends a fresh one.
+                headers: { Urgency: "high", TTL: String(CATCH_UP_HOURS * 60 * 60) },
+                fcm_options: { link },
+              },
             },
           }),
         });
