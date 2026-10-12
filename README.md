@@ -65,9 +65,11 @@ Playwright runs the app built from your branch, served on `localhost`, against t
 **dev** Firebase project, in desktop Chromium and mobile WebKit (Safari's engine). They
 run on every pull request ("End-to-end tests" workflow).
 
-- They sign in to a test account with email and password, which only the dev project
-  allows. The app has no UI for that: a test-only hook (`src/e2e/testHooks.ts`) is
-  included only when `VITE_E2E=true`, never in a normal build.
+- They sign in to a test account with email and password in the dev project. The
+  accounts' addresses can't receive mail, so they're marked as verified with the Admin
+  API (`accounts:update`, `emailVerified: true`); a new test account needs the same, or
+  the rules keep it out. Setup signs in through a test-only hook
+  (`src/e2e/testHooks.ts`), included only when `VITE_E2E=true`, never in a normal build.
 - Each browser has its own test account, so CI runs Chromium and WebKit side by side.
   Locally, put them in `.env.e2e.local` (git-ignored): `E2E_EMAIL`, `E2E_PASSWORD`,
   `E2E_WEBKIT_EMAIL` and `E2E_WEBKIT_PASSWORD`. In CI they are secrets with the same
@@ -119,12 +121,20 @@ without sending anything.
 - **GitHub:** a GitHub OAuth app per project, with the callback
   `https://<authDomain>/__/auth/handler` (one callback per app). Production's
   `authDomain` is `dontbreakthechain.se`.
+- **Email/Password:** enable the first option only ("Email link" isn't needed; on Spark
+  it allows 5 emails a day). Keep **email enumeration protection** on (Authentication →
+  Settings → User actions), so sign-in and password reset never tell which emails have
+  an account; sign-up can't hide it. The firestore rules keep password accounts out of
+  all data until the email is verified (the app shows "Check your inbox"); otherwise
+  someone could register another person's Gmail address first and share the account
+  when that person later signs in with Google. Optionally set the email templates'
+  sender name in Authentication → Templates.
 - Keep **one account per email address** (Authentication → Settings), the default.
   Signing in with the other provider for the same email then shows "Sign in with
   GitHub/Google instead". One exception, accepted on purpose: Google is trusted for
-  Gmail addresses, so a GitHub account with a Gmail address is taken over by Google
-  sign-in (same account, habits intact, GitHub sign-in stops working). Preventing it
-  needs blocking functions, which need the Blaze plan.
+  Gmail addresses, so a GitHub or unverified password account with a Gmail address is
+  taken over by Google sign-in (same account, habits intact, the earlier sign-in stops
+  working). Preventing it needs blocking functions, which need the Blaze plan.
 
 **Daily reminders:**
 - The Cloudflare Worker starts the workflow at :02 every hour with a fine-grained
@@ -146,7 +156,8 @@ without sending anything.
 - On iPhone, push works only in the app installed on the home screen (iOS 16.4+).
 
 **App Check** is off on purpose: reCAPTCHA sends device data to Google on every visit,
-and the risk (someone exhausting the free quota) can't cost money on Spark. Before
+and the risk (someone exhausting the free quota, including the daily verification and
+password reset emails) can't cost money on Spark. Before
 turning it on: name reCAPTCHA in the privacy policy (recipient, purpose, legal basis,
 US transfer, cookie) and bump its effective date, register a reCAPTCHA v3 key per
 project, set `VITE_APPCHECK_SITE_KEY` (dev env file and the `production` environment's

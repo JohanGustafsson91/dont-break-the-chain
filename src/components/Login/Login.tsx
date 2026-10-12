@@ -13,6 +13,7 @@ import {
 } from "../../shared/accountDeletedNotice";
 import { setLanguageSetting, useLanguage, useMessages, type Language } from "../../i18n/i18n";
 import { DemoCard } from "./DemoCard";
+import { EmailSignIn } from "./EmailSignIn";
 import { loginMessages } from "./messages";
 import "./Login.css";
 
@@ -25,6 +26,7 @@ export const Login = () => {
   const t = useMessages(loginMessages);
   const { language } = useLanguage();
   const [errorMessage, setErrorMessage] = useState<string>();
+  const [showEmail, setShowEmail] = useState(false);
   const [accountDeleted] = useState(wasAccountDeleted);
 
   useEffect(
@@ -99,6 +101,13 @@ export const Login = () => {
           >
             {t.continueWith("GitHub")}
           </button>
+          {showEmail ? (
+            <EmailSignIn />
+          ) : (
+            <button className="Login-button secondary" type="button" onClick={() => setShowEmail(true)}>
+              {t.continueWithEmail}
+            </button>
+          )}
         </div>
         {/* Signing in is accepting the terms (see Terms); the data is handled under
             contract and legitimate interest, not consent, so no box to tick. */}

@@ -26,10 +26,11 @@ const english = (
     <h2>Your account</h2>
     <p>
       You need to be at least 13; if you're under 18, ask a parent or guardian first. You
-      sign in with a supported account (Google or GitHub), and you're responsible for
-      keeping that account safe. If you first signed in with GitHub and later sign in with
-      Google using the same Gmail address, your account continues with Google and GitHub
-      sign-in stops working for it; your habits stay.
+      sign in with Google, GitHub or an email and password, and you're responsible for
+      keeping that account and password safe. If you first signed in with GitHub or an email and password,
+      and later sign in with Google using the same Gmail address, your account continues
+      with Google and the earlier way of signing in may stop working for it; your habits
+      stay.
     </p>
 
     <h2>Your content</h2>
@@ -98,10 +99,11 @@ const swedish = (
     <h2>Ditt konto</h2>
     <p>
       Du måste vara minst 13 år; är du under 18, fråga en förälder eller vårdnadshavare
-      först. Du loggar in med ett konto som stöds (Google eller GitHub), och du ansvarar för
-      att det kontot är säkert. Om du först loggade in med GitHub och senare loggar in via
-      Google med samma Gmail-adress kopplas ditt konto till Google i stället, och
-      inloggningen med GitHub slutar fungera för det. Dina vanor finns kvar.
+      först. Du loggar in med Google, GitHub eller e-post och lösenord, och du ansvarar för
+      att kontot och lösenordet är säkra. Om du först loggade in med GitHub eller e-post och lösenord
+      och senare loggar in via Google med samma Gmail-adress kopplas ditt konto till
+      Google i stället, och det tidigare sättet att logga in kan sluta fungera. Dina vanor
+      finns kvar.
     </p>
 
     <h2>Ditt innehåll</h2>

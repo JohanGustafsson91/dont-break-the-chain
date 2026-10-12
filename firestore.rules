@@ -8,9 +8,18 @@ rules_version = '2';
 // earlier, unmerged notifications experiment.
 service cloud.firestore {
   match /databases/{database}/documents {
+    // Signed in, and with a password only once the email is verified: otherwise someone
+    // could sign up with another person's address first and share their account when
+    // that person later signs in with Google. Google and GitHub sessions pass as before.
+    function isTrustedUser() {
+      return request.auth != null
+        && (request.auth.token.firebase.sign_in_provider != 'password'
+          || request.auth.token.email_verified == true);
+    }
+
     match /habits/{habitId} {
       function isSignedIn() {
-        return request.auth != null;
+        return isTrustedUser();
       }
 
       function ownsExisting() {
@@ -82,7 +91,7 @@ service cloud.firestore {
     // sender (scripts/send-reminders.mjs) uses server credentials.
     match /reminders/{uid} {
       function isOwner() {
-        return request.auth != null && request.auth.uid == uid;
+        return isTrustedUser() && request.auth.uid == uid;
       }
 
       function isValidReminder(data) {

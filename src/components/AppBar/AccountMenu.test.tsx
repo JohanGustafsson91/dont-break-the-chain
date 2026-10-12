@@ -134,6 +134,43 @@ describe("AccountMenu - export, delete, legal links and log out", () => {
     );
   });
 
+  it("should ask an email account for its password before deleting", async () => {
+    vi.mocked(accountService.deleteAccountAndData).mockResolvedValue({ ok: true });
+    const emailUser = { ...user, providerData: [{ providerId: "password" }] } as unknown as User;
+    render(
+      <ToastProvider>
+        <MemoryRouter>
+          <AccountMenu user={emailUser} />
+        </MemoryRouter>
+      </ToastProvider>,
+    );
+
+    await userEvent.click(screen.getByRole("button", { name: "Account menu" }));
+    await userEvent.click(screen.getByRole("button", { name: "Delete my account" }));
+    const dialog = screen.getByRole("alertdialog");
+    expect(dialog).toHaveTextContent("Enter your password to confirm.");
+    const confirm = within(dialog).getByRole("button", { name: "Delete everything" });
+    expect(confirm).toBeDisabled();
+
+    const field = within(dialog).getByLabelText("Password");
+    expect(field).toHaveFocus();
+
+    // A typo keeps the dialog open, with the error right there.
+    vi.mocked(accountService.deleteAccountAndData).mockResolvedValueOnce({
+      ok: false,
+      step: "reauthenticate",
+      error: Object.assign(new Error("wrong"), { code: "auth/invalid-credential" }),
+    });
+    await userEvent.type(field, "typo");
+    await userEvent.click(confirm);
+    expect(within(dialog).getByRole("alert")).toHaveTextContent("Wrong password. Nothing was deleted.");
+
+    // Enter confirms.
+    await userEvent.clear(field);
+    await userEvent.type(field, "my password{Enter}");
+    expect(accountService.deleteAccountAndData).toHaveBeenLastCalledWith("my password");
+  });
+
   it("should let the user choose the app's language, following the browser by default", async () => {
     onTestFinished(() => setLanguageSetting("auto"));
     renderMenu();

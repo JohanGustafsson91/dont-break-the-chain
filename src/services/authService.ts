@@ -1,17 +1,23 @@
 import { useAuthState } from "react-firebase-hooks/auth";
 import { auth } from "./firebaseService";
 import {
+  createUserWithEmailAndPassword,
+  EmailAuthProvider,
   GithubAuthProvider,
   GoogleAuthProvider,
+  reauthenticateWithCredential,
   reauthenticateWithPopup,
+  sendEmailVerification,
+  sendPasswordResetEmail,
+  signInWithEmailAndPassword,
   signInWithPopup,
   signOut,
   type User,
 } from "firebase/auth";
 import { forgetThisDevice } from "./reminderService";
 import { AUTH_STATUS, AUTH_PROVIDERS } from "../shared/constants";
-import { messagesFor } from "../i18n/i18n";
-import { signInMessages } from "./messages";
+import { getLanguage, messagesFor } from "../i18n/i18n";
+import { emailSignInMessages, signInMessages } from "./messages";
 
 export type AuthProvider = (typeof AUTH_PROVIDERS)[keyof typeof AUTH_PROVIDERS];
 
@@ -30,14 +36,27 @@ const providerByFirebaseId: Record<string, AuthProvider> = {
   "google.com": AUTH_PROVIDERS.GOOGLE,
 };
 
-/** Firebase asks for a fresh sign-in before sensitive actions like deleting the account. */
-export const reauthenticate = (user: User) => {
-  const provider = user.providerData
-    .map((p) => providerByFirebaseId[p.providerId])
-    .find((p) => p !== undefined);
-  if (!provider) throw new Error("Unsupported sign-in provider");
+// `?? []`: test doubles of a user often leave providerData out.
+const providerIds = (user: User) => (user.providerData ?? []).map((p) => p.providerId);
 
-  return reauthenticateWithPopup(user, providers[provider]);
+const federatedProvider = (user: User) =>
+  providerIds(user).map((id) => providerByFirebaseId[id]).find((p) => p !== undefined);
+
+/** Signs in with email and password only, so confirming it's them takes the password. */
+export const usesPassword = (user: User) =>
+  !federatedProvider(user) && providerIds(user).includes("password");
+
+/**
+ * Firebase asks for a fresh sign-in before sensitive actions like deleting the account:
+ * the Google or GitHub window, or the password for an email account.
+ */
+export const reauthenticate = (user: User, password?: string) => {
+  const provider = federatedProvider(user);
+  if (provider) return reauthenticateWithPopup(user, providers[provider]);
+  if (usesPassword(user) && user.email && password !== undefined) {
+    return reauthenticateWithCredential(user, EmailAuthProvider.credential(user.email, password));
+  }
+  throw new Error("Unsupported sign-in provider");
 };
 
 export const providerName: Record<AuthProvider, string> = {
@@ -83,18 +102,98 @@ export const login = ({ provider }: { provider: AuthProvider }) => {
   return signInWithPopup(auth, authProvider);
 };
 
+// After verifying on Firebase's page, its "Continue" button leads back to the app.
+const backToApp = () => ({ url: `${window.location.origin}/` });
+
+// Emails from Firebase (verification, password reset) in the app's language.
+const setEmailLanguage = () => {
+  auth.languageCode = getLanguage();
+};
+
+export const signInWithEmail = (email: string, password: string) =>
+  signInWithEmailAndPassword(auth, email.trim(), password);
+
+/**
+ * Signs the new account in and sends the verification email. Until the address is
+ * verified the rules keep the account out of all data, so the app asks to verify first
+ * (a failed send can be retried from there).
+ */
+export const signUpWithEmail = async (email: string, password: string) => {
+  const { user } = await createUserWithEmailAndPassword(auth, email.trim(), password);
+  setEmailLanguage();
+  await sendEmailVerification(user, backToApp()).catch((error) => {
+    console.warn("Could not send the verification email", { error });
+  });
+  return user;
+};
+
+export const resendVerification = () => {
+  const user = auth.currentUser;
+  if (!user) throw new Error("Not signed in");
+  setEmailLanguage();
+  return sendEmailVerification(user, backToApp());
+};
+
+/** After the link was opened elsewhere: reloads the user and gets a token that says so. */
+export const checkVerified = async () => {
+  const user = auth.currentUser;
+  if (!user) return false;
+  await user.reload();
+  if (user.emailVerified) await user.getIdToken(true);
+  return user.emailVerified;
+};
+
+/** An email account whose address isn't verified yet, which the rules keep out of all data. */
+export const needsVerification = (user: User) => usesPassword(user) && !user.emailVerified;
+
+/** Succeeds whether or not the account exists, so it never tells which emails have one. */
+export const sendPasswordReset = async (email: string) => {
+  setEmailLanguage();
+  try {
+    await sendPasswordResetEmail(auth, email.trim());
+  } catch (error) {
+    // Only reported when enumeration protection is off; say the same as for a real account.
+    if ((error as { code?: string })?.code !== "auth/user-not-found") throw error;
+  }
+};
+
+export type EmailAction = "signIn" | "signUp" | "reset";
+
+export const emailErrorMessage = (error: unknown, action: EmailAction): string => {
+  const code = (error as { code?: string } | undefined)?.code;
+  const t = messagesFor(emailSignInMessages);
+  switch (code) {
+    case "auth/invalid-email":
+      return t.invalidEmail;
+    case "auth/missing-password":
+    case "auth/weak-password":
+      return t.weakPassword;
+    // With enumeration protection on, a wrong password and an unknown email look the same.
+    case "auth/invalid-credential":
+    case "auth/wrong-password":
+    case "auth/user-not-found":
+      return t.wrongCredentials;
+    case "auth/email-already-in-use":
+      return t.emailInUse;
+    case "auth/too-many-requests":
+      return t.tooManyAttempts;
+    case "auth/network-request-failed":
+      return messagesFor(signInMessages).networkFailed;
+    default:
+      return action === "reset" ? t.resetFailed : messagesFor(signInMessages).failed;
+  }
+};
+
 /**
  * What to tell the user when signing in fails, or undefined when they simply closed
  * the window. Accounts are never linked automatically: an email that already belongs
- * to the other provider must sign in with that one.
+ * to another way of signing in must use that one.
  */
 export const signInErrorMessage = (
   error: unknown,
   attempted: AuthProvider,
 ): string | undefined => {
   const code = (error as { code?: string } | undefined)?.code;
-  // Exactly two providers are enabled (no email/password), so an email that exists
-  // with a different credential belongs to the other one.
   const other =
     attempted === AUTH_PROVIDERS.GITHUB ? AUTH_PROVIDERS.GOOGLE : AUTH_PROVIDERS.GITHUB;
 
@@ -104,6 +203,7 @@ export const signInErrorMessage = (
     case "auth/cancelled-popup-request":
     case "auth/user-cancelled":
       return undefined;
+    // The other provider, or an email and password: either way, the earlier way works.
     case "auth/account-exists-with-different-credential":
       return t.accountExists(providerName[other]);
     case "auth/popup-blocked":

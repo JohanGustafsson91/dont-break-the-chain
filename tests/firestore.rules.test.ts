@@ -63,6 +63,31 @@ afterAll(async () => {
   await env.cleanup();
 });
 
+describe("Firestore rules - email accounts need a verified address", () => {
+  const passwordDb = (uid: string, verified: boolean) =>
+    env
+      .authenticatedContext(uid, { firebase: { sign_in_provider: "password" }, email_verified: verified })
+      .firestore() as unknown as Firestore;
+
+  it("should keep an unverified email account out of everything, and let it in once verified", async () => {
+    const unverified = passwordDb(ALICE, false);
+    await assertFails(getDoc(doc(unverified, "habits", "alice-habit")));
+    await assertFails(setDoc(doc(unverified, "habits", "new"), newHabit(ALICE)));
+    await assertFails(setDoc(doc(unverified, "reminders", ALICE), { hour: 20, timeZone: "Europe/Stockholm", tokens: [] }));
+
+    const verified = passwordDb(ALICE, true);
+    await assertSucceeds(getDoc(doc(verified, "habits", "alice-habit")));
+    await assertSucceeds(setDoc(doc(verified, "habits", "new"), newHabit(ALICE)));
+    await assertSucceeds(setDoc(doc(verified, "reminders", ALICE), { hour: 20, timeZone: "Europe/Stockholm", tokens: [] }));
+
+    // Google and GitHub sessions don't depend on the flag.
+    const google = env
+      .authenticatedContext(ALICE, { firebase: { sign_in_provider: "google.com" }, email_verified: false })
+      .firestore() as unknown as Firestore;
+    await assertSucceeds(getDoc(doc(google, "habits", "alice-habit")));
+  });
+});
+
 describe("Firestore rules - habits belong to one user", () => {
   it("should let users create habits only for themselves, with valid data", async () => {
     await assertSucceeds(setDoc(doc(db(ALICE), "habits", "new"), newHabit(ALICE)));

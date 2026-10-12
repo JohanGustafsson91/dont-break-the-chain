@@ -29,6 +29,19 @@ test.describe("Signed out", () => {
     await expect(page.getByRole("heading", { level: 1, name: "Privacy policy" })).toBeVisible();
   });
 
+  test("should sign in with email and password from the landing page", async ({ page }, testInfo) => {
+    const { email, password } = credentials(testInfo.project.name);
+    await page.goto("/login");
+
+    // One sign-in only: Firebase limits password attempts on the shared test accounts
+    // (wrong passwords are covered by the unit tests).
+    await page.getByRole("button", { name: "Continue with email" }).click();
+    await page.getByRole("textbox", { name: "Email" }).fill(email);
+    await page.getByLabel("Password", { exact: true }).fill(password);
+    await page.getByRole("button", { name: "Sign in", exact: true }).click();
+    await expect(page.getByRole("heading", { name: "Your habits" })).toBeVisible({ timeout: 20_000 });
+  });
+
   test("should keep a protected page behind sign-in", async ({ page }) => {
     await page.goto("/");
     await expect(page.getByRole("button", { name: "Continue with Google" })).toBeVisible();

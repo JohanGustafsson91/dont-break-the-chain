@@ -1,5 +1,5 @@
 import "./ConfirmDialog.css";
-import { useEffect, useId } from "react";
+import { useEffect, useId, type ReactNode } from "react";
 import { useMessages } from "../../i18n/i18n";
 import { confirmDialogMessages } from "./messages";
 
@@ -9,6 +9,9 @@ export const ConfirmDialog = ({
   confirmLabel,
   onConfirm,
   onCancel,
+  confirmDisabled = false,
+  focusCancel = true,
+  children,
 }: Props) => {
   const titleId = useId();
   const m = useMessages(confirmDialogMessages);
@@ -37,11 +40,12 @@ export const ConfirmDialog = ({
           {title}
         </span>
         <span className="ConfirmDialog-body">{body}</span>
+        {children}
         <div className="ConfirmDialog-actions">
-          <button type="button" className="secondary" onClick={onCancel} autoFocus>
+          <button type="button" className="secondary" onClick={onCancel} autoFocus={focusCancel}>
             {m.cancel}
           </button>
-          <button type="button" className="danger" onClick={onConfirm}>
+          <button type="button" className="danger" onClick={onConfirm} disabled={confirmDisabled}>
             {confirmLabel}
           </button>
         </div>
@@ -56,4 +60,9 @@ interface Props {
   confirmLabel: string;
   onConfirm: () => void;
   onCancel: () => void;
+  /** Extra content between the text and the buttons, e.g. a field to confirm with. */
+  children?: ReactNode;
+  confirmDisabled?: boolean;
+  /** Off when the content has a field to fill in first, which takes focus itself. */
+  focusCancel?: boolean;
 }

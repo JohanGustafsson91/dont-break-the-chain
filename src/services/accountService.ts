@@ -76,12 +76,12 @@ type DeletionResult =
  * Re-authenticates first, so a declined sign-in leaves everything untouched. Habits go
  * before the account: if the last step fails the user is still signed in and can retry.
  */
-export const deleteAccountAndData = async (): Promise<DeletionResult> => {
+export const deleteAccountAndData = async (password?: string): Promise<DeletionResult> => {
   const user = auth.currentUser;
   if (!user) return { ok: false, step: "reauthenticate", error: new Error("Not signed in") };
 
   try {
-    await reauthenticate(user);
+    await reauthenticate(user, password);
   } catch (error) {
     return { ok: false, step: "reauthenticate", error };
   }
@@ -114,6 +114,9 @@ export const deletionFailureMessage = (
     }
     if (code === "auth/user-mismatch") {
       return t.userMismatch;
+    }
+    if (code === "auth/invalid-credential" || code === "auth/wrong-password") {
+      return t.wrongPassword;
     }
     return t.notConfirmed;
   }
