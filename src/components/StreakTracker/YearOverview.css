@@ -71,6 +71,10 @@
   background: var(--error-color);
 }
 
+.YearOverview-day_rest {
+  background: color-mix(in srgb, var(--primary-color) 40%, var(--surface-color));
+}
+
 .YearOverview-day_today {
   outline: 1.5px solid var(--text-color);
   outline-offset: 1px;

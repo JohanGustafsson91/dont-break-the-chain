@@ -12,6 +12,8 @@ export const AUTH_STATUS = {
 export const HABIT_STATUS = {
   GOOD: "GOOD" as const,
   BAD: "BAD" as const,
+  // A rest day (daily goals): doesn't break the chain, and doesn't count in it either.
+  REST: "REST" as const,
   NOT_SPECIFIED: "NOT_SPECIFIED" as const,
 } as const;
 

@@ -90,4 +90,27 @@ test.describe("Habits", () => {
 
     await expect(page.getByText("No habits yet")).toBeVisible({ timeout: 25_000 });
   });
+
+  test("should keep the chain on a day off chosen in the day's sheet", async ({ signedIn: page }) => {
+    // Five days done up to yesterday, today not marked.
+    await page.evaluate(async () => {
+      await window.__e2e!.seedHabit("Run", "ggggg-");
+      await window.__e2e!.waitForWrites();
+    });
+    await page.reload();
+    await expect(card(page, "Run")).toContainText("Current 5");
+    await openHabit(page, "Run");
+    await expect(page.locator('input[type="text"]')).toHaveValue("Run");
+
+    await holdDay(page, new Date().getDate());
+    await tap(page.getByRole("radio", { name: "Day off" }));
+    await page.getByRole("button", { name: "Done", exact: true }).click();
+    // Saved, not just shown: it's still there after a reload.
+    await reloadWhenSaved(page);
+    await expect(page.locator('input[type="text"]')).toHaveValue("Run");
+
+    await page.getByRole("button", { name: "‹ Habits" }).click();
+    await expect(card(page, "Run")).toContainText("Day off, chain kept");
+    await expect(card(page, "Run")).toContainText("Current 5");
+  });
 });

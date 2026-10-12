@@ -59,6 +59,21 @@ export const markDay = (
   };
 };
 
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+const restDaysOf = (habit: Habit) =>
+  new Set(habit.streak.filter((d) => d.status === HABIT_STATUS.REST).map((d) => createDate(d.date).getTime()));
+
+/** Whether every day strictly between two days is a rest day (true for neighbours). */
+const onlyRestBetween = (restDays: Set<number>, from: Date, to: Date) => {
+  for (let t = createDate(from).getTime() + DAY_MS; t < createDate(to).getTime(); t += DAY_MS) {
+    if (!restDays.has(t)) return false;
+  }
+  return true;
+};
+
+// Chains of ✓ days. Rest days between two ✓ days keep them in one chain, but only the
+// ✓ days count.
 function buildStreaks(habit: Habit): Date[][] {
   const goodDays = habit.streak
     .filter((d) => d.status === HABIT_STATUS.GOOD)
@@ -66,6 +81,7 @@ function buildStreaks(habit: Habit): Date[][] {
     .sort((a, b) => a.getTime() - b.getTime());
 
   if (goodDays.length === 0) return [];
+  const restDays = restDaysOf(habit);
 
   return goodDays.reduce((acc, curr) => {
     if (acc.length === 0) return [[curr]];
@@ -73,7 +89,7 @@ function buildStreaks(habit: Habit): Date[][] {
     const lastStreak = acc[acc.length - 1];
     const lastDate = lastStreak[lastStreak.length - 1];
 
-    if (isNextDay(lastDate, curr)) {
+    if (isNextDay(lastDate, curr) || onlyRestBetween(restDays, lastDate, curr)) {
       lastStreak.push(curr);
       return acc;
     }
@@ -95,8 +111,11 @@ export const calculateCurrentStreak = (
   const lastDate = lastStreak[lastStreak.length - 1];
   const today = getToday();
 
+  // Still going if the last ✓ is today or yesterday, or only rest days followed it.
   const isActive =
-    createDate(lastDate).getTime() === today.getTime() || isYesterday(lastDate);
+    createDate(lastDate).getTime() === today.getTime() ||
+    isYesterday(lastDate) ||
+    onlyRestBetween(restDaysOf(habit), lastDate, today);
 
   const badDays = habit.streak
     .filter((d) => d.status === HABIT_STATUS.BAD)
@@ -212,8 +231,8 @@ export const getStreakSummary = (
       };
 
 /**
- * Whether nothing is left to do today: every daily habit has today marked (✓ or ✗),
- * and every weekly habit has today ✓ or has already reached its goal this week.
+ * Whether nothing is left to do today: every daily habit has today marked (✓, ✗ or a
+ * rest day), and every weekly habit has today ✓ or has already reached its goal this week.
  */
 export const isEverythingDoneToday = (habits: Habit[], today: Date = getToday()) =>
   habits.every((habit) => {

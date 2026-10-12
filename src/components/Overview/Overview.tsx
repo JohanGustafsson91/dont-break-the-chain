@@ -25,6 +25,7 @@ const cellClass = (cell: OverviewCell, isWeekly: boolean) =>
     cell.isToday && "Overview-cell_today",
     cell.status === HABIT_STATUS.GOOD && (isWeekly ? "Overview-cell_good-weekly" : "Overview-cell_good"),
     cell.status === HABIT_STATUS.BAD && "Overview-cell_bad",
+    cell.status === HABIT_STATUS.REST && "Overview-cell_rest",
   ]
     .filter(Boolean)
     .join(" ");
@@ -80,6 +81,7 @@ export const Overview = () => {
   const lastDay = overview.weeks[overview.weeks.length - 1][6];
   const hasLater = periodsBack > 0;
   const hasWeekly = overview.rows.some((row) => row.habit.goal.type === "weekly");
+  const hasRest = overview.rows.some((row) => row.weeks.flat().some((c) => c.status === HABIT_STATUS.REST));
 
   function show(weeks: OverviewWeeks, back: number) {
     const next = new URLSearchParams();
@@ -246,6 +248,9 @@ export const Overview = () => {
                     <span><span className="Overview-cell Overview-cell_good-weekly" /> {m.legendDoneWeekly}</span>
                   ) : null}
                   <span><span className="Overview-cell Overview-cell_bad" /> {m.legendMissed}</span>
+                  {hasRest ? (
+                    <span><span className="Overview-cell Overview-cell_rest" /> {m.legendRest}</span>
+                  ) : null}
                   <span><span className="Overview-cell" /> {m.legendNotMarked}</span>
                 </div>
               </>

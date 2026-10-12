@@ -142,10 +142,13 @@ export const Calendar = ({
 
             // Links don't wrap to the next week row or into the next month.
             const nextDay = daysInMonthWithStreakData[day.number];
+            // Rest days keep the chain, so the link runs through them.
+            const keepsChain = (status?: string) =>
+              status === HABIT_STATUS.GOOD || status === HABIT_STATUS.REST;
             const linkedClassName =
               goal.type === "daily" &&
-              day.status === HABIT_STATUS.GOOD &&
-              nextDay?.status === HABIT_STATUS.GOOD &&
+              keepsChain(day.status) &&
+              keepsChain(nextDay?.status) &&
               weekDay < 6
                 ? "Calendar-day_linked"
                 : "";
@@ -181,7 +184,7 @@ export const Calendar = ({
 
       <div className="Calendar-legend">
         <span>{m.tapToCycle}</span>
-        <span>{m.holdToAddNote}</span>
+        <span>{goal.type === "daily" ? m.holdToAddNote : m.holdToAddNoteWeekly}</span>
         <span>{m.hasNote}</span>
         {goal.type === "weekly" ? <span>{m.litWeek}</span> : null}
       </div>
@@ -192,13 +195,16 @@ export const Calendar = ({
 const classNameByStatus = {
   GOOD: "Calendar-day_success",
   BAD: "Calendar-day_error",
+  REST: "Calendar-day_rest",
   NOT_SPECIFIED: "",
 };
 
+// A tap cycles ✓ and ✗; a rest day is chosen in the day's sheet (hold), and a tap clears it.
 const newStatusMap = {
   NOT_SPECIFIED: "GOOD",
   GOOD: "BAD",
   BAD: "NOT_SPECIFIED",
+  REST: "NOT_SPECIFIED",
 } as const;
 
 // Unmarked days are neutral for weekly goals, so there's no ✗ in the cycle.
@@ -206,6 +212,7 @@ const nextWeeklyStatusMap = {
   NOT_SPECIFIED: "GOOD",
   GOOD: "NOT_SPECIFIED",
   BAD: "NOT_SPECIFIED",
+  REST: "NOT_SPECIFIED",
 } as const;
 
 function isWeekGoalReached(

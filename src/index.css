@@ -238,6 +238,12 @@ button.error {
   color: var(--on-accent-color);
 }
 
+.radio-label.radio-label-checked[data-status="REST"] {
+  border-color: var(--primary-color);
+  background: var(--primary-color);
+  color: var(--on-accent-color);
+}
+
 /* Hidden from sight but not from keyboards and screen readers, so the ✓/✗ buttons can
    be reached with Tab and arrow keys; the label shows keyboard focus (focus-visible). */
 .radio-input {

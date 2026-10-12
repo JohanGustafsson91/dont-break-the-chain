@@ -22,7 +22,7 @@ export interface E2eHooks {
   seedReminder: () => Promise<void>;
   /**
    * Creates a habit with history: `marks` from oldest to today, one letter per day
-   * ("g" done, "b" missed, "-" unmarked), created on the first of those days.
+   * ("g" done, "b" missed, "r" rest day, "-" unmarked), created on the first of those days.
    */
   seedHabit: (name: string, marks: string, goal?: Goal) => Promise<void>;
 }
@@ -66,7 +66,7 @@ window.__e2e = {
     const today = getToday();
     const dayBack = (n: number) =>
       createDate({ year: today.getUTCFullYear(), month: today.getUTCMonth(), day: today.getUTCDate() - n });
-    const statusOf = { g: HABIT_STATUS.GOOD, b: HABIT_STATUS.BAD } as Record<string, StreakDay["status"] | undefined>;
+    const statusOf = { g: HABIT_STATUS.GOOD, b: HABIT_STATUS.BAD, r: HABIT_STATUS.REST } as Record<string, StreakDay["status"] | undefined>;
     const streak = [...marks].flatMap((mark, i) => {
       const status = statusOf[mark];
       return status ? [{ date: Timestamp.fromDate(dayBack(marks.length - 1 - i)), status, notes: "" }] : [];

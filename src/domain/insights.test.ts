@@ -8,7 +8,7 @@ import { HABIT_STATUS } from "../shared/constants";
 const NOW = new Date("2025-03-30T00:00:00Z");
 const ONE_DAY_IN_MS = 24 * 60 * 60 * 1000;
 
-type Mark = "good" | "bad" | undefined;
+type Mark = "good" | "bad" | "rest" | undefined;
 
 const habitWithHistory = (
   days: number,
@@ -25,7 +25,7 @@ const habitWithHistory = (
     return mark
       ? {
           date,
-          status: mark === "good" ? HABIT_STATUS.GOOD : HABIT_STATUS.BAD,
+          status: { good: HABIT_STATUS.GOOD, bad: HABIT_STATUS.BAD, rest: HABIT_STATUS.REST }[mark],
           notes: "",
         }
       : undefined;
@@ -105,6 +105,12 @@ describe("Insights - patterns found in a habit's history", () => {
       "100 % good days in the last 30 days, up from 50 %.",
     ]);
     expect(getInsights(steady, NOW)).toEqual([]);
+
+    // Rest days are neither done nor missed: resting on Sundays lately is no decline.
+    const restingOnSundays = habitWithHistory(60, (daysAgo, date) =>
+      daysAgo < 30 && date.getUTCDay() === 0 ? "rest" : "good",
+    );
+    expect(getInsights(restingOnSundays, NOW)).toEqual([]);
   });
 
   it("should only show the trend for weekly goals, counted in good days", () => {

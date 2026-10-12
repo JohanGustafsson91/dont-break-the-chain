@@ -11,6 +11,8 @@ interface Props {
   groupName?: string;
   verbose?: boolean;
   allowBad?: boolean;
+  /** A rest day keeps the chain without counting in it; daily goals only. */
+  allowRest?: boolean;
 }
 
 export const StreakStatusRadioGroup = ({
@@ -19,16 +21,20 @@ export const StreakStatusRadioGroup = ({
   groupName = "status-group",
   verbose = false,
   allowBad = true,
+  allowRest = false,
 }: Props) => {
   const m = useMessages(streakStatusMessages);
   const verboseTextByStatus: Record<Status, string> = {
     [HABIT_STATUS.GOOD]: m.done,
     [HABIT_STATUS.BAD]: m.missed,
+    [HABIT_STATUS.REST]: m.rest,
     [HABIT_STATUS.NOT_SPECIFIED]: "",
   };
-  const statuses = allowBad
-    ? [HABIT_STATUS.GOOD, HABIT_STATUS.BAD]
-    : [HABIT_STATUS.GOOD];
+  const statuses = [
+    HABIT_STATUS.GOOD,
+    ...(allowBad ? [HABIT_STATUS.BAD] : []),
+    ...(allowRest ? [HABIT_STATUS.REST] : []),
+  ];
 
   return statuses.map((status) => {
     const checked = currentStreakDay.status === status;
@@ -83,5 +89,6 @@ export const StreakStatusRadioGroup = ({
 const textByStatus: Record<Status, string> = {
   [HABIT_STATUS.GOOD]: "✓",
   [HABIT_STATUS.BAD]: "✗",
+  [HABIT_STATUS.REST]: "☾",
   [HABIT_STATUS.NOT_SPECIFIED]: "⏳",
 };
