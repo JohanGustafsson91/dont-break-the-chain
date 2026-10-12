@@ -1,0 +1,55 @@
+name: Delete unverified accounts
+
+# Once a day: email accounts whose address was never verified are deleted a week after
+# sign-up (scripts/delete-unverified.mjs). A manual run is a dry run unless unticked.
+on:
+  schedule:
+    - cron: "41 3 * * *"
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Only count, delete nothing"
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+  id-token: write # for Workload Identity Federation
+
+concurrency:
+  group: cleanup
+  cancel-in-progress: false
+
+jobs:
+  cleanup:
+    name: Delete unverified accounts
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: "20"
+
+      # No stored key: GitHub's OIDC token is exchanged for a short-lived access token
+      # of the account-cleaner service account. Only this workflow on main may do that.
+      - name: Authenticate to Google Cloud
+        id: auth
+        uses: google-github-actions/auth@v3
+        with:
+          workload_identity_provider: ${{ vars.CLEANUP_WIF_PROVIDER }}
+          service_account: ${{ vars.CLEANUP_SERVICE_ACCOUNT }}
+          token_format: access_token
+          create_credentials_file: false
+
+      - name: Delete unverified accounts
+        run: node scripts/delete-unverified.mjs
+        env:
+          ACCESS_TOKEN: ${{ steps.auth.outputs.access_token }}
+          PROJECT_ID: dont-break-the-chain-cb8a0
+          DRY_RUN: ${{ inputs.dry_run && '1' || '' }}
