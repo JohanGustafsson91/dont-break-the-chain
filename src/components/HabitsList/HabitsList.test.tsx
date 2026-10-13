@@ -387,6 +387,31 @@ describe("HabitsList - User workflows", () => {
   });
   const titles = () => screen.getAllByText(/^(Run|Read|Stretch)$/).map((el) => el.textContent);
 
+  it("should show habits done today last when the list opens, and not move one as it's marked", async () => {
+    const doneToday = { ...sortable("habit-1", "Run", 0), streak: [{ date: getToday(), status: "GOOD" as const, notes: "" }] };
+    vi.mocked(habitService.getAllHabits).mockResolvedValue([
+      doneToday,
+      sortable("habit-2", "Read", 1),
+      sortable("habit-3", "Stretch", 2),
+    ]);
+    vi.mocked(habitService.updateHabit).mockResolvedValue();
+
+    renderHabitsList();
+    await screen.findByText("Run");
+    expect(titles()).toEqual(["Read", "Stretch", "Run"]);
+
+    // Marking stays put, so the next row doesn't slide under the finger.
+    const read = screen.getByText("Read").closest(".HabitsList-item") as HTMLElement;
+    await userEvent.click(within(read).getByRole("radio", { name: "Done" }));
+    await waitFor(() => expect(habitService.updateHabit).toHaveBeenCalled());
+    expect(titles()).toEqual(["Read", "Stretch", "Run"]);
+
+    // Sorting by hand still starts from, and saves, the user's own order.
+    await userEvent.click(screen.getByRole("button", { name: "Reorder" }));
+    expect(within(screen.getByRole("list", { name: "Habits in order" })).getAllByRole("listitem").map((li) => li.textContent))
+      .toEqual(["Run", "Read", "Stretch"]);
+  });
+
   it("should save only the habits that changed place", async () => {
     vi.mocked(habitService.getAllHabits).mockResolvedValue([
       sortable("habit-1", "Run", 0),

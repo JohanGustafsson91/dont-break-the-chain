@@ -7,6 +7,12 @@ const sortKey = (habit: Habit) => habit.order ?? habit.createdAt?.getTime() ?? 0
 export const sortHabits = (habits: Habit[]): Habit[] =>
   [...habits].sort((a, b) => sortKey(a) - sortKey(b) || a.id.localeCompare(b.id));
 
+/** Keeps the order, with the given habits moved last. */
+export const withLast = (habits: Habit[], last: Set<string>): Habit[] => [
+  ...habits.filter((h) => !last.has(h.id)),
+  ...habits.filter((h) => last.has(h.id)),
+];
+
 /** The `order` to save for each habit whose place differs from what is stored. */
 export const orderChanges = (habits: Habit[]): { id: string; order: number }[] =>
   habits.flatMap((habit, order) => (habit.order === order ? [] : [{ id: habit.id, order }]));

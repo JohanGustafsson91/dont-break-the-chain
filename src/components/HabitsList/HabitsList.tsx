@@ -7,6 +7,7 @@ import {
   getGoodDays,
   getBadDays,
   getStreakSummary,
+  isEverythingDoneToday,
   markDay,
 } from "../../domain/Habit";
 import {
@@ -15,7 +16,7 @@ import {
   saveHabitOrder,
   updateHabit,
 } from "../../services/habitService";
-import { orderChanges, withOrders } from "../../domain/habitOrder";
+import { orderChanges, withLast, withOrders } from "../../domain/habitOrder";
 import { ReorderList } from "./ReorderList";
 import { ViewSwitch } from "../ViewSwitch/ViewSwitch";
 import { ProgressBar } from "../StreakTracker/ProgressBar";
@@ -51,6 +52,9 @@ export const HabitsList = () => {
   const [pendingRemoval, setPendingRemoval] = useState<PendingRemoval>();
   // The order being edited; set while sorting, saved on Done.
   const [reorderDraft, setReorderDraft] = useState<Habit[]>();
+  // Habits done today go last, but only as the list opens: a row that moved away as it
+  // was marked would put the next habit under the finger, and an undo out of reach.
+  const [doneWhenOpened, setDoneWhenOpened] = useState(new Set<string>());
   const navigate = useNavigate();
   const { showToast } = useToast();
   // Also re-renders the date and the status lines from the domain when the language changes.
@@ -72,6 +76,7 @@ export const HabitsList = () => {
     (async () => {
       try {
         const data = await getAllHabits();
+        setDoneWhenOpened(new Set(data.filter((h) => isEverythingDoneToday([h])).map((h) => h.id)));
         setHabits({ data, status: "resolved" });
       } catch (error) {
         console.error("Could fetch habits", { error });
@@ -186,7 +191,7 @@ export const HabitsList = () => {
                   <div className="HabitsList-empty-text">{m.emptyText}</div>
                 </div>
               ) : (
-                habits.data.map((habit) => {
+                withLast(habits.data, doneWhenOpened).map((habit) => {
                   const { id, name } = habit;
                   const goodDays = getGoodDays(habit).length;
                   const badDays = getBadDays(habit).length;
