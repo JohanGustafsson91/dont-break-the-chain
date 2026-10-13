@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { moveHabit, orderChanges, sortHabits, withOrders } from "./habitOrder";
+import { moveHabit, orderChanges, sortHabits, withLast, withOrders } from "./habitOrder";
 import type { Habit } from "./Habit";
 
 const habit = (id: string, extra: Partial<Habit> = {}): Habit => ({
@@ -26,6 +26,11 @@ describe("habitOrder", () => {
 
   it("should keep a stable order for habits without order or creation date", () => {
     expect(ids(sortHabits([habit("b"), habit("a")]))).toEqual(["a", "b"]);
+  });
+
+  it("should move the given habits last, keeping the order within both groups", () => {
+    const habits = ["a", "b", "c", "d"].map((id) => habit(id));
+    expect(ids(withLast(habits, new Set(["a", "c"])))).toEqual(["b", "d", "a", "c"]);
   });
 
   it("should move a habit to another's place, shifting those in between", () => {
