@@ -104,8 +104,8 @@ describe("Login - User authentication flow", () => {
     onTestFinished(() => consoleErrorSpy.mockRestore());
     renderLogin();
     await userEvent.click(screen.getByRole("button", { name: "Continue with email" }));
-    // The form opens with the email field ready to type in.
-    expect(screen.getByLabelText("Email")).toHaveFocus();
+    // Focus moves to the form, not a field, so a phone doesn't pop up its keyboard.
+    expect(screen.getByRole("form", { name: "Sign in with email" })).toHaveFocus();
 
     // A wrong password says so, without telling whether the email has an account.
     vi.mocked(firebaseAuth.signInWithEmailAndPassword).mockRejectedValueOnce(
@@ -122,6 +122,8 @@ describe("Login - User authentication flow", () => {
     expect(await screen.findByRole("status")).toHaveTextContent("If there's an account for ada@example.com");
 
     await userEvent.click(screen.getByRole("button", { name: "New here? Create an account" }));
+    // Switching stays on the button that was pressed, so the keyboard doesn't pop up.
+    expect(screen.getByRole("button", { name: /Already have an account/ })).toHaveFocus();
     expect(screen.getByText("At least 8 characters.")).toBeInTheDocument();
     await userEvent.clear(screen.getByLabelText("Password"));
     await userEvent.type(screen.getByLabelText("Password"), "short");

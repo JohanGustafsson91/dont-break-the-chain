@@ -121,6 +121,11 @@
   background: var(--surface-color);
 }
 
+/* Focused only so focus isn't lost when it opens; it isn't something to act on. */
+.Login-email:focus {
+  outline: none;
+}
+
 .Login-email_title {
   margin: 0 0 0.25rem;
   font-size: 1rem;
