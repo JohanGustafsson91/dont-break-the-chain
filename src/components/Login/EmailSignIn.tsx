@@ -1,4 +1,4 @@
-import { useId, useRef, useState, type FormEvent } from "react";
+import { useEffect, useId, useRef, useState, type FormEvent } from "react";
 import {
   emailErrorMessage,
   sendPasswordReset,
@@ -25,10 +25,18 @@ export const EmailSignIn = () => {
   const [busy, setBusy] = useState(false);
   const [feedback, setFeedback] = useState<{ kind: "error" | "info"; text: string }>();
   const emailRef = useRef<HTMLInputElement>(null);
+  const formRef = useRef<HTMLFormElement>(null);
   const titleId = useId();
   const emailId = useId();
   const passwordId = useId();
   const hintId = useId();
+
+  useEffect(function focusFormOnOpen() {
+    // The button that opened it is gone, so focus would otherwise fall to the page. The
+    // form, not a field: on a phone a focused field pops up the keyboard before the
+    // person has even seen the form.
+    formRef.current?.focus({ preventScroll: true });
+  }, []);
 
   async function run(action: EmailAction, task: () => Promise<unknown>, done?: string) {
     setBusy(true);
@@ -68,23 +76,24 @@ export const EmailSignIn = () => {
   function switchTo(next: Mode) {
     setMode(next);
     setFeedback(undefined);
-    emailRef.current?.focus();
   }
 
   return (
-    <form className="Login-email" onSubmit={onSubmit} noValidate aria-labelledby={titleId} aria-busy={busy}>
+    <form
+      ref={formRef}
+      tabIndex={-1}
+      className="Login-email"
+      onSubmit={onSubmit} noValidate aria-labelledby={titleId} aria-busy={busy}>
       <h3 className="Login-email_title" id={titleId}>
         {mode === "signUp" ? t.titleSignUp : t.titleSignIn}
       </h3>
       <label htmlFor={emailId}>{t.email}</label>
-      {/* Opened on request, so taking focus here is expected. */}
       <input
         ref={emailRef}
         id={emailId}
         type="email"
         autoComplete="username"
         inputMode="email"
-        autoFocus
         value={email}
         onChange={(e) => setEmail(e.target.value)}
       />
