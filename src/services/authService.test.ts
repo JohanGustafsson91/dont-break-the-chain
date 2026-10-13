@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, onTestFinished } from "vitest";
-import { renderHook } from "@testing-library/react";
+import { renderHook, waitFor } from "@testing-library/react";
 import * as firebaseAuth from "firebase/auth";
 import * as firebaseFirestore from "firebase/firestore";
 import * as reactFirebaseHooks from "react-firebase-hooks/auth";
@@ -139,6 +139,40 @@ describe("authService - Authentication workflows", () => {
 
       expect(result.current.status).toBe(AUTH_STATUS.RESOLVED);
       expect(result.current.user).toEqual(mockUser);
+    });
+  });
+
+  describe("useAuth hook - Verified email", () => {
+    const emailUser = (uid: string, emailVerifiedInToken: boolean) =>
+      ({
+        uid,
+        emailVerified: true,
+        providerData: [{ providerId: "password" }],
+        getIdTokenResult: vi.fn().mockResolvedValue({ claims: { email_verified: emailVerifiedInToken } }),
+        getIdToken: vi.fn().mockResolvedValue("fresh-token"),
+      }) as unknown as User;
+
+    it("should renew a token from before the address was verified before letting the app read data", async () => {
+      const user = emailUser("verified-elsewhere", false);
+      useAuthStateSpy.mockReturnValue([user, false, undefined] as ReturnType<typeof reactFirebaseHooks.useAuthState>);
+
+      const { result } = renderHook(() => useAuth());
+
+      expect(result.current.status).toBe(AUTH_STATUS.PENDING);
+      await waitFor(() => expect(result.current.status).toBe(AUTH_STATUS.RESOLVED));
+      expect(user.getIdToken).toHaveBeenCalledWith(true);
+    });
+
+    it("should keep a token that already says the address is verified", async () => {
+      const user = emailUser("verified-here", true);
+      useAuthStateSpy.mockReturnValue([user, false, undefined] as ReturnType<typeof reactFirebaseHooks.useAuthState>);
+
+      const { result } = renderHook(() => useAuth());
+
+      await waitFor(() => expect(result.current.status).toBe(AUTH_STATUS.RESOLVED));
+      expect(user.getIdToken).not.toHaveBeenCalled();
+      // Checked once per user, so later pages don't wait again.
+      expect(renderHook(() => useAuth()).result.current.status).toBe(AUTH_STATUS.RESOLVED);
     });
   });
 
