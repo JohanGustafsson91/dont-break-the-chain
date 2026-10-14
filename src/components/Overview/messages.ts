@@ -13,7 +13,8 @@ export const overviewMessages = defineMessages({
     weeks: (n: number) => `${n} weeks`,
     summaryLabel: "Daily habits:",
     summaryCount: (done: number, counted: number) => `${done} of ${counted}`,
-    summaryRest: (percent: number) => `days done (${percent} %)`,
+    // Habit-days, not calendar days: three habits over ten days make 30.
+    summaryRest: (percent: number) => `checked off (${percent} %)`,
     inARow: (n: number) => `${n} in a row`,
     weeksInARow: (n: number) => `${n} wk in a row`,
     dailySummary: (good: number, bad: number) => `${good} done, ${bad} missed`,
@@ -37,7 +38,7 @@ export const overviewMessages = defineMessages({
     weeks: (n: number) => `${n} veckor`,
     summaryLabel: "Dagliga vanor:",
     summaryCount: (done: number, counted: number) => `${done} av ${counted}`,
-    summaryRest: (percent: number) => `dagar klara (${percent} %)`,
+    summaryRest: (percent: number) => `avbockade (${percent} %)`,
     inARow: (n: number) => `${n} i rad`,
     weeksInARow: (n: number) => `${n} v i rad`,
     dailySummary: (good: number, bad: number) => `${good} ${good === 1 ? "klar" : "klara"}, ${bad} ${bad === 1 ? "missad" : "missade"}`,

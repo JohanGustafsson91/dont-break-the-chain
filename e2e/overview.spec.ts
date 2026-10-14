@@ -16,7 +16,7 @@ test.describe("Overview", () => {
 
     // Read: six days up to yesterday, five done, and today not marked yet, so it doesn't
     // count. Run: yesterday not marked, today done.
-    await expect(page.getByText(/Daily habits: 6 of 8\s+days done/)).toBeVisible();
+    await expect(page.getByText(/Daily habits: 6 of 8\s+checked off/)).toBeVisible();
     const read = page.getByRole("button", { name: /^Read: 5 done, 1 missed/ });
     await expect(read).toBeVisible();
     await expect(page.getByRole("button", { name: /^Run: 1 done, 0 missed/ })).toBeVisible();

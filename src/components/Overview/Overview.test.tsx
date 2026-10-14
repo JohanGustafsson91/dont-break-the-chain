@@ -47,7 +47,7 @@ describe("Overview", () => {
 
     renderOverview();
 
-    expect(await screen.findByText(/days done/)).toHaveTextContent("Daily habits: 2 of 3 days done (67 %)");
+    expect(await screen.findByText(/checked off/)).toHaveTextContent("Daily habits: 2 of 3 checked off (67 %)");
     expect(screen.getByText("Sep 28 – Oct 11")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Overview" })).toHaveAttribute("aria-current", "page");
     // Nothing before this period, and nothing after this week.
@@ -95,7 +95,7 @@ describe("Overview", () => {
     expect(screen.getByText("1/2")).toBeInTheDocument();
     // This week is still under way, so its 1/2 isn't a missed week yet. Weekly goals are
     // shown per week, not in the daily summary.
-    expect(screen.queryByText(/days done/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/checked off/)).not.toBeInTheDocument();
   });
 
   it("should tell the user when habits can't be loaded", async () => {
@@ -126,7 +126,7 @@ describe("Overview", () => {
 
     renderOverview();
 
-    expect(await screen.findByText(/dagar klara/)).toHaveTextContent("Dagliga vanor: 2 av 3 dagar klara (67 %)");
+    expect(await screen.findByText(/avbockade/)).toHaveTextContent("Dagliga vanor: 2 av 3 avbockade (67 %)");
     expect(screen.getByRole("heading", { name: "Översikt" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Run: 2 klara, 1 missad, 1 i rad" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Tidigare" })).toBeInTheDocument();
