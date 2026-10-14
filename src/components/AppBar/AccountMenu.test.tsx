@@ -1,11 +1,12 @@
 import "@testing-library/jest-dom";
 import { describe, it, expect, vi, beforeEach, onTestFinished } from "vitest";
-import { render, screen, within } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
 import type { User } from "firebase/auth";
 import * as accountService from "../../services/accountService";
 import * as authService from "../../services/authService";
+import * as reminderService from "../../services/reminderService";
 import { AccountMenu } from "./AccountMenu";
 import { ToastProvider } from "../Toast/Toast.Provider";
 import { setLanguageSetting } from "../../i18n/i18n";
@@ -62,6 +63,7 @@ describe("AccountMenu - export, delete, legal links and log out", () => {
     expect(trigger).toHaveTextContent(/^A$/); // initial when there is no picture
     await userEvent.click(trigger);
     expect(trigger).toHaveAttribute("aria-expanded", "true");
+    expect(screen.getByText("Ada")).toBeInTheDocument();
     expect(screen.getByText("ada@example.com")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Privacy policy" })).toHaveAttribute("href", "/privacy");
     expect(screen.getByRole("link", { name: "Terms of use" })).toHaveAttribute("href", "/terms");
@@ -90,6 +92,22 @@ describe("AccountMenu - export, delete, legal links and log out", () => {
     await userEvent.click(trigger);
     await userEvent.click(screen.getByRole("button", { name: "Log out" }));
     expect(authService.logout).toHaveBeenCalled();
+  });
+
+  it("should show this device's reminder times next to the menu item", async () => {
+    localStorage.setItem("reminderToken", "this-device");
+    onTestFinished(() => localStorage.clear());
+    vi.mocked(reminderService.getReminderSettings).mockResolvedValueOnce({
+      hour: 8,
+      hours: [8, 20],
+      timeZone: "Europe/Stockholm",
+      tokens: ["this-device"],
+    });
+    renderMenu();
+    await userEvent.click(screen.getByRole("button", { name: "Account menu" }));
+
+    const reminders = screen.getByRole("button", { name: "Daily reminders" });
+    await waitFor(() => expect(reminders).toHaveAccessibleDescription(/^08:00.*\+1$/));
   });
 
   it("should open the daily reminder settings from the menu", async () => {
@@ -176,13 +194,13 @@ describe("AccountMenu - export, delete, legal links and log out", () => {
     renderMenu();
     await userEvent.click(screen.getByRole("button", { name: "Account menu" }));
 
-    const language = screen.getByRole("combobox", { name: "Language" });
-    expect(language).toHaveDisplayValue("Automatic (English)");
+    const language = screen.getByRole("radiogroup", { name: "Language" });
+    expect(within(language).getByRole("radio", { name: "Automatic (English)" })).toBeChecked();
 
-    await userEvent.selectOptions(language, "sv");
+    await userEvent.click(within(language).getByRole("radio", { name: "Svenska" }));
 
     // The menu itself switches at once.
-    expect(screen.getByRole("combobox", { name: "Språk" })).toHaveDisplayValue("Svenska");
+    expect(within(screen.getByRole("radiogroup", { name: "Språk" })).getByRole("radio", { name: "Svenska" })).toBeChecked();
     expect(screen.getByRole("button", { name: "Logga ut" })).toBeInTheDocument();
   });
 });

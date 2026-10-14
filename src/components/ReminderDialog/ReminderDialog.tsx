@@ -15,18 +15,12 @@ import {
   type ReminderSupport,
 } from "../../services/reminderService";
 import { useToast } from "../Toast/Toast.Context";
-import { getLanguage, getLocale, languageFromBrowser, useMessages } from "../../i18n/i18n";
+import { useMessages } from "../../i18n/i18n";
+import { formatHour } from "./formatHour";
 import { reminderDialogMessages } from "./messages";
 
 const HOURS = Array.from({ length: 24 }, (_, hour) => hour);
 
-// The browser's own locale when it speaks the app's language, so its 12- or 24-hour
-// clock is kept (en-GB shows 19:00, not 07 PM); otherwise the app language's default.
-const formatHour = (hour: number) =>
-  new Date(2000, 0, 1, hour).toLocaleTimeString(
-    languageFromBrowser([navigator.language]) === getLanguage() ? navigator.language : getLocale(),
-    { hour: "2-digit", minute: "2-digit" },
-  );
 
 const deviceTimeZone = () => Intl.DateTimeFormat().resolvedOptions().timeZone;
 

@@ -24,25 +24,62 @@
   z-index: 15;
   display: flex;
   flex-direction: column;
-  min-width: 220px;
+  width: 18rem;
+  max-width: calc(100vw - 1.5rem);
   padding: 0.375rem;
   border: 1px solid var(--border-color);
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-lg);
   background: var(--surface-color);
   box-shadow: 0 12px 32px rgba(0, 0, 0, 0.35);
 }
 
 .AccountMenu-who {
-  margin: 0;
-  padding: 0.5rem 0.625rem 0.375rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.625rem 0.625rem 0.5rem;
+}
+
+.AccountMenu-who_avatar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--primary-color);
+  color: var(--on-accent-color);
+  font-size: 1.0625rem;
+  font-weight: 600;
+}
+
+.AccountMenu-who_text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.AccountMenu-who_text > * {
   overflow: hidden;
   text-overflow: ellipsis;
-  font-size: 0.75rem;
+  white-space: nowrap;
+}
+
+.AccountMenu-who_text b {
+  font-size: 0.9375rem;
+  font-weight: 600;
+}
+
+.AccountMenu-who_text span {
+  font-size: 0.8125rem;
   color: var(--text-subtle-color);
 }
 
 .AccountMenu-item {
-  display: block;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
   width: 100%;
   height: auto;
   padding: 0.625rem;
@@ -71,23 +108,96 @@
   color: var(--error-color);
 }
 
-.AccountMenu-language {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.75rem;
-  padding: 0.25rem 0.625rem;
-  font-size: 0.9375rem;
+.AccountMenu-item_text {
+  flex: 1;
 }
 
-.AccountMenu-language select {
-  min-height: 40px;
-  padding: 0 0.5rem;
+.AccountMenu-icon {
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  fill: none;
+  stroke: var(--text-muted-color);
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.AccountMenu-item_danger .AccountMenu-icon {
+  stroke: currentColor;
+}
+
+/* This device's reminder time, so it shows without opening the dialog. */
+.AccountMenu-pill {
+  padding: 0.125rem 0.5rem;
+  border: 1px solid var(--success-border-color);
+  border-radius: 999px;
+  background: var(--success-surface-color);
+  color: var(--success-color);
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.AccountMenu-label {
+  padding: 0.625rem 0.625rem 0.25rem;
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--text-subtle-color);
+}
+
+.AccountMenu-languages {
+  display: flex;
+  margin: 0.125rem 0.625rem 0.5rem;
+  padding: 3px;
   border: 1px solid var(--border-color);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-md);
   background: var(--surface-muted-color);
+}
+
+.AccountMenu-languages label {
+  position: relative;
+  flex: 1;
+  padding: 0.375rem 0;
+  border-radius: 6px;
+  color: var(--text-muted-color);
+  font-size: 0.8125rem;
+  text-align: center;
+  cursor: pointer;
+}
+
+.AccountMenu-languages label.is-checked {
+  background: var(--surface-color);
+  box-shadow: 0 0 0 1px var(--border-color);
   color: var(--text-color);
-  font: inherit;
+  font-weight: 600;
+}
+
+/* Hidden from sight, not from keyboards: arrow keys move between the languages. */
+.AccountMenu-languages input {
+  position: absolute;
+  inset: 0;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.AccountMenu-languages label:has(input:focus-visible) {
+  outline: 2px solid var(--primary-color);
+  outline-offset: 1px;
+}
+
+.AccountMenu-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 1rem;
+  padding: 0.375rem 0.625rem;
+}
+
+.AccountMenu-links a {
+  color: var(--text-subtle-color);
+  font-size: 0.8125rem;
 }
 
 .AccountMenu-panel hr {
