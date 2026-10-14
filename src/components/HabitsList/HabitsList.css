@@ -26,6 +26,12 @@
   background: var(--error-surface-color);
 }
 
+/* A weekly habit set aside for today: one quiet line, still there to bring back. */
+.HabitsList-item_day-off {
+  padding-block: 0.5rem;
+  opacity: 0.6;
+}
+
 .HabitsList-date {
   margin-top: 1.125rem;
   font-family: var(--font-mono);

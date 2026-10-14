@@ -59,7 +59,7 @@ const comebackRate = (habit: Habit, today: Date) => {
   return { samples: next.length, rate: next.filter((s) => s === HABIT_STATUS.GOOD).length / (next.length || 1) };
 };
 
-const weeklyLine = (habit: Habit, today: Date, markedToday: boolean, times: number) => {
+const weeklyLine = (habit: Habit, today: Date, todayStatus: Status | undefined, times: number) => {
   const t = messagesFor(statusLineMessages);
   const left = times - countGoodDaysInWeek(habit, today);
   // Days left in the week, today included (weeks start on Monday).
@@ -69,7 +69,8 @@ const weeklyLine = (habit: Habit, today: Date, markedToday: boolean, times: numb
     if (weeks >= 2) return t.weeksGoalMet(weeks);
     return daysLeft > 1 ? t.doneWithDaysToSpare(daysLeft - 1) : t.weekGoalDone;
   }
-  if (markedToday) return t.niceMoreThisWeek(left);
+  if (todayStatus === HABIT_STATUS.GOOD) return t.niceMoreThisWeek(left);
+  if (todayStatus === HABIT_STATUS.REST) return t.dayOffMoreThisWeek(left);
   // Out of reach this week, but every day still adds up.
   if (left > daysLeft) return t.everyExtraDayCounts;
   if (left === daysLeft) return t.moreEveryDayCounts(left);
@@ -84,7 +85,7 @@ export const habitStatusLine = (habit: Habit): string => {
   const missedYesterday = statusOn(habit, yesterday) === HABIT_STATUS.BAD;
 
   if (habit.goal.type === "weekly") {
-    return weeklyLine(habit, today, todayStatus === HABIT_STATUS.GOOD, habit.goal.times);
+    return weeklyLine(habit, today, todayStatus, habit.goal.times);
   }
 
   const current = calculateCurrentStreak(habit).count;

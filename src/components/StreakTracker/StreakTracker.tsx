@@ -355,7 +355,7 @@ export const StreakTracker = () => {
                 <StreakStatusRadioGroup
                   verbose
                   allowBad={goal.type === "daily"}
-                  allowRest={goal.type === "daily"}
+                  allowRest
                   currentStreakDay={
                     activeStreakDay ?? {
                       status: HABIT_STATUS.NOT_SPECIFIED,

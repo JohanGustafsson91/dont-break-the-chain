@@ -150,6 +150,7 @@ describe("habitStatusLine - weekly goal", () => {
     expect(line(weekly(2, day(10)))).toBe("1 more this week");
     expect(line(weekly(3, day(10)))).toBe("2 more, every day counts 🎯");
     expect(line(weekly(3))).toBe("Every extra day counts");
+    expect(line(weekly(3, day(10), day(15, "REST")))).toBe("Day off, 2 more this week");
   });
 });
 
