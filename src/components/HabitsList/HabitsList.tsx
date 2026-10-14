@@ -205,7 +205,6 @@ export const HabitsList = () => {
                   );
                   const currentDayStatus =
                     currentStreakDay?.status ?? HABIT_STATUS.NOT_SPECIFIED;
-                  // A weekly habit set aside for today shrinks to a line; ☾ again brings it back.
                   const isDayOff = goal.type === "weekly" && currentDayStatus === HABIT_STATUS.REST;
 
                   return (

@@ -230,6 +230,8 @@ export const getStreakSummary = (
         unit: "day",
       };
 
+const WEEKLY_DONE_TODAY: StreakDay["status"][] = [HABIT_STATUS.GOOD, HABIT_STATUS.REST];
+
 /**
  * Whether nothing is left to do today: every daily habit has today marked (✓, ✗ or a
  * rest day), and every weekly habit has today ✓ or a day off, or has already reached its
@@ -243,7 +245,7 @@ export const isEverythingDoneToday = (habits: Habit[], today: Date = getToday())
     }
     // Weekly goals have ✓ and days off; an old ✗ from when the habit was daily doesn't count.
     return (
-      entriesToday.some((s) => s.status === HABIT_STATUS.GOOD || s.status === HABIT_STATUS.REST) ||
+      entriesToday.some((s) => WEEKLY_DONE_TODAY.includes(s.status)) ||
       countGoodDaysInWeek(habit, today) >= habit.goal.times
     );
   });
