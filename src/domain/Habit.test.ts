@@ -365,6 +365,8 @@ describe("Domain - Habit tracking complete workflows", () => {
       expect(isEverythingDoneToday([habit(threeTimes, [...twoThisWeek, day("2025-02-15")])], today())).toBe(true);
       // Reached earlier in the week: nothing to do today.
       expect(isEverythingDoneToday([habit(threeTimes, [...twoThisWeek, day("2025-02-13")])], today())).toBe(true);
+      // A day off today takes the habit off today's list, without counting towards the goal.
+      expect(isEverythingDoneToday([habit(threeTimes, [...twoThisWeek, day("2025-02-15", "REST")])], today())).toBe(true);
       // Last week's days don't count towards this week.
       expect(isEverythingDoneToday([habit(threeTimes, [day("2025-02-07"), day("2025-02-08"), day("2025-02-09")])], today())).toBe(false);
     });

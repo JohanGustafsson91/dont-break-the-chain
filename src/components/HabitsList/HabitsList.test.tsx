@@ -262,7 +262,7 @@ describe("HabitsList - User workflows", () => {
     });
   });
 
-  it("should show weekly progress and only a ✓ button for weekly goals", async () => {
+  it("should show weekly progress and no ✗ button for weekly goals", async () => {
     const mockHabits: Habit[] = [
       {
         id: "habit-1",
@@ -284,6 +284,29 @@ describe("HabitsList - User workflows", () => {
     expect(screen.getByText("1/3 this week")).toBeInTheDocument();
     expect(screen.getByRole("radio", { name: "Done" })).toBeInTheDocument();
     expect(screen.queryByRole("radio", { name: "Missed" })).not.toBeInTheDocument();
+  });
+
+  it("should let a weekly habit take today off, shrinking its card until ☾ is tapped again", async () => {
+    vi.mocked(habitService.getAllHabits).mockResolvedValue([
+      { id: "habit-1", name: "Gym", description: "", goal: { type: "weekly", times: 3 }, streak: [] },
+    ]);
+    vi.mocked(habitService.updateHabit).mockResolvedValue();
+
+    renderHabitsList();
+    await userEvent.click(await screen.findByRole("radio", { name: "Day off" }));
+
+    expect(habitService.updateHabit).toHaveBeenCalledWith("habit-1", {
+      streak: [expect.objectContaining({ status: "REST" })],
+    });
+    expect(screen.getByText("Day off, 3 more this week")).toBeInTheDocument();
+    expect(screen.queryByText("0/3 this week")).not.toBeInTheDocument();
+    // Reminders count it as taken care of today.
+    expect(reminderService.recordTodayProgress).toHaveBeenLastCalledWith([
+      expect.objectContaining({ streak: [expect.objectContaining({ status: "REST" })] }),
+    ]);
+
+    await userEvent.click(screen.getByRole("radio", { name: "Day off" }));
+    expect(await screen.findByText("0/3 this week")).toBeInTheDocument();
   });
 
   it("should display habits with no streak data", async () => {

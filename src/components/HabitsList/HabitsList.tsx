@@ -205,10 +205,11 @@ export const HabitsList = () => {
                   );
                   const currentDayStatus =
                     currentStreakDay?.status ?? HABIT_STATUS.NOT_SPECIFIED;
+                  const isDayOff = goal.type === "weekly" && currentDayStatus === HABIT_STATUS.REST;
 
                   return (
                     <div
-                      className={`HabitsList-item ${itemClassByDayStatus[currentDayStatus]}`}
+                      className={`HabitsList-item ${itemClassByDayStatus[currentDayStatus]} ${isDayOff ? "HabitsList-item_day-off" : ""}`}
                       key={id}
                       onClick={(e) => {
                         const target = e.target as HTMLElement;
@@ -240,6 +241,7 @@ export const HabitsList = () => {
                             }
                             groupName={`habit-${id}`}
                             allowBad={goal.type === "daily"}
+                            allowRest={goal.type === "weekly"}
                             onUpdateStatus={(values) =>
                               handleUpdateDay(
                                 habit,
@@ -252,15 +254,16 @@ export const HabitsList = () => {
                         </div>
                       </div>
 
-                      <div className="HabitsList-item_progress">
-                        {goal.type === "weekly" ? (
-                          <ProgressBar
-                            goodDays={Math.min(goodDaysThisWeek, goal.times)}
-                            badDays={0}
-                            total={goal.times}
-                          />
-                        ) : (
-                          <ProgressBar goodDays={goodDays} badDays={badDays} />
+                      {isDayOff ? null : (
+                        <div className="HabitsList-item_progress">
+                          {goal.type === "weekly" ? (
+                            <ProgressBar
+                              goodDays={Math.min(goodDaysThisWeek, goal.times)}
+                              badDays={0}
+                              total={goal.times}
+                            />
+                          ) : (
+                            <ProgressBar goodDays={goodDays} badDays={badDays} />
                         )}
                         <div className="HabitsList-item_row HabitsList-item_stats">
                           <span>
@@ -280,6 +283,7 @@ export const HabitsList = () => {
                           </div>
                         </div>
                       </div>
+                      )}
                     </div>
                   );
                 })
