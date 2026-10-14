@@ -1,5 +1,5 @@
 import "./AccountMenu.css";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import type { User } from "../../services/firebaseService";
 import { logout, usesPassword } from "../../services/authService";
@@ -12,9 +12,56 @@ import { ConfirmDialog } from "../ConfirmDialog/ConfirmDialog";
 import { markAccountDeleted } from "../../shared/accountDeletedNotice";
 import { useToast } from "../Toast/Toast.Context";
 import { ReminderDialog } from "../ReminderDialog/ReminderDialog";
-import { refreshTodayProgress, remindersAvailable, syncReminderToken } from "../../services/reminderService";
+import { formatHour } from "../ReminderDialog/formatHour";
+import {
+  getReminderSettings,
+  isOnForThisDevice,
+  refreshTodayProgress,
+  reminderHours,
+  remindersAvailable,
+  syncReminderToken,
+} from "../../services/reminderService";
 import { setLanguageSetting, useLanguage, useMessages, type LanguageSetting } from "../../i18n/i18n";
 import { accountMenuMessages, languageNames } from "./messages";
+
+// Stroke icons in the style of the rest of the app; decorative, the text says it all.
+const icons = {
+  bell: (
+    <>
+      <path d="M6 8a6 6 0 1 1 12 0c0 7 3 9 3 9H3s3-2 3-9" />
+      <path d="M10.3 21a1.94 1.94 0 0 0 3.4 0" />
+    </>
+  ),
+  download: (
+    <>
+      <path d="M12 3v12" />
+      <path d="m7 10 5 5 5-5" />
+      <path d="M5 21h14" />
+    </>
+  ),
+  logOut: (
+    <>
+      <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4" />
+      <path d="m10 17 5-5-5-5" />
+      <path d="M15 12H3" />
+    </>
+  ),
+  trash: (
+    <>
+      <path d="M3 6h18" />
+      <path d="M8 6V4h8v2" />
+      <path d="M6 6l1 14h10l1-14" />
+    </>
+  ),
+};
+
+const Icon = ({ name }: { name: keyof typeof icons }) => (
+  <svg className="AccountMenu-icon" viewBox="0 0 24 24" aria-hidden="true">
+    {icons[name]}
+  </svg>
+);
+
+const LANGUAGE_SETTINGS: LanguageSetting[] = ["auto", "sv", "en"];
 
 export const AccountMenu = ({ user }: Props) => {
   const [isOpen, setIsOpen] = useState(false);
@@ -25,6 +72,11 @@ export const AccountMenu = ({ user }: Props) => {
   const needsPassword = usesPassword(user);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isReminderOpen, setIsReminderOpen] = useState(false);
+  // This device's reminder times, shown next to the menu item; undefined while off.
+  const [reminderTimes, setReminderTimes] = useState<number[]>();
+  const reminderLabelId = useId();
+  const reminderStatusId = useId();
+  const languageId = useId();
   const rootRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const { showToast, hideToast } = useToast();
@@ -35,6 +87,23 @@ export const AccountMenu = ({ user }: Props) => {
   useEffect(function keepReminderTokenFresh() {
     void syncReminderToken();
   }, []);
+
+  useEffect(
+    function loadReminderTimes() {
+      if (!isOpen || !remindersAvailable) return;
+      let isCurrent = true;
+      getReminderSettings()
+        .then((settings) => {
+          if (isCurrent) setReminderTimes(settings && isOnForThisDevice(settings) ? reminderHours(settings) : undefined);
+        })
+        // Only a hint in the menu; the dialog says what went wrong if it matters.
+        .catch(() => {});
+      return () => {
+        isCurrent = false;
+      };
+    },
+    [isOpen],
+  );
 
   useEffect(
     function closeOnOutsideClickOrEscape() {
@@ -135,22 +204,75 @@ export const AccountMenu = ({ user }: Props) => {
 
       {isOpen ? (
         <div className="AccountMenu-panel" id="account-menu">
-          {user.email ? <p className="AccountMenu-who">{user.email}</p> : null}
+          <div className="AccountMenu-who">
+            {user.photoURL ? (
+              <img alt="" src={user.photoURL} className="AccountMenu-who_avatar" />
+            ) : (
+              <span className="AccountMenu-who_avatar">{initial}</span>
+            )}
+            <span className="AccountMenu-who_text">
+              {user.displayName ? <b>{user.displayName}</b> : null}
+              {user.email ? <span>{user.email}</span> : null}
+            </span>
+          </div>
+          <hr />
           {remindersAvailable ? (
             <button
               type="button"
               className="AccountMenu-item"
+              // The time is a description, so the item is still named just "Daily reminders".
+              aria-labelledby={reminderLabelId}
+              aria-describedby={reminderTimes ? reminderStatusId : undefined}
               onClick={() => {
                 setIsOpen(false);
                 setIsReminderOpen(true);
               }}
             >
-              {t.reminder}
+              <Icon name="bell" />
+              <span className="AccountMenu-item_text" id={reminderLabelId}>
+                {t.reminder}
+              </span>
+              {reminderTimes ? (
+                <span className="AccountMenu-pill" id={reminderStatusId}>
+                  {formatHour(Math.min(...reminderTimes))}
+                  {reminderTimes.length > 1 ? ` +${reminderTimes.length - 1}` : ""}
+                </span>
+              ) : null}
             </button>
           ) : null}
           <button type="button" className="AccountMenu-item" onClick={onExport}>
-            {t.exportData}
+            <Icon name="download" />
+            <span className="AccountMenu-item_text">{t.exportData}</span>
           </button>
+          <div className="AccountMenu-label" id={languageId}>
+            {t.language}
+          </div>
+          <div className="AccountMenu-languages" role="radiogroup" aria-labelledby={languageId}>
+            {LANGUAGE_SETTINGS.map((option) => (
+              <label key={option} className={setting === option ? "is-checked" : undefined}>
+                <input
+                  type="radio"
+                  name="language"
+                  value={option}
+                  checked={setting === option}
+                  // Says which language "Auto" picked; the button itself stays short.
+                  aria-label={option === "auto" ? t.automatic(languageNames[language]) : undefined}
+                  onChange={() => {
+                    setLanguageSetting(option);
+                    // Reminders are written in the chosen language; save it with them.
+                    void refreshTodayProgress();
+                  }}
+                />
+                {option === "auto" ? t.auto : languageNames[option]}
+              </label>
+            ))}
+          </div>
+          <hr />
+          <button type="button" className="AccountMenu-item" onClick={logout}>
+            <Icon name="logOut" />
+            <span className="AccountMenu-item_text">{t.logOut}</span>
+          </button>
+          {/* Last, away from the everyday choices, so it isn't tapped by mistake. */}
           <button
             type="button"
             className="AccountMenu-item AccountMenu-item_danger"
@@ -160,34 +282,18 @@ export const AccountMenu = ({ user }: Props) => {
               setIsConfirmingDelete(true);
             }}
           >
-            {t.deleteAccount}
+            <Icon name="trash" />
+            <span className="AccountMenu-item_text">{t.deleteAccount}</span>
           </button>
           <hr />
-          <Link className="AccountMenu-item" to="/privacy" onClick={() => setIsOpen(false)}>
-            {t.privacy}
-          </Link>
-          <Link className="AccountMenu-item" to="/terms" onClick={() => setIsOpen(false)}>
-            {t.terms}
-          </Link>
-          <button type="button" className="AccountMenu-item" onClick={logout}>
-            {t.logOut}
-          </button>
-          <hr />
-          <label className="AccountMenu-language">
-            <span>{t.language}</span>
-            <select
-              value={setting}
-              onChange={(e) => {
-                setLanguageSetting(e.target.value as LanguageSetting);
-                // Reminders are written in the chosen language; save it with them.
-                void refreshTodayProgress();
-              }}
-            >
-              <option value="auto">{t.automatic(languageNames[language])}</option>
-              <option value="en">{languageNames.en}</option>
-              <option value="sv">{languageNames.sv}</option>
-            </select>
-          </label>
+          <div className="AccountMenu-links">
+            <Link to="/privacy" onClick={() => setIsOpen(false)}>
+              {t.privacy}
+            </Link>
+            <Link to="/terms" onClick={() => setIsOpen(false)}>
+              {t.terms}
+            </Link>
+          </div>
         </div>
       ) : null}
 
